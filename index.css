@@ -1,38 +1,44 @@
-.advance-modal {
+.react-advance-modal {
   /* variable and default value */
   /* 
     --modal-color-overlay: #00000099;
     --modal-color-bg: white;
   */
-  
+
   position: fixed;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  background: transparent;
   white-space: nowrap;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
 }
-.advance-modal.--no-animation, .advance-modal.--no-animation > * {
+
+.react-advance-modal[data-animation-pause],
+.react-advance-modal[data-animation-pause] > * {
   animation-iteration-count: 0 !important;
   transition: none !important;
 }
-.advance-modal:not(.advance-modal--floating) {
+
+.react-advance-modal[data-modal-type*='full'] {
   filter: drop-shadow(0 0 15px var(--modal-color-overlay, #00000099));
 }
-.advance-modal:not(.advance-modal--floating).--out-animation {
+.react-advance-modal[data-modal-type*='full'].--out-transition {
   background: transparent !important;
 }
-.advance-modal--floating {
+
+.react-advance-modal[data-modal-type*='floating'] {
   background: var(--modal-color-overlay, #00000099);
-  animation: fadeIn 0.25s ease;
+  animation: overlayFadeIn 0.25s ease;
 }
-@keyframes fadeIn {
+.react-advance-modal[data-modal-type*='floating'].--out-transition {
+  animation: overlayFadeOut 0.25s ease forwards;
+}
+@keyframes overlayFadeIn {
   from {
     background: #00000000;
   }
@@ -40,10 +46,7 @@
     background: var(--modal-color-overlay, #00000099);
   }
 }
-.advance-modal--floating.--out-animation {
-  animation: fadeOut 0.25s ease forwards;
-}
-@keyframes fadeOut {
+@keyframes overlayFadeOut {
   from {
     background: var(--modal-color-overlay, #00000099);
   }
@@ -51,29 +54,30 @@
     background: #00000000;
   }
 }
-.advance-modal--bottom {
+
+.react-advance-modal[data-modal-type*='bottom'] {
   align-items: end;
   padding-bottom: 3rem;
 }
-.advance-modal__page {
+
+/* ------- Page styling --------- */
+.react-advance-modal__page {
   position: absolute;
   background: var(--modal-color-bg, white);
   padding: 2rem;
   transition: all 0.25s ease;
   white-space: initial;
 }
-.advance-modal:not(.advance-modal--floating) .advance-modal__page {
+.react-advance-modal[data-modal-type*='full'] .react-advance-modal__page {
   width: 100%;
   height: 100%;
 }
-.advance-modal--floating .advance-modal__page {
+.react-advance-modal[data-modal-type*='floating'] .react-advance-modal__page {
   border-radius: 1rem;
 }
-/* In/Out Animation -------- */
-.advance-modal .--zoom-in-animation {
-  transition: all 0.15s ease-in-out;
-  animation: zoomInAnimation 0.15s cubic-bezier(0.18, 0.8, 0.74, 1.14);
-}
+
+/* In/Out zoom-in animation -------- */
+
 @keyframes zoomInAnimation {
   from {
     transform: scale(0.3);
@@ -94,23 +98,32 @@
     opacity: 0;
   }
 }
-.advance-modal .--zoom-in-animation.--back-animation + div {
+
+.react-advance-modal[data-animation='zoom-in'] .react-advance-modal__page {
+  transition: all 0.15s ease-in-out;
+  animation: zoomInAnimation 0.15s cubic-bezier(0.18, 0.8, 0.74, 1.14);
+}
+.react-advance-modal[data-animation='zoom-in']
+  .react-advance-modal__page.--back-transition
+  + div {
   animation: zoomOutBottom 0.15s ease forwards;
   pointer-events: none;
 }
-.advance-modal .--zoom-in-animation.--back-animation:last-child {
+.react-advance-modal[data-animation='zoom-in']
+  .react-advance-modal__page.--back-transition:last-child {
   transform: scale(0.5);
   opacity: 0;
   pointer-events: none;
 }
-.advance-modal .--zoom-in-animation:not(:last-child):not(.--back-animation) {
+.react-advance-modal[data-animation='zoom-in']
+  .react-advance-modal__page:not(:last-child):not(.--back-transition) {
   transform: scale(0.5);
   opacity: 0;
   pointer-events: none;
 }
-.advance-modal .--slide-animation {
-  animation: slideIn 0.25s ease;
-}
+
+/* In/Out slide animation -------- */
+
 @keyframes slideIn {
   from {
     transform: translate(100vw, 0);
@@ -127,22 +140,29 @@
     transform: translate(100vw, 0);
   }
 }
-.advance-modal .--slide-animation.--back-animation + div {
+
+.react-advance-modal[data-animation='slide'] .react-advance-modal__page {
+  animation: slideIn 0.25s ease;
+}
+.react-advance-modal[data-animation='slide']
+  .react-advance-modal__page.--back-transition
+  + div {
   animation: slideOut 0.25s ease forwards;
   pointer-events: none;
 }
-.advance-modal .--slide-animation.--back-animation:last-child {
+.react-advance-modal[data-animation='slide']
+  .react-advance-modal__page.--back-transition:last-child {
   transform: translate(100vw, 0);
   pointer-events: none;
 }
-.advance-modal .--slide-animation:not(:last-child):not(.--back-animation) {
+.react-advance-modal[data-animation='slide']
+  .react-advance-modal__page:not(:last-child):not(.--back-transition) {
   transform: translate(-100vw, 0);
   pointer-events: none;
 }
-.advance-modal .--slide-bottom-animation {
-  transition: all 0.25s ease-in-out;
-  animation: slideInBottom 0.25s cubic-bezier(0, 0.3, 0.15, 1.1);
-}
+
+/* In/Out slide bottom animation -------- */
+
 @keyframes slideInBottom {
   from {
     transform: translate(0, 100vh);
@@ -159,15 +179,24 @@
     transform: translate(0, 100vh);
   }
 }
-.advance-modal .--slide-bottom-animation.--back-animation + div {
+
+.react-advance-modal[data-animation='slide-bottom'] .react-advance-modal__page {
+  transition: all 0.25s ease-in-out;
+  animation: slideInBottom 0.25s cubic-bezier(0, 0.3, 0.15, 1.1);
+}
+.react-advance-modal[data-animation='slide-bottom']
+  .react-advance-modal__page.--back-transition
+  + div {
   animation: slideOutBottom 0.25s ease forwards;
   pointer-events: none;
 }
-.advance-modal .--slide-bottom-animation.--back-animation:last-child {
+.react-advance-modal[data-animation='slide-bottom']
+  .react-advance-modal__page.--back-transition:last-child {
   transform: translate(0, 100vh);
   pointer-events: none;
 }
-.advance-modal .--slide-bottom-animation:not(:last-child):not(.--back-animation) {
+.react-advance-modal[data-animation='slide-bottom']
+  .react-advance-modal__page:not(:last-child):not(.--back-transition) {
   transform: translate(0, 100vh);
   pointer-events: none;
 }

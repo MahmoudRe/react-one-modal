@@ -10,7 +10,7 @@ import { createPortal } from 'react-dom';
 import './index.css';
 
 const AdvanceModal = forwardRef((props, ref) => {
-  const {
+  let {
     className = '', //className for modal container
     pageClassName = '',
     pageAttributes = {},
@@ -33,14 +33,28 @@ const AdvanceModal = forwardRef((props, ref) => {
   const animation = useRef({
     type: animationType,
     setType: (type) => {
-      animation.current.type = type;
+      // Internal state
+      animationType = animation.current.type; //preserve the old value to use when resume
+      animation.current.type = type; //current value
+
+      // HTML element state
+      if (type) {
+        advanceModal.current.dataset.animation = type;
+        advanceModal.current.removeAttribute('data-animation-pause');
+      } else {
+        advanceModal.current.setAttribute('data-animation-pause', '');
+      }
     },
     pause: (timeout) => {
       //if timeout is not passed, pause indefinitely
-      advanceModal.current?.classList.add('--no-animation');
+      animation.current.type = false;
+      advanceModal.current.setAttribute('data-animation-pause', '');
       timeout && setTimeout(animation.current.resume, timeout);
     },
-    resume: () => advanceModal.current?.classList.remove('--no-animation'),
+    resume: () => {
+      animation.current.type = animationType;
+      advanceModal.current.removeAttribute('data-animation-pause');
+    },
   });
 
   const advanceModal = useRef(null);
@@ -51,16 +65,14 @@ const AdvanceModal = forwardRef((props, ref) => {
       animation: animationType = animation.current.type,
     } = options;
 
-    if (!animationType) animation.current.pause(250);
+    //pause if the animation is already active, but options.animation is false for this instance
+    if (!animationType && !!animation.current.type)
+      animation.current.pause(250);
 
     pagesArr.current.push(
       <div
         key={Math.random()} //since the key is set only on push, random value should be fine
-        className={
-          'advance-modal__page ' +
-          `--${animationType}-animation ` +
-          pageClassName
-        }
+        className={'react-advance-modal__page ' + pageClassName}
         {...pageAttributes}
       >
         {content}
@@ -95,8 +107,8 @@ const AdvanceModal = forwardRef((props, ref) => {
     const { animation: animationType = animation.current.type } = options;
 
     if (!animationType) {
-      animation.current.pause(250);
       pagesArr.current.pop();
+      if (!!animation.current.type) animation.current.pause(250); //pause if animation is already active
       forceUpdate();
       return;
     }
@@ -105,9 +117,9 @@ const AdvanceModal = forwardRef((props, ref) => {
     let len = advanceModal.current.children?.length;
     // select the page before last one (or last in case of one page)
     let page = advanceModal.current.children[len > 1 ? len - 2 : 0];
-    page?.classList.add('--back-animation');
+    page.classList.add('--back-transition');
     setTimeout(() => {
-      page?.classList.remove('--back-animation');
+      page.classList.remove('--back-transition');
       pagesArr.current.pop();
       forceUpdate();
     }, 250);
@@ -116,9 +128,9 @@ const AdvanceModal = forwardRef((props, ref) => {
     if (pagesArr.current.length === 0) {
       page &&
         animationType &&
-        advanceModal.current.classList.add('--out-animation');
+        advanceModal.current.classList.add('--out-transition');
       setTimeout(() => {
-        page && advanceModal.current.classList.remove('--out-animation');
+        page && advanceModal.current.classList.remove('--out-transition');
       }, 250);
     }
   };
@@ -127,20 +139,19 @@ const AdvanceModal = forwardRef((props, ref) => {
     const { animation: animationType = animation.current.type } = options;
 
     if (!animationType) {
-      //empty array while keeping reference
-      pagesArr.current.splice(0, pagesArr.current.length);
-      animation.current.pause(250);
+      pagesArr.current.splice(0, pagesArr.current.length); //empty array while keeping reference
+      if (!!animation.current.type) animation.current.pause(250); //pause if animation is already active
       forceUpdate();
       return;
     }
 
     /* transition */
     let page = advanceModal.current.lastChild;
-    page?.classList.add('--back-animation');
-    page && advanceModal.current.classList.add('--out-animation');
+    page?.classList.add('--back-transition');
+    page && advanceModal.current.classList.add('--out-transition');
     setTimeout(() => {
-      page?.classList.remove('--back-animation');
-      page && advanceModal.current.classList.remove('--out-animation');
+      page?.classList.remove('--back-transition');
+      page && advanceModal.current.classList.remove('--out-transition');
       pagesArr.current.splice(0, pagesArr.current.length);
       forceUpdate();
     }, 250);
@@ -150,35 +161,42 @@ const AdvanceModal = forwardRef((props, ref) => {
     const { animation: animationType = animation.current.type } = options;
 
     if (!animationType) {
-      animation.current.pause(250);
+      if (!!animation.current.type) animation.current.pause(250); //pause if animation is already active
       setHidden(true);
       return;
     }
 
     /* transition */
     let page = advanceModal.current.lastChild;
-    page?.classList.add('--back-animation');
-    page && advanceModal.current.classList.add('--out-animation');
+    page?.classList.add('--back-transition');
+    page && advanceModal.current.classList.add('--out-transition');
     setTimeout(() => {
-      page?.classList.remove('--back-animation');
-      page && advanceModal.current.classList.remove('--out-animation');
+      page?.classList.remove('--back-transition');
+      page && advanceModal.current.classList.remove('--out-transition');
       setHidden(true);
     }, 250);
   };
 
+  /**
+   * @param {*} arg0 either React Component to show, ie. push into the stack or options object
+   * @param {*} options if arg0 was a React Component then this parameter is options object, otherwise ignore
+   */
   const show = (arg0, options = {}) => {
     let { animation: animationType = animation.current.type } = options;
 
-    if (arg0 && arg0.animation)
-      //then arg0 is options
+    //the case where arg0 is option and only need to show the hidden pages
+    if (arg0 && arg0.animation) {
       animationType = arg0.animation;
 
-    if (!animationType) {
-      animation.current.pause(250);
+      //pause if the animation is already active, but options.animation is false for this instance
+      if (!animationType && !!animation.current.type)
+        animation.current.pause(250);
     }
 
+    //the case where arg0 is React Component, then push it into stack and pass option object
+    if (arg0 && !arg0.animation) push(arg0, options);
+
     setHidden(false);
-    if (arg0 && !arg0.animation) return push(arg0, options);
   };
 
   useImperativeHandle(ref, () => ({ push, pop, close, hide, show, animation }));
@@ -189,11 +207,10 @@ const AdvanceModal = forwardRef((props, ref) => {
 
   return createPortal(
     <div
-      className={
-        'advance-modal ' +
-        (floating ? 'advance-modal--floating ' : '') +
-        (bottom ? 'advance-modal--bottom ' : '') +
-        className
+      className={'react-advance-modal ' + className}
+      data-animation={animationType}
+      data-modal-type={
+        (floating ? 'floating' : 'full') + (bottom ? ' bottom' : '')
       }
       ref={advanceModal}
       style={{
