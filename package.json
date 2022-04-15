@@ -1,0 +1,26 @@
+{
+  "name": "react-advance-modal",
+  "version": "1.0.0",
+  "description": "Animated modal with advanced functionality for React framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mahmoudre/react-advance-modal.git"
+  },
+  "keywords": [
+    "animated",
+    "modal",
+    "React",
+    "advance",
+    "advanced"
+  ],
+  "author": "Mahmoud Al-Refaai",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/schuttelaar/react-advance-modal/issues"
+  },
+  "homepage": "https://github.com/schuttelaar/react-advance-modal#readme"
+}
