@@ -30,28 +30,36 @@ const AdvanceModal = forwardRef((props, ref) => {
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const pagesArr = useRef([]); //useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
   const [isHidden, setHidden] = useState(false);
+  const animation = useRef({
+    type: animationType,
+    setType: (type) => {
+      animation.current.type = type;
+    },
+    pause: (timeout) => {
+      //if timeout is not passed, pause indefinitely
+      advanceModal.current?.classList.add('--no-animation');
+      timeout && setTimeout(animation.current.resume, timeout);
+    },
+    resume: () => advanceModal.current?.classList.remove('--no-animation'),
+  });
 
   const advanceModal = useRef(null);
 
-  const animation = {
-    type: animationType,
-    pause: (timeout) => {     //if timeout is not passed, pause indefinitely
-      advanceModal.current?.classList.remove('--no-animation');
-      timeout && setTimeout(animation.resume, timeout);   
-    },
-    resume: () => advanceModal.current?.classList.remove('--no-animation'),
-  }
-
   const push = (content, options = {}) => {
-    const { popLast = false, animation: animationType = animation.type } = options;
+    const {
+      popLast = false,
+      animation: animationType = animation.current.type,
+    } = options;
 
-    if (!animationType) animation.pause(250);
+    if (!animationType) animation.current.pause(250);
 
     pagesArr.current.push(
       <div
         key={Math.random()} //since the key is set only on push, random value should be fine
         className={
-          'advance-modal__page ' + `--${animationType}-animation ` + pageClassName
+          'advance-modal__page ' +
+          `--${animationType}-animation ` +
+          pageClassName
         }
         {...pageAttributes}
       >
@@ -61,10 +69,15 @@ const AdvanceModal = forwardRef((props, ref) => {
     forceUpdate();
 
     if (pagesArr.current.length > size)
-      setTimeout(() => {
+      if (animationType)
+        setTimeout(() => {
+          pagesArr.current.shift();
+          forceUpdate();
+        }, 250);
+      else {
         pagesArr.current.shift();
         forceUpdate();
-      }, 250);
+      }
 
     if (popLast && pagesArr.current.length > 1)
       setTimeout(() => {
@@ -74,10 +87,10 @@ const AdvanceModal = forwardRef((props, ref) => {
   };
 
   const pop = (options = {}) => {
-    const { animation: animationType = animation.type } = options;
+    const { animation: animationType = animation.current.type } = options;
 
     if (!animationType) {
-      animation.pause(250);
+      animation.current.pause(250);
       pagesArr.current.pop();
       forceUpdate();
       return;
@@ -106,12 +119,12 @@ const AdvanceModal = forwardRef((props, ref) => {
   };
 
   const close = (options = {}) => {
-    const { animation: animationType = animation.type } = options;
+    const { animation: animationType = animation.current.type } = options;
 
     if (!animationType) {
       //empty array while keeping reference
       pagesArr.current.splice(0, pagesArr.current.length);
-      animation.pause(250);
+      animation.current.pause(250);
       forceUpdate();
       return;
     }
@@ -129,10 +142,10 @@ const AdvanceModal = forwardRef((props, ref) => {
   };
 
   const hide = (options = {}) => {
-    const { animation: animationType = animation.type } = options;
+    const { animation: animationType = animation.current.type } = options;
 
     if (!animationType) {
-      animation.pause(250);
+      animation.current.pause(250);
       setHidden(true);
       return;
     }
@@ -149,14 +162,14 @@ const AdvanceModal = forwardRef((props, ref) => {
   };
 
   const show = (arg0, options = {}) => {
-    let { animation: animationType = animation.type} = options;
+    let { animation: animationType = animation.current.type } = options;
 
     if (arg0 && arg0.animation)
       //then arg0 is options
       animationType = arg0.animation;
 
     if (!animationType) {
-      animation.pause(250);
+      animation.current.pause(250);
     }
 
     setHidden(false);
@@ -215,6 +228,16 @@ class ModalState {
       transit: (content, options) => this.transit(key, content, options),
       hide: (options) => this.hide(key, options),
       show: (content, options) => this.show(key, content, options),
+      animation: {
+        getType: () =>
+          this.advanceModalRef[key]?.current?.animation.current.type,
+        setType: (type) =>
+          this.advanceModalRef[key]?.current?.animation.current.setType(type),
+        pause: (timeout) =>
+          this.advanceModalRef[key]?.current?.animation.current.pause(timeout),
+        resume: () =>
+          this.advanceModalRef[key]?.current?.animation.current.resume(),
+      },
     };
 
     // We could here simply do `return this.advanceModalRef[key]?.current` and then all functionalities will be exposed.
@@ -252,7 +275,6 @@ class ModalState {
   hide = (key, options) => this.advanceModalRef[key]?.current?.hide(options);
   show = (key, content, options) =>
     this.advanceModalRef[key]?.current?.show(content, options);
-  animation = (key) => this.advanceModalRef[key]?.current?.animation; //to pause/resume animation
 }
 
 const modalState = new ModalState();
