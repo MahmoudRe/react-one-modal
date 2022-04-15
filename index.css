@@ -1,5 +1,10 @@
 .advance-modal {
   /* variable and default value */
+  /* 
+    --modal-color-overlay: #00000099;
+    --modal-color-bg: white;
+  */
+
   position: fixed;
   top: 0;
   bottom: 0;
@@ -13,7 +18,8 @@
   justify-content: center;
   align-items: center;
 }
-.advance-modal.--no-animation, .advance-modal.--no-animation > * {
+.advance-modal.--no-animation,
+.advance-modal.--no-animation > * {
   animation-iteration-count: 0 !important;
   transition: none !important;
 }
@@ -60,7 +66,53 @@
 .advance-modal:not(.advance-modal--floating) .advance-modal__page {
   width: 100%;
   height: 100%;
-  /* In/Out Animation */
+}
+.advance-modal--floating .advance-modal__page {
+  border-radius: 1rem;
+}
+
+/* In/Out Animation -------- */
+.advance-modal.--zoom-in-animation .advance-modal__page {
+  transition: all 0.15s ease-in-out;
+  animation: zoomInAnimation 0.15s cubic-bezier(0.18, 0.8, 0.74, 1.14);
+}
+@keyframes zoomInAnimation {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes zoomOutBottom {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+.advance-modal.--zoom-in-animation .advance-modal__page.--back-animation + div {
+  animation: zoomOutBottom 0.15s ease forwards;
+  pointer-events: none;
+}
+.advance-modal.--zoom-in-animation
+  .advance-modal__page.--back-animation:last-child {
+  transform: scale(0.5);
+  opacity: 0;
+  pointer-events: none;
+}
+.advance-modal.--zoom-in-animation
+  .advance-modal__page:not(:last-child):not(.--back-animation) {
+  transform: scale(0.5);
+  opacity: 0;
+  pointer-events: none;
+}
+.advance-modal.--slide-animation .advance-modal__page {
   animation: slideIn 0.25s ease;
 }
 @keyframes slideIn {
@@ -79,63 +131,21 @@
     transform: translate(100%, 0);
   }
 }
-.advance-modal:not(.advance-modal--floating) .advance-modal__page.--back-animation {
-  transform: translate(0, 0);
-  pointer-events: none;
-}
-.advance-modal:not(.advance-modal--floating) .advance-modal__page.--back-animation + div {
+.advance-modal.--slide-animation .advance-modal__page.--back-animation + div {
   animation: slideOut 0.25s ease forwards;
   pointer-events: none;
 }
-.advance-modal:not(.advance-modal--floating) .advance-modal__page.--back-animation:last-child {
+.advance-modal.--slide-animation
+  .advance-modal__page.--back-animation:last-child {
   transform: translate(100%, 0);
   pointer-events: none;
 }
-.advance-modal:not(.advance-modal--floating) .advance-modal__page:not(:last-child):not(.--back-animation) {
+.advance-modal.--slide-animation
+  .advance-modal__page:not(:last-child):not(.--back-animation) {
   transform: translate(-100%, 0);
   pointer-events: none;
 }
-.advance-modal--floating .advance-modal__page {
-  border-radius: 1rem;
-  transition: all 0.15s ease-in-out;
-  /* In/Out Animation */
-  animation: popInAnimation 0.15s cubic-bezier(0.18, 0.8, 0.74, 1.14);
-}
-@keyframes popInAnimation {
-  from {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-@keyframes popOutBottom {
-  from {
-    transform: scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: scale(0.6);
-    opacity: 0;
-  }
-}
-.advance-modal--floating .advance-modal__page.--back-animation + div {
-  animation: popOutBottom 0.15s ease forwards;
-  pointer-events: none;
-}
-.advance-modal--floating .advance-modal__page.--back-animation:last-child {
-  transform: scale(0.5);
-  opacity: 0;
-  pointer-events: none;
-}
-.advance-modal--floating .advance-modal__page:not(:last-child):not(.--back-animation) {
-  transform: scale(0.5);
-  opacity: 0;
-  pointer-events: none;
-}
-.advance-modal--floating.advance-modal--bottom .advance-modal__page {
+.advance-modal.--slide-bottom-animation .advance-modal__page {
   transition: all 0.25s ease-in-out;
   animation: slideInBottom 0.25s cubic-bezier(0, 0.3, 0.15, 1.1);
 }
@@ -155,15 +165,19 @@
     transform: translate(0, 100vh);
   }
 }
-.advance-modal--floating.advance-modal--bottom .advance-modal__page.--back-animation + div {
+.advance-modal.--slide-bottom-animation
+  .advance-modal__page.--back-animation
+  + div {
   animation: slideOutBottom 0.25s ease forwards;
   pointer-events: none;
 }
-.advance-modal--floating.advance-modal--bottom .advance-modal__page.--back-animation:last-child {
+.advance-modal.--slide-bottom-animation
+  .advance-modal__page.--back-animation:last-child {
   transform: translate(0, 100vh);
   pointer-events: none;
 }
-.advance-modal--floating.advance-modal--bottom .advance-modal__page:not(:last-child):not(.--back-animation) {
+.advance-modal.--slide-bottom-animation
+  .advance-modal__page:not(:last-child):not(.--back-animation) {
   transform: translate(0, 100vh);
   pointer-events: none;
 }

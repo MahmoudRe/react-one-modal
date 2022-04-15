@@ -14,12 +14,17 @@ const AdvanceModal = forwardRef((props, ref) => {
     className = '', //className for modal container
     pageClassName = '',
     pageAttributes = {},
-    animated: isAnimated = true,
     size = 999, // the number of pages to preserve in the stack before start dropping out old pages
     overlayColor, //default #00000099, also it can be set by css variable --modal-color-overlay
     backgroundColor, //default 'white', also it can be set by css variable --modal-color-bg
     floating,
     bottom,
+    animated: isAnimated = true,
+    animation = props.bottom
+      ? 'slide-bottom'
+      : props.floating
+      ? 'zoom-in'
+      : 'slide', // choose from [ slide | slide-bottom | zoom-in ]
     children, //if existed, add them as the first page
     ...attributes //pass the reset to modal container
   } = props;
@@ -163,6 +168,7 @@ const AdvanceModal = forwardRef((props, ref) => {
     <div
       className={
         'advance-modal ' +
+        `--${animation}-animation ` +
         (floating ? 'advance-modal--floating ' : '') +
         (bottom ? 'advance-modal--bottom ' : '') +
         className
