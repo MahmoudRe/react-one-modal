@@ -19,12 +19,11 @@ const AdvanceModal = forwardRef((props, ref) => {
     backgroundColor, //default 'white', also it can be set by css variable --modal-color-bg
     floating,
     bottom,
-    animated: isAnimated = true,
-    animation = props.bottom
+    animation: animationType = props.bottom
       ? 'slide-bottom'
       : props.floating
       ? 'zoom-in'
-      : 'slide', // choose from [ slide | slide-bottom | zoom-in ]
+      : 'slide', // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
     children, //if existed, add them as the first page
     ...attributes //pass the reset to modal container
   } = props;
@@ -42,14 +41,16 @@ const AdvanceModal = forwardRef((props, ref) => {
   };
 
   const push = (content, options = {}) => {
-    const { popLast = false, animated = isAnimated } = options;
+    const { popLast = false, animation = animationType } = options;
 
-    if (!animated) pauseAnimation();
+    if (!animation) pauseAnimation();
 
     pagesArr.current.push(
       <div
         key={Math.random()} //since the key is set only on push, random value should be fine
-        className={'advance-modal__page ' + pageClassName}
+        className={
+          'advance-modal__page ' + `--${animation}-animation ` + pageClassName
+        }
         {...pageAttributes}
       >
         {content}
@@ -71,9 +72,9 @@ const AdvanceModal = forwardRef((props, ref) => {
   };
 
   const pop = (options = {}) => {
-    const { animated = isAnimated } = options;
+    const { animation = animationType } = options;
 
-    if (!animated) {
+    if (!animation) {
       pauseAnimation();
       pagesArr.current.pop();
       forceUpdate();
@@ -93,7 +94,9 @@ const AdvanceModal = forwardRef((props, ref) => {
 
     // if last page, animate overlay hiding
     if (pagesArr.current.length === 0) {
-      page && animated && advanceModal.current.classList.add('--out-animation');
+      page &&
+        animation &&
+        advanceModal.current.classList.add('--out-animation');
       setTimeout(() => {
         page && advanceModal.current.classList.remove('--out-animation');
       }, 250);
@@ -101,9 +104,9 @@ const AdvanceModal = forwardRef((props, ref) => {
   };
 
   const close = (options = {}) => {
-    const { animated = isAnimated } = options;
+    const { animation = animationType } = options;
 
-    if (!animated) {
+    if (!animation) {
       //empty array while keeping reference
       pagesArr.current.splice(0, pagesArr.current.length);
       pauseAnimation();
@@ -124,9 +127,9 @@ const AdvanceModal = forwardRef((props, ref) => {
   };
 
   const hide = (options = {}) => {
-    const { animated = isAnimated } = options;
+    const { animation = animationType } = options;
 
-    if (!animated) {
+    if (!animation) {
       pauseAnimation();
       setHidden(true);
       return;
@@ -144,18 +147,18 @@ const AdvanceModal = forwardRef((props, ref) => {
   };
 
   const show = (arg0, options = {}) => {
-    let { animated = isAnimated } = options;
+    let { animation = animationType } = options;
 
-    if (arg0 && arg0.animated)
+    if (arg0 && arg0.animation)
       //then arg0 is options
-      animated = arg0.animated;
+      animation = arg0.animation;
 
-    if (!animated) {
+    if (!animation) {
       pauseAnimation();
     }
 
     setHidden(false);
-    if (arg0 && !arg0.animated) return push(arg0, options);
+    if (arg0 && !arg0.animation) return push(arg0, options);
   };
 
   useImperativeHandle(ref, () => ({ push, pop, close, hide, show }));
@@ -168,7 +171,6 @@ const AdvanceModal = forwardRef((props, ref) => {
     <div
       className={
         'advance-modal ' +
-        `--${animation}-animation ` +
         (floating ? 'advance-modal--floating ' : '') +
         (bottom ? 'advance-modal--bottom ' : '') +
         className
