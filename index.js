@@ -80,10 +80,15 @@ const AdvanceModal = forwardRef((props, ref) => {
       }
 
     if (popLast && pagesArr.current.length > 1)
-      setTimeout(() => {
+      if (animationType)
+        setTimeout(() => {
+          pagesArr.current.splice(pagesArr.current.length - 2, 1); //remove before last page
+          forceUpdate();
+        }, 250);
+      else {
         pagesArr.current.splice(pagesArr.current.length - 2, 1); //remove before last page
         forceUpdate();
-      }, 250);
+      }
   };
 
   const pop = (options = {}) => {
