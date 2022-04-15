@@ -22,5 +22,9 @@
   "bugs": {
     "url": "https://github.com/schuttelaar/react-advance-modal/issues"
   },
-  "homepage": "https://github.com/schuttelaar/react-advance-modal#readme"
+  "homepage": "https://github.com/schuttelaar/react-advance-modal#readme",
+  "devDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
 }
