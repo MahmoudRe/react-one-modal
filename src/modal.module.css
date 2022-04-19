@@ -1,0 +1,202 @@
+.container {
+  /* variable and default value */
+  /* 
+    --modal-color-overlay: #00000099;
+    --modal-color-bg: white;
+  */
+
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  white-space: nowrap;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container[data-animation-pause],
+.container[data-animation-pause] > * {
+  animation-iteration-count: 0 !important;
+  transition: none !important;
+}
+
+.container[data-modal-type*='full'] {
+  filter: drop-shadow(0 0 15px var(--modal-color-overlay, #00000099));
+}
+.container[data-modal-type*='full'].--out-transition {
+  background: transparent !important;
+}
+
+.container[data-modal-type*='floating'] {
+  background: var(--modal-color-overlay, #00000099);
+  animation: overlayFadeIn 0.25s ease;
+}
+.container[data-modal-type*='floating'].--out-transition {
+  animation: overlayFadeOut 0.25s ease forwards;
+}
+@keyframes overlayFadeIn {
+  from {
+    background: #00000000;
+  }
+  to {
+    background: var(--modal-color-overlay, #00000099);
+  }
+}
+@keyframes overlayFadeOut {
+  from {
+    background: var(--modal-color-overlay, #00000099);
+  }
+  to {
+    background: #00000000;
+  }
+}
+
+.container[data-modal-type*='bottom'] {
+  align-items: end;
+  padding-bottom: 3rem;
+}
+
+/* ------- Page styling --------- */
+.page {
+  position: absolute;
+  background: var(--modal-color-bg, white);
+  padding: 2rem;
+  transition: all 0.25s ease;
+  white-space: initial;
+}
+.container[data-modal-type*='full'] .page {
+  width: 100%;
+  height: 100%;
+}
+.container[data-modal-type*='floating'] .page {
+  border-radius: 1rem;
+}
+
+/* In/Out zoom-in animation -------- */
+
+@keyframes zoomInAnimation {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes zoomOutBottom {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+
+.container[data-animation='zoom-in'] .page {
+  transition: all 0.15s ease-in-out;
+  animation: zoomInAnimation 0.15s cubic-bezier(0.18, 0.8, 0.74, 1.14);
+}
+.container[data-animation='zoom-in']
+  .page.--back-transition
+  + div {
+  animation: zoomOutBottom 0.15s ease forwards;
+  pointer-events: none;
+}
+.container[data-animation='zoom-in']
+  .page.--back-transition:last-child {
+  transform: scale(0.5);
+  opacity: 0;
+  pointer-events: none;
+}
+.container[data-animation='zoom-in']
+  .page:not(:last-child):not(.--back-transition) {
+  transform: scale(0.5);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* In/Out slide animation -------- */
+
+@keyframes slideIn {
+  from {
+    transform: translate(100vw, 0);
+  }
+  to {
+    transform: translate(0, 0);
+  }
+}
+@keyframes slideOut {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(100vw, 0);
+  }
+}
+
+.container[data-animation='slide'] .page {
+  animation: slideIn 0.25s ease;
+}
+.container[data-animation='slide']
+  .page.--back-transition
+  + div {
+  animation: slideOut 0.25s ease forwards;
+  pointer-events: none;
+}
+.container[data-animation='slide']
+  .page.--back-transition:last-child {
+  transform: translate(100vw, 0);
+  pointer-events: none;
+}
+.container[data-animation='slide']
+  .page:not(:last-child):not(.--back-transition) {
+  transform: translate(-100vw, 0);
+  pointer-events: none;
+}
+
+/* In/Out slide bottom animation -------- */
+
+@keyframes slideInBottom {
+  from {
+    transform: translate(0, 100vh);
+  }
+  to {
+    transform: translate(0, 0);
+  }
+}
+@keyframes slideOutBottom {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(0, 100vh);
+  }
+}
+
+.container[data-animation='slide-bottom'] .page {
+  transition: all 0.25s ease-in-out;
+  animation: slideInBottom 0.25s cubic-bezier(0, 0.3, 0.15, 1.1);
+}
+.container[data-animation='slide-bottom']
+  .page.--back-transition
+  + div {
+  animation: slideOutBottom 0.25s ease forwards;
+  pointer-events: none;
+}
+.container[data-animation='slide-bottom']
+  .page.--back-transition:last-child {
+  transform: translate(0, 100vh);
+  pointer-events: none;
+}
+.container[data-animation='slide-bottom']
+  .page:not(:last-child):not(.--back-transition) {
+  transform: translate(0, 100vh);
+  pointer-events: none;
+}

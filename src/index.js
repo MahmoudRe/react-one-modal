@@ -1,4 +1,4 @@
-import {
+import React, {
   useRef,
   useReducer,
   useState,
@@ -7,7 +7,7 @@ import {
   useImperativeHandle
 } from 'react'
 import { createPortal } from 'react-dom'
-import './index.css'
+import styles from './modal.module.css'
 
 const AdvanceModal = forwardRef((props, ref) => {
   let {
@@ -71,7 +71,7 @@ const AdvanceModal = forwardRef((props, ref) => {
     pagesArr.current.push(
       <div
         key={Math.random()} // since the key is set only on push, random value should be fine
-        className={'react-advance-modal__page ' + pageClassName}
+        className={styles.page + ' ' + pageClassName}
         {...pageAttributes}
       >
         {content}
@@ -116,9 +116,9 @@ const AdvanceModal = forwardRef((props, ref) => {
     const len = advanceModal.current.children?.length
     // select the page before last one (or last in case of one page)
     const page = advanceModal.current.children[len > 1 ? len - 2 : 0]
-    page.classList.add('--back-transition')
+    page.classList.add(styles['--back-transition'])
     setTimeout(() => {
-      page.classList.remove('--back-transition')
+      page.classList.remove(styles['--back-transition'])
       pagesArr.current.pop()
       forceUpdate()
     }, 250)
@@ -146,10 +146,10 @@ const AdvanceModal = forwardRef((props, ref) => {
 
     /* transition */
     const page = advanceModal.current.lastChild
-    page?.classList.add('--back-transition')
+    page?.classList.add(styles['--back-transition'])
     page && advanceModal.current.classList.add('--out-transition')
     setTimeout(() => {
-      page?.classList.remove('--back-transition')
+      page?.classList.remove(styles['--back-transition'])
       page && advanceModal.current.classList.remove('--out-transition')
       pagesArr.current.splice(0, pagesArr.current.length)
       forceUpdate()
@@ -167,11 +167,11 @@ const AdvanceModal = forwardRef((props, ref) => {
 
     /* transition */
     const page = advanceModal.current.lastChild
-    page?.classList.add('--back-transition')
-    page && advanceModal.current.classList.add('--out-transition')
+    page?.classList.add(styles['--back-transition'])
+    page && advanceModal.current.classList.add(styles['--out-transition'])
     setTimeout(() => {
-      page?.classList.remove('--back-transition')
-      page && advanceModal.current.classList.remove('--out-transition')
+      page?.classList.remove(styles['--back-transition'])
+      page && advanceModal.current.classList.remove(styles['--out-transition'])
       setHidden(true)
     }, 250)
   }
@@ -206,7 +206,7 @@ const AdvanceModal = forwardRef((props, ref) => {
 
   return createPortal(
     <div
-      className={'react-advance-modal ' + className}
+      className={styles.container + ' ' + className}
       data-animation={animationType}
       data-modal-type={
         (floating ? 'floating' : 'full') + (bottom ? ' bottom' : '')
