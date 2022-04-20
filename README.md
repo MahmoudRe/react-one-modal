@@ -2,7 +2,9 @@
 
 > Animated modal with advanced functionality for React framework
 
-[![NPM](https://img.shields.io/npm/v/react-advance-modal.svg)](https://www.npmjs.com/package/react-advance-modal) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+[![NPM](https://img.shields.io/npm/v/react-advance-modal.svg)](https://www.npmjs.com/package/react-advance-modal)
+[![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+[![Size](https://img.shields.io/bundlephobia/minzip/react-advance-modal)](https://www.npmjs.com/package/react-advance-modal)
 
 ## Install
 
