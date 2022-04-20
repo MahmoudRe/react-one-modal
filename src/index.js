@@ -1,4 +1,4 @@
-import {
+import React, {
   useRef,
   useReducer,
   useState,
@@ -9,7 +9,7 @@ import {
 import { createPortal } from 'react-dom'
 import styles from './modal.css'
 
-const AdvanceModal = forwardRef((props, ref) => {
+const Modal = forwardRef((props, ref) => {
   let {
     className = '', // className for modal container
     pageClassName = '',
@@ -40,25 +40,25 @@ const AdvanceModal = forwardRef((props, ref) => {
 
       // HTML element state
       if (type) {
-        advanceModal.current.dataset.animation = type
-        advanceModal.current.removeAttribute('data-animation-pause')
+        modal.current.dataset.animation = type
+        modal.current.removeAttribute('data-animation-pause')
       } else {
-        advanceModal.current.setAttribute('data-animation-pause', '')
+        modal.current.setAttribute('data-animation-pause', '')
       }
     },
     pause: (timeout) => {
       // if timeout is not passed, pause indefinitely
       animation.current.type = false
-      advanceModal.current.setAttribute('data-animation-pause', '')
+      modal.current.setAttribute('data-animation-pause', '')
       timeout && setTimeout(animation.current.resume, timeout)
     },
     resume: () => {
       animation.current.type = animationType
-      advanceModal.current.removeAttribute('data-animation-pause')
+      modal.current.removeAttribute('data-animation-pause')
     }
   })
 
-  const advanceModal = useRef(null)
+  const modal = useRef(null)
 
   const push = (content, options = {}) => {
     const {
@@ -116,9 +116,9 @@ const AdvanceModal = forwardRef((props, ref) => {
     }
 
     /* transition */
-    const len = advanceModal.current.children?.length
+    const len = modal.current.children?.length
     // select the page before last one (or last in case of one page)
-    const page = advanceModal.current.children[len > 1 ? len - 2 : 0]
+    const page = modal.current.children[len > 1 ? len - 2 : 0]
     page.classList.add(styles['--back-transition'])
     setTimeout(() => {
       page.classList.remove(styles['--back-transition'])
@@ -129,10 +129,10 @@ const AdvanceModal = forwardRef((props, ref) => {
 
     // if last page, animate overlay hiding
     if (pagesArr.current.length <= 1) {
-      page && advanceModal.current.classList.add(styles['--out-transition'])
+      page && modal.current.classList.add(styles['--out-transition'])
       setTimeout(() => {
         page &&
-          advanceModal.current.classList.remove(styles['--out-transition'])
+          modal.current.classList.remove(styles['--out-transition'])
       }, 250)
     }
   }
@@ -149,12 +149,12 @@ const AdvanceModal = forwardRef((props, ref) => {
     }
 
     /* transition */
-    const page = advanceModal.current.lastChild
+    const page = modal.current.lastChild
     page?.classList.add(styles['--back-transition'])
-    page && advanceModal.current.classList.add(styles['--out-transition'])
+    page && modal.current.classList.add(styles['--out-transition'])
     setTimeout(() => {
       page?.classList.remove(styles['--back-transition'])
-      page && advanceModal.current.classList.remove(styles['--out-transition'])
+      page && modal.current.classList.remove(styles['--out-transition'])
       pagesArr.current.splice(0, pagesArr.current.length)
       forceUpdate()
       callback('close', options)
@@ -172,12 +172,12 @@ const AdvanceModal = forwardRef((props, ref) => {
     }
 
     /* transition */
-    const page = advanceModal.current.lastChild
+    const page = modal.current.lastChild
     page?.classList.add(styles['--back-transition'])
-    page && advanceModal.current.classList.add(styles['--out-transition'])
+    page && modal.current.classList.add(styles['--out-transition'])
     setTimeout(() => {
       page?.classList.remove(styles['--back-transition'])
-      page && advanceModal.current.classList.remove(styles['--out-transition'])
+      page && modal.current.classList.remove(styles['--out-transition'])
       setHidden(true)
       callback('hide', options)
     }, 250)
@@ -220,7 +220,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       data-modal-type={
         (floating ? 'floating' : 'full') + (bottom ? ' bottom' : '')
       }
-      ref={advanceModal}
+      ref={modal}
       style={{
         display: !pagesArr.current.length || isHidden ? 'none' : undefined,
         '--modal-color-overlay': overlayColor || undefined,
@@ -238,10 +238,10 @@ const AdvanceModal = forwardRef((props, ref) => {
   )
 })
 
-export default AdvanceModal
+export default Modal
 
 class ModalState {
-  advanceModalRef = {}
+  modalRefs = {}
 
   /**
    * Get the functions of an already bound modal instance, given its key.
@@ -260,53 +260,53 @@ class ModalState {
       show: (content, options) => this.show(key, content, options),
       animation: {
         getType: () =>
-          this.advanceModalRef[key]?.current?.animation.current.type,
+          this.modalRefs[key]?.current?.animation.current.type,
         setType: (type) =>
-          this.advanceModalRef[key]?.current?.animation.current.setType(type),
+          this.modalRefs[key]?.current?.animation.current.setType(type),
         pause: (timeout) =>
-          this.advanceModalRef[key]?.current?.animation.current.pause(timeout),
+          this.modalRefs[key]?.current?.animation.current.pause(timeout),
         resume: () =>
-          this.advanceModalRef[key]?.current?.animation.current.resume()
+          this.modalRefs[key]?.current?.animation.current.resume()
       }
     }
 
-    // We could here simply do `return this.advanceModalRef[key]?.current` and then all functionalities will be exposed.
-    // However, at the start, ref is null and `this.advanceModalRef[key]?.current` is resolved to undefined.
+    // We could here simply do `return this.modalRefs[key]?.current` and then all functionalities will be exposed.
+    // However, at the start, ref is null and `this.modalRefs[key]?.current` is resolved to undefined.
     // Hence, when ref value is changed to an HTMLElement after the first render, there is no way .
     // That is way useRef() hook returns {current: VALUE} object such that "ref.current" refers to a mutable VALUE.
-    // By using function closure, `this.advanceModalRef[key]?.current` is resolved when each of these function is called.
+    // By using function closure, `this.modalRefs[key]?.current` is resolved when each of these function is called.
   }
 
   /**
-   * Bind a AdvanceModal instance given its ref, with a given key.
+   * Bind a Modal instance given its ref, with a given key.
    * If a key isn't passed, its value would be 'default'.
    *
    * Although the HTMLElement of the modal is located at the bottom of the <body> tag,
    * it inherits the context from the component in which it's declared.
    *
-   * @param {React.MutableRefObject<HTMLElement>} ref react ref object for AdvanceModal instance.
+   * @param {React.MutableRefObject<HTMLElement>} ref react ref object for Modal instance.
    * @param {string} key
    * @returns modal object with { push, pop, close, hide, show } functions
    */
   bindModal = (ref, key = 'default') => {
-    this.advanceModalRef[key] = ref
+    this.modalRefs[key] = ref
     return this.useModal(key)
   }
 
   push = (key, content, options) =>
-    this.advanceModalRef[key]?.current?.push(content, options)
+    this.modalRefs[key]?.current?.push(content, options)
 
-  pop = (key, options) => this.advanceModalRef[key]?.current?.pop(options)
-  close = (key, options) => this.advanceModalRef[key]?.current?.close(options)
+  pop = (key, options) => this.modalRefs[key]?.current?.pop(options)
+  close = (key, options) => this.modalRefs[key]?.current?.close(options)
   transit = (key, content, options) =>
-    this.advanceModalRef[key]?.current?.push(content, {
+    this.modalRefs[key]?.current?.push(content, {
       popLast: true,
       ...options
     })
 
-  hide = (key, options) => this.advanceModalRef[key]?.current?.hide(options)
+  hide = (key, options) => this.modalRefs[key]?.current?.hide(options)
   show = (key, content, options) =>
-    this.advanceModalRef[key]?.current?.show(content, options)
+    this.modalRefs[key]?.current?.show(content, options)
 }
 
 const modalState = new ModalState()
