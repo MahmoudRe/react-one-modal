@@ -1,4 +1,4 @@
-import React, {
+import {
   useRef,
   useReducer,
   useState,
@@ -79,7 +79,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       </div>
     )
     forceUpdate()
-    callback('push', content)
+    callback('push', options, content)
 
     if (pagesArr.current.length > size)
       if (animationType)
@@ -111,7 +111,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       pagesArr.current.pop()
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
-      callback('pop')
+      callback('pop', options)
       return
     }
 
@@ -124,7 +124,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       page.classList.remove(styles['--back-transition'])
       pagesArr.current.pop()
       forceUpdate()
-      callback('pop')
+      callback('pop', options)
     }, 250)
 
     // if last page, animate overlay hiding
@@ -144,7 +144,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       pagesArr.current.splice(0, pagesArr.current.length) // empty array while keeping reference
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
-      callback('close')
+      callback('close', options)
       return
     }
 
@@ -157,7 +157,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       page && advanceModal.current.classList.remove(styles['--out-transition'])
       pagesArr.current.splice(0, pagesArr.current.length)
       forceUpdate()
-      callback('close')
+      callback('close', options)
     }, 250)
   }
 
@@ -167,7 +167,7 @@ const AdvanceModal = forwardRef((props, ref) => {
     if (!animationType) {
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       setHidden(true)
-      callback('hide')
+      callback('hide', options)
       return
     }
 
@@ -179,7 +179,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       page?.classList.remove(styles['--back-transition'])
       page && advanceModal.current.classList.remove(styles['--out-transition'])
       setHidden(true)
-      callback('hide')
+      callback('hide', options)
     }, 250)
   }
 
@@ -198,7 +198,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       if (!animationType && !!animation.current.type)
         animation.current.pause(250)
 
-      callback('show')
+      callback('show', options)
     }
 
     // the case where arg0 is React Component, then push it into stack and pass option object
