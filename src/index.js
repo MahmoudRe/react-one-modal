@@ -19,7 +19,7 @@ const AdvanceModal = forwardRef((props, ref) => {
     backgroundColor, // default 'white', also it can be set by css variable --modal-color-bg
     floating,
     bottom,
-    callback = () => {}, // callback after a control function (push/pop/show/hide... etc) finish transition, i.e. after animation is done. The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
+    callback = () => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
     animation: animationType = props.bottom
       ? 'slide-bottom'
       : props.floating
@@ -79,18 +79,17 @@ const AdvanceModal = forwardRef((props, ref) => {
       </div>
     )
     forceUpdate()
+    callback('push', content)
 
     if (pagesArr.current.length > size)
       if (animationType)
         setTimeout(() => {
           pagesArr.current.shift()
           forceUpdate()
-          callback('push', content)
         }, 250)
       else {
         pagesArr.current.shift()
         forceUpdate()
-        callback('push', content)
       }
 
     if (popLast && pagesArr.current.length > 1)
