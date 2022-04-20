@@ -19,6 +19,7 @@ const AdvanceModal = forwardRef((props, ref) => {
     backgroundColor, // default 'white', also it can be set by css variable --modal-color-bg
     floating,
     bottom,
+    callback = () => {}, // callback after a control function (push/pop/show/hide... etc) finish transition, i.e. after animation is done. The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
     animation: animationType = props.bottom
       ? 'slide-bottom'
       : props.floating
@@ -84,10 +85,12 @@ const AdvanceModal = forwardRef((props, ref) => {
         setTimeout(() => {
           pagesArr.current.shift()
           forceUpdate()
+          callback('push', content)
         }, 250)
       else {
         pagesArr.current.shift()
         forceUpdate()
+        callback('push', content)
       }
 
     if (popLast && pagesArr.current.length > 1)
@@ -109,6 +112,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       pagesArr.current.pop()
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
+      callback('pop')
       return
     }
 
@@ -121,13 +125,15 @@ const AdvanceModal = forwardRef((props, ref) => {
       page.classList.remove(styles['--back-transition'])
       pagesArr.current.pop()
       forceUpdate()
+      callback('pop')
     }, 250)
 
     // if last page, animate overlay hiding
     if (pagesArr.current.length <= 1) {
       page && advanceModal.current.classList.add(styles['--out-transition'])
       setTimeout(() => {
-        page && advanceModal.current.classList.remove(styles['--out-transition'])
+        page &&
+          advanceModal.current.classList.remove(styles['--out-transition'])
       }, 250)
     }
   }
@@ -139,6 +145,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       pagesArr.current.splice(0, pagesArr.current.length) // empty array while keeping reference
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
+      callback('close')
       return
     }
 
@@ -151,6 +158,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       page && advanceModal.current.classList.remove(styles['--out-transition'])
       pagesArr.current.splice(0, pagesArr.current.length)
       forceUpdate()
+      callback('close')
     }, 250)
   }
 
@@ -160,6 +168,7 @@ const AdvanceModal = forwardRef((props, ref) => {
     if (!animationType) {
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       setHidden(true)
+      callback('hide')
       return
     }
 
@@ -171,6 +180,7 @@ const AdvanceModal = forwardRef((props, ref) => {
       page?.classList.remove(styles['--back-transition'])
       page && advanceModal.current.classList.remove(styles['--out-transition'])
       setHidden(true)
+      callback('hide')
     }, 250)
   }
 
@@ -181,13 +191,15 @@ const AdvanceModal = forwardRef((props, ref) => {
   const show = (arg0, options = {}) => {
     let { animation: animationType = animation.current.type } = options
 
-    // the case where arg0 is option and only need to show the hidden pages
+    // the case arg0 is option and only need to show the hidden pages
     if (arg0 && arg0.animation) {
       animationType = arg0.animation
 
       // pause if the animation is already active, but options.animation is false for this instance
       if (!animationType && !!animation.current.type)
         animation.current.pause(250)
+
+      callback('show')
     }
 
     // the case where arg0 is React Component, then push it into stack and pass option object

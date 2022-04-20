@@ -24,6 +24,7 @@
     }
   },
   "rules": {
+    "standard/no-callback-literal": "off",
     "no-unused-expressions": "off", //fix error for optional chaining (otherwise upgrade eslint to 7.5)
     "space-before-function-paren": 0,
     "react/prop-types": 0,
