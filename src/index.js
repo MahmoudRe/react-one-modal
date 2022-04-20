@@ -60,7 +60,6 @@ const AdvanceModal = forwardRef((props, ref) => {
   const advanceModal = useRef(null)
 
   const push = (content, options = {}) => {
-    console.log('hiiii', styles)
     const {
       popLast = false,
       animation: animationType = animation.current.type
