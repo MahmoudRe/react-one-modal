@@ -124,10 +124,8 @@ const AdvanceModal = forwardRef((props, ref) => {
     }, 250)
 
     // if last page, animate overlay hiding
-    if (pagesArr.current.length === 0) {
-      page &&
-        animationType &&
-        advanceModal.current.classList.add('--out-transition')
+    if (pagesArr.current.length <= 1) {
+      page && advanceModal.current.classList.add('--out-transition')
       setTimeout(() => {
         page && advanceModal.current.classList.remove('--out-transition')
       }, 250)
