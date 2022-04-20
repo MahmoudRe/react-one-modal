@@ -125,9 +125,9 @@ const AdvanceModal = forwardRef((props, ref) => {
 
     // if last page, animate overlay hiding
     if (pagesArr.current.length <= 1) {
-      page && advanceModal.current.classList.add('--out-transition')
+      page && advanceModal.current.classList.add(styles['--out-transition'])
       setTimeout(() => {
-        page && advanceModal.current.classList.remove('--out-transition')
+        page && advanceModal.current.classList.remove(styles['--out-transition'])
       }, 250)
     }
   }
@@ -145,10 +145,10 @@ const AdvanceModal = forwardRef((props, ref) => {
     /* transition */
     const page = advanceModal.current.lastChild
     page?.classList.add(styles['--back-transition'])
-    page && advanceModal.current.classList.add('--out-transition')
+    page && advanceModal.current.classList.add(styles['--out-transition'])
     setTimeout(() => {
       page?.classList.remove(styles['--back-transition'])
-      page && advanceModal.current.classList.remove('--out-transition')
+      page && advanceModal.current.classList.remove(styles['--out-transition'])
       pagesArr.current.splice(0, pagesArr.current.length)
       forceUpdate()
     }, 250)
