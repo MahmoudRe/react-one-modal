@@ -154,6 +154,12 @@ const FullPageModalLastStep = () => {
 
 ```
 
+## To Do
+- Promisify all control functions (push/pop/close/show/hide) to resolve when animation is done.
+- Notification style modal
+- Auto load css when importing component, such that no need to import stylesheet by end user (check styled-components?)
+- Write proper documentation
+
 ## License
 
 MIT © [MahmoudRe](https://github.com/MahmoudRe) [Schuttelaar & Partners](https://github.com/schuttelaar)
