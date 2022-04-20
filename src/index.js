@@ -7,7 +7,7 @@ import React, {
   useImperativeHandle
 } from 'react'
 import { createPortal } from 'react-dom'
-import styles from './modal.module.css'
+import styles from './modal.css'
 
 const AdvanceModal = forwardRef((props, ref) => {
   let {
@@ -60,6 +60,7 @@ const AdvanceModal = forwardRef((props, ref) => {
   const advanceModal = useRef(null)
 
   const push = (content, options = {}) => {
+    console.log('hiiii', styles)
     const {
       popLast = false,
       animation: animationType = animation.current.type
