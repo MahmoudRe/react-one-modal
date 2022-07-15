@@ -34,10 +34,10 @@ const App = () => {
         Show bottom sheet modal
       </button>
 
-      <Modal ref={modalRef} floating />
-      <Modal ref={modalBottomRef} floating bottom />
-      <Modal ref={modalFullPageRef} />
-      <Modal ref={modalBottomSheetRef} bottomSheet />
+      <Modal ref={modalRef} />
+      <Modal ref={modalBottomRef} position='bottom' />
+      <Modal ref={modalFullPageRef} type='full-page' />
+      <Modal ref={modalBottomSheetRef} type='bottom-sheet' />
     </>
   )
 }

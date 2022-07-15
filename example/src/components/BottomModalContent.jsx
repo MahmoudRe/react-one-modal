@@ -5,7 +5,6 @@ const BottomModalContent = () => {
 
   return (
     <div>
-      <h1> Floating Modal Content </h1>
       <p>
         Lorem ipsum dolor sit amet, ea vix essent diceret, vidit abhorreant sed
         at, duo consul numquam at.

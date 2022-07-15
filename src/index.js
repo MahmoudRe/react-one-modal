@@ -17,15 +17,14 @@ const Modal = forwardRef((props, ref) => {
     size = 999, // the number of pages to preserve in the stack before start dropping out old pages
     overlayColor, // default #00000099, also it can be set by css variable --modal-color-overlay
     backgroundColor, // default 'white', also it can be set by css variable --modal-color-bg
-    floating,
-    bottom,
-    bottomSheet,
+    type = 'floating', // ['floating', 'full-page', 'bottom-sheet']
+    position = 'center', // ['top', 'center', 'bottom'], in case of floating type
     callback = () => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
-    animation: animationType = (props.bottom || props.bottomSheet)
+    animation: animationType = props.type == 'full-page'
+      ? 'slide'
+      : (props.type == 'bottom-sheet' || props.position == 'bottom')
       ? 'slide-bottom'
-      : props.floating
-      ? 'zoom-in'
-      : 'slide', // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
+      : 'zoom-in', // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
     children, // if existed, add them as the first page
     ...attributes // pass the reset to modal container
   } = props
@@ -132,8 +131,7 @@ const Modal = forwardRef((props, ref) => {
     if (pagesArr.current.length <= 1) {
       page && modal.current.classList.add(styles['--out-transition'])
       setTimeout(() => {
-        page &&
-          modal.current.classList.remove(styles['--out-transition'])
+        page && modal.current.classList.remove(styles['--out-transition'])
       }, 250)
     }
   }
@@ -218,16 +216,15 @@ const Modal = forwardRef((props, ref) => {
     <div
       className={styles.container + ' ' + className}
       data-animation={animationType}
-      data-modal-type={
-        (bottomSheet ? 'slide-sheet' : floating ? 'floating' : 'full') + (bottom ? ' bottom' : '')
-      }
+      data-modal-type={type}
+      data-modal-position={position}
       ref={modal}
       style={{
         display: !pagesArr.current.length || isHidden ? 'none' : undefined,
         '--modal-color-overlay': overlayColor || undefined,
         '--modal-color-bg': backgroundColor || undefined,
         background:
-          pagesArr.current.length > 1 && !floating
+          pagesArr.current.length > 1 && !(type == 'floating')
             ? 'var(--modal-color-bg)'
             : undefined
       }}
@@ -260,14 +257,12 @@ class ModalState {
       hide: (options) => this.hide(key, options),
       show: (content, options) => this.show(key, content, options),
       animation: {
-        getType: () =>
-          this.modalRefs[key]?.current?.animation.current.type,
+        getType: () => this.modalRefs[key]?.current?.animation.current.type,
         setType: (type) =>
           this.modalRefs[key]?.current?.animation.current.setType(type),
         pause: (timeout) =>
           this.modalRefs[key]?.current?.animation.current.pause(timeout),
-        resume: () =>
-          this.modalRefs[key]?.current?.animation.current.resume()
+        resume: () => this.modalRefs[key]?.current?.animation.current.resume()
       }
     }
 
