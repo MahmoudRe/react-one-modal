@@ -19,8 +19,9 @@ const Modal = forwardRef((props, ref) => {
     backgroundColor, // default 'white', also it can be set by css variable --modal-color-bg
     floating,
     bottom,
+    bottomSheet,
     callback = () => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
-    animation: animationType = props.bottom
+    animation: animationType = (props.bottom || props.bottomSheet)
       ? 'slide-bottom'
       : props.floating
       ? 'zoom-in'
@@ -218,7 +219,7 @@ const Modal = forwardRef((props, ref) => {
       className={styles.container + ' ' + className}
       data-animation={animationType}
       data-modal-type={
-        (floating ? 'floating' : 'full') + (bottom ? ' bottom' : '')
+        (bottomSheet ? 'slide-sheet' : floating ? 'floating' : 'full') + (bottom ? ' bottom' : '')
       }
       ref={modal}
       style={{
@@ -311,4 +312,4 @@ class ModalState {
 
 const modalState = new ModalState()
 
-export const { useModal, bindModal } = modalState
+export const { useModal, bindModal, getModal = useModal } = modalState
