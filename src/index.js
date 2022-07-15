@@ -9,14 +9,14 @@ import React, {
 import { createPortal } from 'react-dom'
 import styles from './modal.css'
 
-const Modal = forwardRef((props, ref) => {
+export default forwardRef((props, ref) => {
   let {
-    className = '', // className for modal container
-    pageClassName = '',
-    pageAttributes = {},
+    className = '',
+    classNameOverlay = '', // className for modal container/overlay
+    attributes = {},
     size = 999, // the number of pages to preserve in the stack before start dropping out old pages
-    overlayColor, // default #00000099, also it can be set by css variable --modal-color-overlay
-    backgroundColor, // default 'white', also it can be set by css variable --modal-color-bg
+    colorOverlay, // default #00000099, also it can be set by css variable --modal-color-overlay
+    colorBackground, // default 'white', also it can be set by css variable --modal-color-bg
     type = 'floating', // ['floating', 'full-page', 'bottom-sheet']
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
     callback = () => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
@@ -25,13 +25,13 @@ const Modal = forwardRef((props, ref) => {
       : (props.type == 'bottom-sheet' || props.position == 'bottom')
       ? 'slide-bottom'
       : 'zoom-in', // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
-    children, // if existed, add them as the first page
-    ...attributes // pass the reset to modal container
+    children, // if existed, add them as the first
+    ...attributesOverlay // pass the reset to modal container/overlay
   } = props
 
-  const modal = useRef(null)
+  const modalOverlayRef = useRef(null)
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
-  const pagesArr = useRef([]) // useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
+  const modalsArr = useRef([]) // useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
   const [isHidden, setHidden] = useState(false)
   const animation = useRef({
     type: animationType,
@@ -42,21 +42,21 @@ const Modal = forwardRef((props, ref) => {
 
       // HTML element state
       if (type) {
-        modal.current.dataset.animation = type
-        modal.current.removeAttribute('data-animation-pause')
+        modalOverlayRef.current.dataset.animation = type
+        modalOverlayRef.current.removeAttribute('data-animation-pause')
       } else {
-        modal.current.setAttribute('data-animation-pause', '')
+        modalOverlayRef.current.setAttribute('data-animation-pause', '')
       }
     },
     pause: (timeout) => {
       // if timeout is not passed, pause indefinitely
       animation.current.type = false
-      modal.current.setAttribute('data-animation-pause', '')
+      modalOverlayRef.current.setAttribute('data-animation-pause', '')
       timeout && setTimeout(animation.current.resume, timeout)
     },
     resume: () => {
       animation.current.type = animationType
-      modal.current.removeAttribute('data-animation-pause')
+      modalOverlayRef.current.removeAttribute('data-animation-pause')
     }
   })
 
@@ -69,11 +69,11 @@ const Modal = forwardRef((props, ref) => {
     // pause if the animation is already active, but options.animation is false for this instance
     if (!animationType && !!animation.current.type) animation.current.pause(250)
 
-    pagesArr.current.push(
+    modalsArr.current.push(
       <div
         key={Math.random()} // since the key is set only on push, random value should be fine
-        className={styles.page + ' ' + pageClassName}
-        {...pageAttributes}
+        className={styles.modal + ' ' + className}
+        {...attributes}
       >
         {content}
       </div>
@@ -81,25 +81,25 @@ const Modal = forwardRef((props, ref) => {
     forceUpdate()
     callback('push', options, content)
 
-    if (pagesArr.current.length > size)
+    if (modalsArr.current.length > size)
       if (animationType)
         setTimeout(() => {
-          pagesArr.current.shift()
+          modalsArr.current.shift()
           forceUpdate()
         }, 250)
       else {
-        pagesArr.current.shift()
+        modalsArr.current.shift()
         forceUpdate()
       }
 
-    if (popLast && pagesArr.current.length > 1)
+    if (popLast && modalsArr.current.length > 1)
       if (animationType)
         setTimeout(() => {
-          pagesArr.current.splice(pagesArr.current.length - 2, 1) // remove before last page
+          modalsArr.current.splice(modalsArr.current.length - 2, 1) // remove before last
           forceUpdate()
         }, 250)
       else {
-        pagesArr.current.splice(pagesArr.current.length - 2, 1) // remove before last page
+        modalsArr.current.splice(modalsArr.current.length - 2, 1) // remove before last
         forceUpdate()
       }
   }
@@ -107,10 +107,10 @@ const Modal = forwardRef((props, ref) => {
   const pop = (options = {}) => {
     const { animation: animationType = animation.current.type } = options
 
-    if(!pagesArr.current.length) return //no pages existed, skip this action
+    if(!modalsArr.current.length) return //no pages existed, skip this action
 
     if (!animationType) {
-      pagesArr.current.pop()
+      modalsArr.current.pop()
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
       callback('pop', options)
@@ -118,22 +118,22 @@ const Modal = forwardRef((props, ref) => {
     }
 
     /* transition */
-    const len = modal.current.children?.length
-    // select the page before last one (or last in case of one page)
-    const page = modal.current.children[len > 1 ? len - 2 : 0]
-    page.classList.add(styles['--back-transition'])
+    const len = modalOverlayRef.current.children?.length
+    // select the modal before last one (or last in case of one modal)
+    const modal = modalOverlayRef.current.children[len > 1 ? len - 2 : 0]
+    modal.classList.add(styles['--back-transition'])
     setTimeout(() => {
-      page.classList.remove(styles['--back-transition'])
-      pagesArr.current.pop()
+      modal.classList.remove(styles['--back-transition'])
+      modalsArr.current.pop()
       forceUpdate()
       callback('pop', options)
     }, 250)
 
-    // if last page, animate overlay hiding
-    if (pagesArr.current.length <= 1) {
-      page && modal.current.classList.add(styles['--out-transition'])
+    // if last modal, animate overlay hiding
+    if (modalsArr.current.length <= 1) {
+      modal && modalOverlayRef.current.classList.add(styles['--out-transition'])
       setTimeout(() => {
-        page && modal.current.classList.remove(styles['--out-transition'])
+        modal && modalOverlayRef.current.classList.remove(styles['--out-transition'])
       }, 250)
     }
   }
@@ -142,7 +142,7 @@ const Modal = forwardRef((props, ref) => {
     const { animation: animationType = animation.current.type } = options
 
     if (!animationType) {
-      pagesArr.current.splice(0, pagesArr.current.length) // empty array while keeping reference
+      modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
       callback('close', options)
@@ -150,13 +150,13 @@ const Modal = forwardRef((props, ref) => {
     }
 
     /* transition */
-    const page = modal.current.lastChild
-    page?.classList.add(styles['--back-transition'])
-    page && modal.current.classList.add(styles['--out-transition'])
+    const modal = modalOverlayRef.current.lastChild
+    modal?.classList.add(styles['--back-transition'])
+    modal && modalOverlayRef.current.classList.add(styles['--out-transition'])
     setTimeout(() => {
-      page?.classList.remove(styles['--back-transition'])
-      page && modal.current.classList.remove(styles['--out-transition'])
-      pagesArr.current.splice(0, pagesArr.current.length)
+      modal?.classList.remove(styles['--back-transition'])
+      modal && modalOverlayRef.current.classList.remove(styles['--out-transition'])
+      modalsArr.current.splice(0, modalsArr.current.length)
       forceUpdate()
       callback('close', options)
     }, 250)
@@ -173,12 +173,12 @@ const Modal = forwardRef((props, ref) => {
     }
 
     /* transition */
-    const page = modal.current.lastChild
-    page?.classList.add(styles['--back-transition'])
-    page && modal.current.classList.add(styles['--out-transition'])
+    const modal = modalOverlayRef.current.lastChild
+    modal?.classList.add(styles['--back-transition'])
+    modal && modalOverlayRef.current.classList.add(styles['--out-transition'])
     setTimeout(() => {
-      page?.classList.remove(styles['--back-transition'])
-      page && modal.current.classList.remove(styles['--out-transition'])
+      modal?.classList.remove(styles['--back-transition'])
+      modal && modalOverlayRef.current.classList.remove(styles['--out-transition'])
       setHidden(true)
       callback('hide', options)
     }, 250)
@@ -216,29 +216,27 @@ const Modal = forwardRef((props, ref) => {
 
   return createPortal(
     <div
-      className={styles.container + ' ' + className}
+      className={styles.overlay + ' ' + classNameOverlay}
       data-animation={animationType}
       data-modal-type={type}
       data-modal-position={position}
-      ref={modal}
+      ref={modalOverlayRef}
       style={{
-        display: !pagesArr.current.length || isHidden ? 'none' : undefined,
-        '--modal-color-overlay': overlayColor || undefined,
-        '--modal-color-bg': backgroundColor || undefined,
+        display: !modalsArr.current.length || isHidden ? 'none' : undefined,
+        '--modal-color-overlay': colorOverlay || undefined,
+        '--modal-color-bg': colorBackground || undefined,
         background:
-          pagesArr.current.length > 1 && !(type == 'floating')
+          modalsArr.current.length > 1 && !(type == 'floating')
             ? 'var(--modal-color-bg)'
             : undefined
       }}
-      {...attributes}
+      {...attributesOverlay}
     >
-      {pagesArr.current}
+      {modalsArr.current}
     </div>,
     document.body
   )
 })
-
-export default Modal
 
 class ModalState {
   modalRefs = {}
