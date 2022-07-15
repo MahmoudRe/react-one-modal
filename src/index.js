@@ -28,6 +28,8 @@ const Modal = forwardRef((props, ref) => {
     children, // if existed, add them as the first page
     ...attributes // pass the reset to modal container
   } = props
+
+  const modal = useRef(null)
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
   const pagesArr = useRef([]) // useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
   const [isHidden, setHidden] = useState(false)
@@ -57,8 +59,6 @@ const Modal = forwardRef((props, ref) => {
       modal.current.removeAttribute('data-animation-pause')
     }
   })
-
-  const modal = useRef(null)
 
   const push = (content, options = {}) => {
     const {
@@ -106,6 +106,8 @@ const Modal = forwardRef((props, ref) => {
 
   const pop = (options = {}) => {
     const { animation: animationType = animation.current.type } = options
+
+    if(!pagesArr.current.length) return //no pages existed, skip this action
 
     if (!animationType) {
       pagesArr.current.pop()
