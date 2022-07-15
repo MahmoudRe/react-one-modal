@@ -12,12 +12,123 @@
 npm install --save react-advance-modal
 ```
 
-## Usage examples
+## Usage
+
+1. Create new instance of `Modal` anywhere in your view. This instance will appear on the bottom of `body` element but preserve React Context of its contents.
+
+```jsx
+import Modal from 'react-advance-modal'
+
+const App = () => {
+  ...
+
+  return (
+    <>
+      ...
+
+      <Modal floating />
+    </>
+  )
+}
+```
+
+2. Create `ref` using `useRef` hook and bind it to the created `Modal` instance as follow:
+
+```jsx
+import { useRef } from 'react'
+import Modal, { bindModal } from 'react-advance-modal'
+
+const App = () => {
+  const modalRef = useRef(null)
+  const modal = bindModal(modalRef)
+  ...
+
+  return (
+    <>
+      ...
+
+      <Modal ref={modalRef} floating />
+    </>
+  )
+}
+```
+
+4. Now, using `modal` instance you can access the control functions of `Modal` and change animation of the bound Modal.
+
+```jsx
+import { useRef } from 'react'
+import Modal, { bindModal } from 'react-advance-modal'
+
+const App = () => {
+  const modalRef = useRef(null)
+  const modal = bindModal(modalRef)
+  ...
+
+  return (
+    <>
+      <button onClick={() => modal.show(<MyComponent />)}>
+        Show floating modal
+      </button>
+      ...
+
+      <Modal ref={modalRef} floating />
+    </>
+  )
+}
+```
+
+5. Using `useModal` or `getModal`, you can access the `Modal` instance anywhere in your component tree.
+
+```jsx
+import { useModal } from 'react-advance-modal'
+
+const MyComponent = () => {
+  const modal = useModal()
+  ...
+
+  return (
+    <>
+      ...
+      <button onClick={() => { modal.push(<MyComponentStep2 />) }}>
+        Next Step
+      </button>
+
+      <button onClick={() => { modal.close() }}>
+        Close
+      </button>
+    </>
+  )
+}
+```
+
+## API
+
+### Modal props
+
+```jsx
+<Modal 
+  ref={modalRef} 
+  floating  // if present then a floating modal will be used
+  
+/>
+```
+
+### Control functions
+
+After binding the `Modal` to a `ref` in parent component, you can access all functionalities to the bound `Modal` using `useModal` or `getModal` functions anywhere in your code as long the parent component is live.
+
+```jsx
+const modal = useModal()
+
+
+```
+
+## Examples
+
 ### Simple floating/bottom modal
 
 ```jsx
-import React, { Component } from 'react'
-
+import React, { useRef } from 'react'
 import Modal, { bindModal, useModal } from 'react-advance-modal'
 import 'react-advance-modal/dist/index.css'
 
@@ -155,6 +266,7 @@ const FullPageModalLastStep = () => {
 ```
 
 ## To Do
+
 - Promisify all control functions (push/pop/close/show/hide) to resolve when animation is done.
 - Notification style modal
 - Auto load css when importing component, such that no need to import stylesheet by end user (check styled-components?)
