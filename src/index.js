@@ -22,7 +22,7 @@ export default forwardRef((props, ref) => {
     callback = () => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
     animation: animationType = props.type == 'full-page'
       ? 'slide'
-      : (props.type == 'bottom-sheet' || props.position == 'bottom')
+      : props.type == 'bottom-sheet' || props.position == 'bottom'
       ? 'slide-bottom'
       : 'zoom-in', // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
     children, // if existed, add them as the first
@@ -61,10 +61,7 @@ export default forwardRef((props, ref) => {
   })
 
   const push = (content, options = {}) => {
-    const {
-      popLast = false,
-      animation: animationType = animation.current.type
-    } = options
+    const { popLast = false, animation: animationType = animation.current.type } = options
 
     // pause if the animation is already active, but options.animation is false for this instance
     if (!animationType && !!animation.current.type) animation.current.pause(250)
@@ -107,7 +104,7 @@ export default forwardRef((props, ref) => {
   const pop = (options = {}) => {
     const { animation: animationType = animation.current.type } = options
 
-    if(!modalsArr.current.length) return //no pages existed, skip this action
+    if (!modalsArr.current.length) return //no pages existed, skip this action
 
     if (!animationType) {
       modalsArr.current.pop()
@@ -196,8 +193,7 @@ export default forwardRef((props, ref) => {
       animationType = arg0.animation
 
       // pause if the animation is already active, but options.animation is false for this instance
-      if (!animationType && !!animation.current.type)
-        animation.current.pause(250)
+      if (!animationType && !!animation.current.type) animation.current.pause(250)
 
       callback('show', options)
     }
@@ -250,16 +246,19 @@ class ModalState {
    */
   useModal = (key = 'default') => {
     return {
-      push: (content, options) => this.push(key, content, options),
-      pop: (options) => this.pop(key, options),
-      close: (options) => this.close(key, options),
-      transit: (content, options) => this.transit(key, content, options),
-      hide: (options) => this.hide(key, options),
-      show: (content, options) => this.show(key, content, options),
+      push: (content, options) => this.modalRefs[key]?.current?.push(content, options),
+      pop: (options) => this.modalRefs[key]?.current?.pop(options),
+      close: (options) => this.modalRefs[key]?.current?.close(options),
+      transit: (content, options) =>
+        this.modalRefs[key]?.current?.push(content, {
+          popLast: true,
+          ...options
+        }),
+      hide: (options) => this.modalRefs[key]?.current?.hide(options),
+      show: (content, options) => this.modalRefs[key]?.current?.show(content, options),
       animation: {
         getType: () => this.modalRefs[key]?.current?.animation.current.type,
-        setType: (type) =>
-          this.modalRefs[key]?.current?.animation.current.setType(type),
+        setType: (type) => this.modalRefs[key]?.current?.animation.current.setType(type),
         pause: (timeout) =>
           this.modalRefs[key]?.current?.animation.current.pause(timeout),
         resume: () => this.modalRefs[key]?.current?.animation.current.resume()
@@ -282,27 +281,12 @@ class ModalState {
    *
    * @param {React.MutableRefObject<HTMLElement>} ref react ref object for Modal instance.
    * @param {string} key
-   * @returns modal object with { push, pop, close, hide, show } functions
+   * @returns modal object with { push, pop, close, transit, hide, show } functions
    */
   bindModal = (ref, key = 'default') => {
     this.modalRefs[key] = ref
     return this.useModal(key)
   }
-
-  push = (key, content, options) =>
-    this.modalRefs[key]?.current?.push(content, options)
-
-  pop = (key, options) => this.modalRefs[key]?.current?.pop(options)
-  close = (key, options) => this.modalRefs[key]?.current?.close(options)
-  transit = (key, content, options) =>
-    this.modalRefs[key]?.current?.push(content, {
-      popLast: true,
-      ...options
-    })
-
-  hide = (key, options) => this.modalRefs[key]?.current?.hide(options)
-  show = (key, content, options) =>
-    this.modalRefs[key]?.current?.show(content, options)
 }
 
 const modalState = new ModalState()
