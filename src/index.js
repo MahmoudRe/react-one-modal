@@ -14,7 +14,15 @@ function dragElement(elmnt, options = {}) {
     yDiff = 0,
     yPrev = 0
 
-  let { startPosition: prevPos = 0, threshold = 250, swipeThreshold = 20 } = options
+  let {
+    positions = [20, 50, 100],
+    startPosition: posIndex = 0,
+    threshold = 150,
+    swipeThreshold = 20
+  } = options
+  
+  //set position of initial open
+  elmnt.style.top = 'calc(100% - ' + positions[posIndex] + '%)'
 
   if (document.getElementById(elmnt.id + 'header')) {
     // if present, the header is where you move the DIV from:
@@ -61,12 +69,15 @@ function dragElement(elmnt, options = {}) {
     document.ontouchmove = null
     elmnt.style.transition = 'all 0.25s cubic-bezier(0, 0.3, 0.15, 1.25)'
 
-    if (yDiff > swipeThreshold || yInit - yPrev > threshold) elmnt.style.top = 100 + 'px'
-    else if (yDiff < -1 * swipeThreshold || yInit - yPrev < -1 * threshold)
-      elmnt.style.top = 90 + '%'
-    else elmnt.style.top = prevPos
+    // swipe/drag up
+    if (yDiff > swipeThreshold || yInit - yPrev > threshold)
+      posIndex = Math.min(positions.length - 1, posIndex + 1)
 
-    prevPos = elmnt.style.top
+    // swipe/drag down
+    if (yDiff < -1 * swipeThreshold || yInit - yPrev < -1 * threshold)
+      posIndex = Math.max(0, posIndex - 1)
+
+    elmnt.style.top = 'calc(100% - ' + positions[posIndex] + '%)'
   }
 }
 
