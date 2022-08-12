@@ -9,6 +9,67 @@ import React, {
 import { createPortal } from 'react-dom'
 import styles from './modal.css'
 
+function dragElement(elmnt, options = {}) {
+  let yInit = 0,
+    yDiff = 0,
+    yPrev = 0
+
+  let { startPosition: prevPos = 0, threshold = 250, swipeThreshold = 20 } = options
+
+  if (document.getElementById(elmnt.id + 'header')) {
+    // if present, the header is where you move the DIV from:
+    document.getElementById(elmnt.id + 'header').onmousedown = dragMouseDown
+    document.getElementById(elmnt.id + 'header').ontouchstart = dragMouseDown
+  } else {
+    // otherwise, move the DIV from anywhere inside the DIV:
+    elmnt.onmousedown = dragMouseDown
+    elmnt.ontouchstart = dragMouseDown
+  }
+
+  function dragMouseDown(e) {
+    e = e || window.event
+    e.preventDefault()
+
+    // get the mouse cursor position at startup:
+    yPrev = yInit = e.clientY || e.touches[0].clientY
+    document.onmouseup = closeDragElement
+    document.ontouchend = closeDragElement
+
+    // call a function whenever the cursor moves:
+    document.onmousemove = elementDrag
+    document.ontouchmove = elementDrag
+
+    elmnt.style.transition = 'none'
+  }
+
+  function elementDrag(e) {
+    e = e || window.event
+
+    // calculate the new cursor position:
+    yDiff = yPrev - (e.clientY || e.touches[0].clientY)
+    yPrev = e.clientY || e.touches[0].clientY
+
+    // set the element's new position:
+    elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
+  }
+
+  function closeDragElement() {
+    // stop moving when mouse button is released:
+    document.onmouseup = null
+    document.ontouchend = null
+    document.onmousemove = null
+    document.ontouchmove = null
+    elmnt.style.transition = 'all 0.25s cubic-bezier(0, 0.3, 0.15, 1.25)'
+
+    if (yDiff > swipeThreshold || yInit - yPrev > threshold) elmnt.style.top = 100 + 'px'
+    else if (yDiff < -1 * swipeThreshold || yInit - yPrev < -1 * threshold)
+      elmnt.style.top = 90 + '%'
+    else elmnt.style.top = prevPos
+
+    prevPos = elmnt.style.top
+  }
+}
+
 export default forwardRef((props, ref) => {
   let {
     className = '',
@@ -70,6 +131,9 @@ export default forwardRef((props, ref) => {
       <div
         key={Math.random()} // since the key is set only on push, random value should be fine
         className={styles.modal + ' ' + className}
+        ref={(ref) => {
+          if (ref) dragElement(ref)
+        }}
         {...attributes}
       >
         {content}
