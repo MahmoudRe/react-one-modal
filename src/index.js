@@ -15,14 +15,13 @@ function dragElement(elmnt, options = {}) {
     yPrev = 0
 
   let {
-    positions = [20, 50, 100],
-    startPosition: posIndex = 0,
-    threshold = 150,
-    swipeThreshold = 20
+    positions = [700, 400, 100],
+    startPosition: currPosition = positions[0],
+    swipeThreshold = 10
   } = options
-  
+
   //set position of initial open
-  elmnt.style.top = 'calc(100% - ' + positions[posIndex] + '%)'
+  elmnt.style.top = 'calc(' + currPosition + 'px)'
 
   if (document.getElementById(elmnt.id + 'header')) {
     // if present, the header is where you move the DIV from:
@@ -67,17 +66,27 @@ function dragElement(elmnt, options = {}) {
     document.ontouchend = null
     document.onmousemove = null
     document.ontouchmove = null
-    elmnt.style.transition = 'all 0.25s cubic-bezier(0, 0.3, 0.15, 1.25)'
+    elmnt.style.transition = 'all 0.25s cubic-bezier(0, 0.3, 0.15, 1)'
 
-    // swipe/drag up
-    if (yDiff > swipeThreshold || yInit - yPrev > threshold)
-      posIndex = Math.min(positions.length - 1, posIndex + 1)
+    let nextPosition = currPosition
 
-    // swipe/drag down
-    if (yDiff < -1 * swipeThreshold || yInit - yPrev < -1 * threshold)
-      posIndex = Math.max(0, posIndex - 1)
+    // swipe up
+    if (yDiff > swipeThreshold)
+      nextPosition = positions[Math.min(positions.length - 1, positions.indexOf(currPosition) + 1)]
+    // swipe down
+    else if (yDiff < -1 * swipeThreshold)
+      nextPosition = positions[Math.max(0, positions.indexOf(currPosition) - 1)]
+    // drag up/down
+    else {
+      let currTop = parseInt(elmnt.style.top)
+      nextPosition = positions.reduce(
+        (acc, pos) => (Math.abs(acc - currTop) < Math.abs(pos - currTop) ? acc : pos),
+        currPosition
+      )
+    }
 
-    elmnt.style.top = 'calc(100% - ' + positions[posIndex] + '%)'
+    currPosition = nextPosition
+    elmnt.style.top = 'calc(' + nextPosition + 'px)'
   }
 }
 
