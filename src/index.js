@@ -21,6 +21,7 @@ function dragElement(elmnt, options = {}) {
   } = options
 
   //set position of initial open
+  elmnt.style.height = 'calc(100% - ' + currPosition + 'px)'
   elmnt.style.top = 'calc(' + currPosition + 'px)'
 
   if (document.getElementById(elmnt.id + 'header')) {
@@ -57,6 +58,7 @@ function dragElement(elmnt, options = {}) {
     yPrev = e.clientY || e.touches[0].clientY
 
     // set the element's new position:
+    elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
     elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
   }
 
@@ -71,11 +73,16 @@ function dragElement(elmnt, options = {}) {
     let nextPosition = currPosition
 
     // swipe up
-    if (yDiff > swipeThreshold)
-      nextPosition = positions[Math.min(positions.length - 1, positions.indexOf(currPosition) + 1)]
+    if (yDiff > swipeThreshold) {
+      elmnt.style.transition += ', height 0.15s cubic-bezier(0, 0.3, 0.15, 1)'
+      nextPosition =
+        positions[Math.min(positions.length - 1, positions.indexOf(currPosition) + 1)]
+    }
     // swipe down
-    else if (yDiff < -1 * swipeThreshold)
+    else if (yDiff < -1 * swipeThreshold) {
+      elmnt.style.transition += ', height 0.35s cubic-bezier(0, 0.3, 0.15, 1)'
       nextPosition = positions[Math.max(0, positions.indexOf(currPosition) - 1)]
+    }
     // drag up/down
     else {
       let currTop = parseInt(elmnt.style.top)
@@ -86,6 +93,7 @@ function dragElement(elmnt, options = {}) {
     }
 
     currPosition = nextPosition
+    elmnt.style.height = 'calc(100% - ' + nextPosition + 'px)'
     elmnt.style.top = 'calc(' + nextPosition + 'px)'
   }
 }
