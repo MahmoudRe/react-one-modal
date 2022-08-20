@@ -12,7 +12,8 @@ import styles from './modal.css'
 function dragElement(elmnt, options = {}) {
   let yInit = 0,
     yDiff = 0,
-    yPrev = 0
+    yPrev = 0,
+    scrollEnd = true
 
   let {
     positions = [700, 400, 100],
@@ -26,31 +27,41 @@ function dragElement(elmnt, options = {}) {
 
   if (document.getElementById(elmnt.id + 'header')) {
     // if present, the header is where you move the DIV from:
-    document.getElementById(elmnt.id + 'header').onmousedown = dragMouseDown
-    document.getElementById(elmnt.id + 'header').ontouchstart = dragMouseDown
+    document.getElementById(elmnt.id + 'header').onmousedown = dragStart
+    document.getElementById(elmnt.id + 'header').ontouchstart = dragStart
   } else {
     // otherwise, move the DIV from anywhere inside the DIV:
-    elmnt.onmousedown = dragMouseDown
-    elmnt.ontouchstart = dragMouseDown
+    elmnt.onmousedown = dragStart
+    elmnt.ontouchstart = dragStart
   }
 
-  function dragMouseDown(e) {
+  function isScrollEnd(element) {
+    if (element === elmnt || element?.parentElement === elmnt)
+      return element?.scrollTop === 0
+
+    if (element?.scrollTop === 0) return isScrollEnd(element?.parentElement)
+
+    return false
+  }
+
+  function dragStart(e) {
     e = e || window.event
-    e.preventDefault()
+    
+    scrollEnd = isScrollEnd(e.target)
 
     // get the mouse cursor position at startup:
     yPrev = yInit = e.clientY || e.touches[0].clientY
-    document.onmouseup = closeDragElement
-    document.ontouchend = closeDragElement
+    document.onmouseup = dragClose
+    document.ontouchend = dragClose
 
     // call a function whenever the cursor moves:
-    document.onmousemove = elementDrag
-    document.ontouchmove = elementDrag
+    document.onmousemove = dragMove
+    document.addEventListener('touchmove', dragMove, { passive: false })
 
     elmnt.style.transition = 'none'
   }
 
-  function elementDrag(e) {
+  function dragMove(e) {
     e = e || window.event
 
     // calculate the new cursor position:
@@ -58,33 +69,43 @@ function dragElement(elmnt, options = {}) {
     yPrev = e.clientY || e.touches[0].clientY
 
     // set the element's new position:
-    elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
-    elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
+    if (elmnt.offsetTop - yDiff > positions[positions.length - 1] && scrollEnd) {
+      e.preventDefault()
+      elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
+      elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
+    } else {
+      scrollEnd = false
+    }
   }
 
-  function closeDragElement() {
+  function dragClose(e) {
+    e = e || window.event
+
     // stop moving when mouse button is released:
     document.onmouseup = null
     document.ontouchend = null
     document.onmousemove = null
-    document.ontouchmove = null
+    document.removeEventListener('touchmove', dragMove, { passive: false })
     elmnt.style.transition = 'all 0.25s cubic-bezier(0, 0.3, 0.15, 1)'
 
     let nextPosition = currPosition
 
     // swipe up
-    if (yDiff > swipeThreshold) {
+    if (yDiff > swipeThreshold && scrollEnd) {
+      console.log('swipe up')
       elmnt.style.transition += ', height 0.15s cubic-bezier(0, 0.3, 0.15, 1)'
       nextPosition =
         positions[Math.min(positions.length - 1, positions.indexOf(currPosition) + 1)]
     }
     // swipe down
-    else if (yDiff < -1 * swipeThreshold) {
+    else if (yDiff < -1 * swipeThreshold && scrollEnd) {
+      console.log('swipe down')
       elmnt.style.transition += ', height 0.35s cubic-bezier(0, 0.3, 0.15, 1)'
       nextPosition = positions[Math.max(0, positions.indexOf(currPosition) - 1)]
     }
     // drag up/down
     else {
+      console.log('drag ' + yDiff)
       let currTop = parseInt(elmnt.style.top)
       nextPosition = positions.reduce(
         (acc, pos) => (Math.abs(acc - currTop) < Math.abs(pos - currTop) ? acc : pos),
@@ -94,7 +115,7 @@ function dragElement(elmnt, options = {}) {
 
     currPosition = nextPosition
     elmnt.style.height = 'calc(100% - ' + nextPosition + 'px)'
-    elmnt.style.top = 'calc(' + nextPosition + 'px)'
+    elmnt.style.top = nextPosition + 'px'
   }
 }
 
