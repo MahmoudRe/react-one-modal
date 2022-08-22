@@ -46,7 +46,7 @@ function dragElement(elmnt, options = {}) {
 
   function dragStart(e) {
     e = e || window.event
-    
+
     scrollEnd = isScrollEnd(e.target)
 
     // get the mouse cursor position at startup:
@@ -71,8 +71,15 @@ function dragElement(elmnt, options = {}) {
     // set the element's new position:
     if (elmnt.offsetTop - yDiff > positions[positions.length - 1] && scrollEnd) {
       e.preventDefault()
-      elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
-      elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
+
+      if(yDiff > 0) {
+        elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
+        elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
+      } else {
+        elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
+        elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
+      }
+      
     } else {
       scrollEnd = false
     }
@@ -86,26 +93,21 @@ function dragElement(elmnt, options = {}) {
     document.ontouchend = null
     document.onmousemove = null
     document.removeEventListener('touchmove', dragMove, { passive: false })
-    elmnt.style.transition = 'all 0.25s cubic-bezier(0, 0.3, 0.15, 1)'
+    elmnt.style.transition = 'all .25s cubic-bezier(0, 0.3, 0.15, 1)'
 
     let nextPosition = currPosition
 
     // swipe up
     if (yDiff > swipeThreshold && scrollEnd) {
-      console.log('swipe up')
-      elmnt.style.transition += ', height 0.15s cubic-bezier(0, 0.3, 0.15, 1)'
       nextPosition =
         positions[Math.min(positions.length - 1, positions.indexOf(currPosition) + 1)]
     }
     // swipe down
     else if (yDiff < -1 * swipeThreshold && scrollEnd) {
-      console.log('swipe down')
-      elmnt.style.transition += ', height 0.35s cubic-bezier(0, 0.3, 0.15, 1)'
       nextPosition = positions[Math.max(0, positions.indexOf(currPosition) - 1)]
     }
     // drag up/down
     else {
-      console.log('drag ' + yDiff)
       let currTop = parseInt(elmnt.style.top)
       nextPosition = positions.reduce(
         (acc, pos) => (Math.abs(acc - currTop) < Math.abs(pos - currTop) ? acc : pos),
@@ -113,9 +115,12 @@ function dragElement(elmnt, options = {}) {
       )
     }
 
+    if(parseInt(elmnt.style.top) < nextPosition)
+      elmnt.style.transition += ', height .25s cubic-bezier(0, 0.3, 0.15, 1) .1s'
+
     currPosition = nextPosition
-    elmnt.style.height = 'calc(100% - ' + nextPosition + 'px)'
     elmnt.style.top = nextPosition + 'px'
+    elmnt.style.height = 'calc(100% - ' + nextPosition + 'px)'
   }
 }
 
