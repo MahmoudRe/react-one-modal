@@ -141,6 +141,7 @@ export default forwardRef((props, ref) => {
     colorOverlay, // default #00000099, also it can be set by css variable --modal-color-overlay
     colorBackground, // default 'white', also it can be set by css variable --modal-color-bg
     type = 'floating', // ['floating', 'full-page', 'bottom-sheet']
+    bottomSheetOptions = {},
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
     callback = () => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
     animation: animationType = props.type == 'full-page'
