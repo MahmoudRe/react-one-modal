@@ -10,27 +10,30 @@ import { createPortal } from 'react-dom'
 import styles from './modal.css'
 
 function dragElement(elmnt, options = {}) {
-  let yInit = 0,
-    yDiff = 0,
+  let yDiff = 0,
     yPrev = 0,
     scrollEnd = true
 
   let {
     positions = [700, 400, 100],
     startPosition: currPosition = positions[0],
-    swipeThreshold = 10
+    swipeThreshold = 10,
+    dynamicHeight,
+    headerSelector
   } = options
 
   //set position of initial open
-  elmnt.style.height = 'calc(100% - ' + currPosition + 'px)'
+  if (dynamicHeight)
+    elmnt.style.height = 'calc(100% - ' + positions[0] + 'px)'
+  else elmnt.style.height = 'calc(100% - ' + positions[positions.length - 1] + 'px)'
+
   elmnt.style.top = 'calc(' + currPosition + 'px)'
 
-  if (document.getElementById(elmnt.id + 'header')) {
-    // if present, the header is where you move the DIV from:
-    document.getElementById(elmnt.id + 'header').onmousedown = dragStart
-    document.getElementById(elmnt.id + 'header').ontouchstart = dragStart
+  // set up event listener for the start of the drag
+  if (headerSelector) {
+    document.querySelector(headerSelector).onmousedown = dragStart
+    document.querySelector(headerSelector).ontouchstart = dragStart
   } else {
-    // otherwise, move the DIV from anywhere inside the DIV:
     elmnt.onmousedown = dragStart
     elmnt.ontouchstart = dragStart
   }
@@ -50,7 +53,7 @@ function dragElement(elmnt, options = {}) {
     scrollEnd = isScrollEnd(e.target)
 
     // get the mouse cursor position at startup:
-    yPrev = yInit = e.clientY || e.touches[0].clientY
+    yPrev = e.clientY || e.touches[0].clientY
     document.onmouseup = dragClose
     document.ontouchend = dragClose
 
@@ -68,26 +71,30 @@ function dragElement(elmnt, options = {}) {
     yDiff = yPrev - (e.clientY || e.touches[0].clientY)
     yPrev = e.clientY || e.touches[0].clientY
 
-    // set the element's new position:
+    // set the element's new position
     if (elmnt.offsetTop - yDiff > positions[positions.length - 1] && scrollEnd) {
+      // prevent scrolling if we didn't react the top nor nested elements is scrolled
       e.preventDefault()
 
-      if(yDiff > 0) {
+      // delay height change according to scroll direction to prevent flickering at bottom of sheet
+      if (yDiff > 0) {
+        // scroll up: decrease height later
         elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
-        elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
+        if (dynamicHeight)
+          elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
       } else {
-        elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
+        // scroll down: increase the height first
+        if (dynamicHeight)
+          elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
         elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
       }
-      
     } else {
+      // enable scroll + prevent drag down after reaching top
       scrollEnd = false
     }
   }
 
-  function dragClose(e) {
-    e = e || window.event
-
+  function dragClose() {
     // stop moving when mouse button is released:
     document.onmouseup = null
     document.ontouchend = null
@@ -115,12 +122,13 @@ function dragElement(elmnt, options = {}) {
       )
     }
 
-    if(parseInt(elmnt.style.top) < nextPosition)
+    if (dynamicHeight && parseInt(elmnt.style.top) < nextPosition)
       elmnt.style.transition += ', height .25s cubic-bezier(0, 0.3, 0.15, 1) .1s'
 
     currPosition = nextPosition
     elmnt.style.top = nextPosition + 'px'
-    elmnt.style.height = 'calc(100% - ' + nextPosition + 'px)'
+
+    if (dynamicHeight) elmnt.style.height = 'calc(100% - ' + nextPosition + 'px)'
   }
 }
 
