@@ -23,8 +23,7 @@ function dragElement(elmnt, options = {}) {
   } = options
 
   //set position of initial open
-  if (dynamicHeight)
-    elmnt.style.height = 'calc(100% - ' + positions[0] + 'px)'
+  if (dynamicHeight) elmnt.style.height = 'calc(100% - ' + positions[0] + 'px)'
   else elmnt.style.height = 'calc(100% - ' + positions[positions.length - 1] + 'px)'
 
   elmnt.style.top = 'calc(' + currPosition + 'px)'
@@ -195,7 +194,8 @@ export default forwardRef((props, ref) => {
         key={Math.random()} // since the key is set only on push, random value should be fine
         className={styles.modal + ' ' + className}
         ref={(ref) => {
-          if (ref && type === 'bottom-sheet') dragElement(ref)
+          if (ref && type === 'bottom-sheet' && bottomSheetOptions.drag)
+            dragElement(ref, bottomSheetOptions)
         }}
         {...attributes}
       >
