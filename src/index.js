@@ -194,7 +194,7 @@ export default forwardRef((props, ref) => {
         key={Math.random()} // since the key is set only on push, random value should be fine
         className={styles.modal + ' ' + className}
         ref={(ref) => {
-          if (ref) dragElement(ref)
+          if (ref && type === 'bottom-sheet') dragElement(ref)
         }}
         {...attributes}
       >
