@@ -1,7 +1,7 @@
-import { useModal } from 'react-advance-modal'
+import { getModal } from 'react-advance-modal'
 
 const BottomModalContent = () => {
-  const modal = useModal('bottom')
+  const modal = getModal('bottom')
 
   return (
     <div>

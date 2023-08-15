@@ -1,4 +1,4 @@
-import { useModal } from 'react-advance-modal'
+import { getModal } from 'react-advance-modal'
 
 const FullPageModalStep1 = ({ modal, className }) => {
   return (
@@ -47,7 +47,7 @@ const FullPageModalStep1 = ({ modal, className }) => {
 }
 
 const FullPageModalStep2 = () => {
-  const modal = useModal('full-page')
+  const modal = getModal('full-page')
 
   return (
     <div className='page' style={{ backgroundColor: '#5dc294' }}>

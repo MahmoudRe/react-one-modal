@@ -1,6 +1,4 @@
-import React, { useRef } from 'react'
-
-import Modal, { bindModal } from 'react-advance-modal'
+import Modal, { useModal } from 'react-advance-modal'
 import 'react-advance-modal/dist/index.css'
 
 import FloatingModalContent from './components/FloatingModalContent';
@@ -8,15 +6,10 @@ import BottomModalContent from './components/BottomModalContent';
 import FullPageModalContent from './components/FullPageModalContent';
 
 const App = () => {
-  const modalRef = useRef(null)
-  const modalBottomRef = useRef(null)
-  const modalFullPageRef = useRef(null)
-  const modalBottomSheetRef = useRef(null)
-
-  const modal = bindModal(modalRef)
-  const modalBottom = bindModal(modalBottomRef, 'bottom')
-  const modalFullPage = bindModal(modalFullPageRef, 'full-page')
-  const modalBottomSheet = bindModal(modalBottomSheetRef, 'bottom-sheet')
+  const [modal, modalRef] = useModal()
+  const [modalBottom, modalBottomRef] = useModal('bottom')
+  const [modalFullPage, modalFullPageRef]  = useModal('full-page')
+  const [modalBottomSheet, modalBottomSheetRef] = useModal('bottom-sheet')
 
   return (
     <>

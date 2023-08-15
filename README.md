@@ -14,7 +14,7 @@ npm install --save react-advance-modal
 
 ## Usage
 
-1. Create new instance of `Modal` anywhere in your view. This instance will appear on the bottom of `body` element but preserve React Context of its contents.
+1. Create new instance of `Modal` anywhere in your view and bind it using `useModal` hook. This `Modal` instance will appear on the bottom of `body` element but preserve React Context of its contents.
 
 ```jsx
 import Modal from 'react-advance-modal'
@@ -30,38 +30,15 @@ const App = () => {
     </>
   )
 }
-```
+``` 
 
-2. Create `ref` using `useRef` hook and bind it to the created `Modal` instance as follow:
+2. Now use `modal` to access the control functions of `Modal` and change the animation of the bound Modal.
 
 ```jsx
-import { useRef } from 'react'
 import Modal, { bindModal } from 'react-advance-modal'
 
 const App = () => {
-  const modalRef = useRef(null)
-  const modal = bindModal(modalRef)
-  ...
-
-  return (
-    <>
-      ...
-
-      <Modal ref={modalRef} floating />
-    </>
-  )
-}
-```
-
-4. Now, using `modal` instance you can access the control functions of `Modal` and change animation of the bound Modal.
-
-```jsx
-import { useRef } from 'react'
-import Modal, { bindModal } from 'react-advance-modal'
-
-const App = () => {
-  const modalRef = useRef(null)
-  const modal = bindModal(modalRef)
+  const [modal, modalRef] = bindModal()
   ...
 
   return (
@@ -77,7 +54,7 @@ const App = () => {
 }
 ```
 
-5. Using `useModal` or `getModal`, you can access the `Modal` instance anywhere in your component tree.
+3. Use `getModal` to access the control functions of `Modal` instance anywhere in your code.
 
 ```jsx
 import { useModal } from 'react-advance-modal'
@@ -109,18 +86,15 @@ const MyComponent = () => {
 <Modal 
   ref={modalRef} 
   floating  // if present then a floating modal will be used
-  
 />
 ```
 
 ### Control functions
 
-After binding the `Modal` to a `ref` in parent component, you can access all functionalities to the bound `Modal` using `useModal` or `getModal` functions anywhere in your code as long the parent component is live.
+After binding the `Modal` to a `ref` in the parent component, you can access all functionalities to the bound `Modal` using `getModal` functions anywhere in your code as long the component containing `Modal` instance is live.
 
 ```jsx
-const modal = useModal()
-
-
+const modal = getModal()
 ```
 
 ## Examples
@@ -188,14 +162,11 @@ const FloatingBottomModalContent = () => {
 ### Multi-step full-page modal
 
 ```jsx
-import React, { Component } from 'react'
-
-import Modal, { bindModal, useModal } from 'react-advance-modal'
+import Modal, { useModal } from 'react-advance-modal'
 import 'react-advance-modal/dist/index.css'
 
 const App = () => {
-  const modalRef = useRef(null)
-  const modal = bindModal(modalRef)
+  const [modal, modalRef] = bindModal()
 
   return (
     <>
@@ -210,7 +181,7 @@ const App = () => {
 }
 
 const FullPageModalStep1 = () => {
-  const modal = useModal('full-page')
+  const modal = getModal('full-page')
 
   return (
     <div style={{ backgroundColor: '#6d9ce8', width: '100%', height: '100%' }}>
@@ -227,7 +198,7 @@ const FullPageModalStep1 = () => {
 }
 
 const FullPageModalStep2 = () => {
-  const modal = useModal('full-page')
+  const modal = getModal('full-page')
 
   return (
     <div style={{ backgroundColor: '#5dc294' }}>
@@ -245,7 +216,7 @@ const FullPageModalStep2 = () => {
 }
 
 const FullPageModalLastStep = () => {
-  const modal = useModal('full-page')
+  const modal = getModal('full-page')
 
   return (
     <div style={{ backgroundColor: '#5dc294' }}>

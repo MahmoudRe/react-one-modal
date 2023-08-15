@@ -364,33 +364,41 @@ export default forwardRef((props, ref) => {
 class ModalState {
   modalRefs = {}
 
+  getModal = (key = 'default') => ({
+    push: (content, options) => this.modalRefs[key]?.current?.push(content, options),
+    pop: (options) => this.modalRefs[key]?.current?.pop(options),
+    close: (options) => this.modalRefs[key]?.current?.close(options),
+    transit: (content, options) =>
+      this.modalRefs[key]?.current?.push(content, {
+        popLast: true,
+        ...options
+      }),
+    hide: (options) => this.modalRefs[key]?.current?.hide(options),
+    show: (content, options) => this.modalRefs[key]?.current?.show(content, options),
+    animation: {
+      getType: () => this.modalRefs[key]?.current?.animation.current.type,
+      setType: (type) => this.modalRefs[key]?.current?.animation.current.setType(type),
+      pause: (timeout) =>
+        this.modalRefs[key]?.current?.animation.current.pause(timeout),
+      resume: () => this.modalRefs[key]?.current?.animation.current.resume()
+    }
+  })
+
   /**
    * Get the functions of an already bound modal instance, given its key.
    * If a key isn't passed, its value would be 'default'.
+   * 
+   * Although the HTMLElement of the modal is located at the bottom of the <body> tag,
+   * it inherits the context from the component in which it's declared.
    *
    * @param {string} [key]
    * @returns modal object with { push, pop, close, hide, show } functions
    */
   useModal = (key = 'default') => {
-    return {
-      push: (content, options) => this.modalRefs[key]?.current?.push(content, options),
-      pop: (options) => this.modalRefs[key]?.current?.pop(options),
-      close: (options) => this.modalRefs[key]?.current?.close(options),
-      transit: (content, options) =>
-        this.modalRefs[key]?.current?.push(content, {
-          popLast: true,
-          ...options
-        }),
-      hide: (options) => this.modalRefs[key]?.current?.hide(options),
-      show: (content, options) => this.modalRefs[key]?.current?.show(content, options),
-      animation: {
-        getType: () => this.modalRefs[key]?.current?.animation.current.type,
-        setType: (type) => this.modalRefs[key]?.current?.animation.current.setType(type),
-        pause: (timeout) =>
-          this.modalRefs[key]?.current?.animation.current.pause(timeout),
-        resume: () => this.modalRefs[key]?.current?.animation.current.resume()
-      }
-    }
+    if(!this.modalRefs[key])
+      this.modalRefs[key] = useRef(null)
+    
+    return [this.getModal(key), this.modalRefs[key]]
 
     // We could here simply do `return this.modalRefs[key]?.current` and then all functionalities will be exposed.
     // However, at the start, ref is null and `this.modalRefs[key]?.current` is resolved to undefined.
@@ -398,24 +406,8 @@ class ModalState {
     // That is way useRef() hook returns {current: VALUE} object such that "ref.current" refers to a mutable VALUE.
     // By using function closure, `this.modalRefs[key]?.current` is resolved when each of these function is called.
   }
-
-  /**
-   * Bind a Modal instance given its ref, with a given key.
-   * If a key isn't passed, its value would be 'default'.
-   *
-   * Although the HTMLElement of the modal is located at the bottom of the <body> tag,
-   * it inherits the context from the component in which it's declared.
-   *
-   * @param {React.MutableRefObject<HTMLElement>} ref react ref object for Modal instance.
-   * @param {string} key
-   * @returns modal object with { push, pop, close, transit, hide, show } functions
-   */
-  bindModal = (ref, key = 'default') => {
-    this.modalRefs[key] = ref
-    return this.useModal(key)
-  }
 }
 
 const modalState = new ModalState()
 
-export const { useModal, bindModal, getModal = useModal } = modalState
+export const { useModal, getModal } = modalState

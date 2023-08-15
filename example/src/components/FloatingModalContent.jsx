@@ -1,7 +1,7 @@
-import { useModal } from 'react-advance-modal'
+import { getModal } from 'react-advance-modal'
 
 const FloatingModalContent = () => {
-  const modal = useModal()
+  const modal = getModal()
 
   return (
     <div>
