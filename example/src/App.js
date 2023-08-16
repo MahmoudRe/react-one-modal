@@ -1,5 +1,4 @@
 import Modal, { useModal } from 'react-advance-modal'
-import 'react-advance-modal/dist/index.css'
 
 import FloatingModalContent from './components/FloatingModalContent';
 import BottomModalContent from './components/BottomModalContent';

@@ -104,7 +104,6 @@ const modal = getModal()
 ```jsx
 import React, { useRef } from 'react'
 import Modal, { bindModal, useModal } from 'react-advance-modal'
-import 'react-advance-modal/dist/index.css'
 
 const App = () => {
   const modalRef = useRef(null)
@@ -241,9 +240,9 @@ const FullPageModalLastStep = () => {
 - [ ] Promisify all control functions (push/pop/close/show/hide) to resolve when animation is done.
 - [ ] Notification style modal (auto hide with optional close button)
 - [ ] Disable page scroll when modal is open
-- [ ] Move to TypeScript
+- [x] Move to TypeScript
 - [ ] Close using ESC or clicking outside the modal
-- [ ] Auto load css when importing component, such that no need to import stylesheet by end user (check styled-components?)
+- [x] Auto load css when importing component, such that no need to import stylesheet by end user (check styled-components?)
 - [ ] Write proper documentation
 - [ ] Add `back`, `next`, `pushLast` control functions to traverse the stack while keeping all components live
 

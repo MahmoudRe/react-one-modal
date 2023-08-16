@@ -4,12 +4,25 @@ import React, {
   useState,
   useEffect,
   forwardRef,
-  useImperativeHandle
+  useImperativeHandle,
+  PropsWithChildren,
+  ReactNode,
+  RefObject,
+  MutableRefObject
 } from 'react'
 import { createPortal } from 'react-dom'
-import styles from './modal.css'
+import styles from './style.module.css'
 
-function dragElement(elmnt, options = {}) {
+interface DragOptions {
+  drag: boolean
+  positions: number[]
+  startPosition: number
+  swipeThreshold: number
+  dynamicHeight: number
+  headerSelector: string
+}
+
+function dragElement(el: HTMLElement, options: DragOptions) {
   let yDiff = 0,
     yPrev = 0,
     scrollEnd = true
@@ -23,36 +36,36 @@ function dragElement(elmnt, options = {}) {
   } = options
 
   //set position of initial open
-  if (dynamicHeight) elmnt.style.height = 'calc(100% - ' + positions[0] + 'px)'
-  else elmnt.style.height = 'calc(100% - ' + positions[positions.length - 1] + 'px)'
+  if (dynamicHeight) el.style.height = 'calc(100% - ' + positions[0] + 'px)'
+  else el.style.height = 'calc(100% - ' + positions[positions.length - 1] + 'px)'
 
-  elmnt.style.top = 'calc(' + currPosition + 'px)'
+  el.style.top = 'calc(' + currPosition + 'px)'
 
   // set up event listener for the start of the drag
-  if (headerSelector) {
-    document.querySelector(headerSelector).onmousedown = dragStart
-    document.querySelector(headerSelector).ontouchstart = dragStart
+  let headerElement = document.querySelector<HTMLElement>(headerSelector)
+  if (headerElement) {
+    headerElement.onmousedown = dragStart
+    headerElement.ontouchstart = dragStart
   } else {
-    elmnt.onmousedown = dragStart
-    elmnt.ontouchstart = dragStart
+    el.onmousedown = dragStart
+    el.ontouchstart = dragStart
   }
 
-  function isScrollEnd(element) {
-    if (element === elmnt || element?.parentElement === elmnt)
-      return element?.scrollTop === 0
+  function isScrollEnd(element: HTMLElement | null): boolean {
+    if (element === el || element?.parentElement === el) return element?.scrollTop === 0
 
     if (element?.scrollTop === 0) return isScrollEnd(element?.parentElement)
 
     return false
   }
 
-  function dragStart(e) {
-    e = e || window.event
+  function dragStart(event: MouseEvent | TouchEvent) {
+    let ev = { clientY: 0, touches: [{ clientY: 0 }], ...event }
 
-    scrollEnd = isScrollEnd(e.target)
+    scrollEnd = isScrollEnd(ev.target as HTMLElement)
 
     // get the mouse cursor position at startup:
-    yPrev = e.clientY || e.touches[0].clientY
+    yPrev = ev.clientY || ev.touches[0].clientY
     document.onmouseup = dragClose
     document.ontouchend = dragClose
 
@@ -60,32 +73,32 @@ function dragElement(elmnt, options = {}) {
     document.onmousemove = dragMove
     document.addEventListener('touchmove', dragMove, { passive: false })
 
-    elmnt.style.transition = 'none'
+    el.style.transition = 'none'
   }
 
-  function dragMove(e) {
-    e = e || window.event
+  function dragMove(event: MouseEvent | TouchEvent) {
+    let ev = { clientY: 0, touches: [{ clientY: 0 }], ...event }
 
     // calculate the new cursor position:
-    yDiff = yPrev - (e.clientY || e.touches[0].clientY)
-    yPrev = e.clientY || e.touches[0].clientY
+    yDiff = yPrev - (ev.clientY || ev.touches[0].clientY)
+    yPrev = ev.clientY || ev.touches[0].clientY
 
     // set the element's new position
-    if (elmnt.offsetTop - yDiff > positions[positions.length - 1] && scrollEnd) {
+    if (el.offsetTop - yDiff > positions[positions.length - 1] && scrollEnd) {
       // prevent scrolling if we didn't react the top nor nested elements is scrolled
-      e.preventDefault()
+      event.preventDefault()
 
       // delay height change according to scroll direction to prevent flickering at bottom of sheet
       if (yDiff > 0) {
         // scroll up: decrease height later
-        elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
+        el.style.top = el.offsetTop - yDiff + 'px'
         if (dynamicHeight)
-          elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
+          el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
       } else {
         // scroll down: increase the height first
         if (dynamicHeight)
-          elmnt.style.height = 'calc(100% - ' + (elmnt.offsetTop - yDiff) + 'px)'
-        elmnt.style.top = elmnt.offsetTop - yDiff + 'px'
+          el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
+        el.style.top = el.offsetTop - yDiff + 'px'
       }
     } else {
       // enable scroll + prevent drag down after reaching top
@@ -98,8 +111,8 @@ function dragElement(elmnt, options = {}) {
     document.onmouseup = null
     document.ontouchend = null
     document.onmousemove = null
-    document.removeEventListener('touchmove', dragMove, { passive: false })
-    elmnt.style.transition = 'all .25s cubic-bezier(0, 0.3, 0.15, 1)'
+    document.removeEventListener('touchmove', dragMove as EventListener, false)
+    el.style.transition = 'all .25s cubic-bezier(0, 0.3, 0.15, 1)'
 
     let nextPosition = currPosition
 
@@ -114,24 +127,59 @@ function dragElement(elmnt, options = {}) {
     }
     // drag up/down
     else {
-      let currTop = parseInt(elmnt.style.top)
+      let currTop = parseInt(el.style.top)
       nextPosition = positions.reduce(
         (acc, pos) => (Math.abs(acc - currTop) < Math.abs(pos - currTop) ? acc : pos),
         currPosition
       )
     }
 
-    if (dynamicHeight && parseInt(elmnt.style.top) < nextPosition)
-      elmnt.style.transition += ', height .25s cubic-bezier(0, 0.3, 0.15, 1) .1s'
+    if (dynamicHeight && parseInt(el.style.top) < nextPosition)
+      el.style.transition += ', height .25s cubic-bezier(0, 0.3, 0.15, 1) .1s'
 
     currPosition = nextPosition
-    elmnt.style.top = nextPosition + 'px'
+    el.style.top = nextPosition + 'px'
 
-    if (dynamicHeight) elmnt.style.height = 'calc(100% - ' + nextPosition + 'px)'
+    if (dynamicHeight) el.style.height = 'calc(100% - ' + nextPosition + 'px)'
   }
 }
 
-export default forwardRef((props, ref) => {
+interface ModalProps {
+  className?: string
+  classNameOverlay?: string
+  attributes?: {}
+  size?: number
+  colorOverlay?: string // default #00000099, also it can be set by css variable --modal-color-overlay
+  colorBackground?: string // default 'white', also it can be set by css variable --modal-color-bg
+  type: 'floating' | 'full-page' | 'bottom-sheet'
+  bottomSheetOptions?: DragOptions
+  position?: 'top' | 'center' | 'bottom'
+  callback?: (name: string, option?: ControlFunctionOption, content?: ReactNode) => void
+  animation: false | 'slide' | 'slide-bottom' | 'zoom-in'
+  children?: ReactNode
+  attributesOverlay: PropsWithChildren
+}
+
+interface ControlFunctionCollection {
+  push: (content: ReactNode, options?: ControlFunctionOption) => void
+  pop: (options?: ControlFunctionOption) => void
+  close: (options?: ControlFunctionOption) => void
+  hide: (options?: ControlFunctionOption) => void
+  show: (content: ReactNode, options?: ControlFunctionOption) => void
+  animation: MutableRefObject<{
+    type: string
+    setType: (type: string) => void
+    pause: (timeout: number) => void
+    resume: () => void
+  }>
+}
+
+interface ControlFunctionOption {
+  animation?: ModalProps['animation']
+  popLast?: boolean
+}
+
+export default forwardRef((props: ModalProps, ref) => {
   let {
     className = '',
     classNameOverlay = '', // className for modal container/overlay
@@ -140,50 +188,50 @@ export default forwardRef((props, ref) => {
     colorOverlay, // default #00000099, also it can be set by css variable --modal-color-overlay
     colorBackground, // default 'white', also it can be set by css variable --modal-color-bg
     type = 'floating', // ['floating', 'full-page', 'bottom-sheet']
-    bottomSheetOptions = {},
+    bottomSheetOptions = {} as DragOptions,
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
-    callback = () => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
+    callback = (_) => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
     animation: animationType = props.type == 'full-page'
       ? 'slide'
       : props.type == 'bottom-sheet' || props.position == 'bottom'
       ? 'slide-bottom'
       : 'zoom-in', // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
     children, // if existed, add them as the first
-    ...attributesOverlay // pass the reset to modal container/overlay
+    attributesOverlay // pass the reset to modal container/overlay
   } = props
 
-  const modalOverlayRef = useRef(null)
+  const modalOverlayRef = useRef<HTMLDivElement>(null)
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
-  const modalsArr = useRef([]) // useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
+  const modalsArr = useRef<ReactNode[]>([]) // useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
   const [isHidden, setHidden] = useState(false)
   const animation = useRef({
     type: animationType,
-    setType: (type) => {
+    setType: (type: ModalProps['animation']) => {
       // Internal state
       animationType = animation.current.type // preserve the old value to use when resume
       animation.current.type = type // current value
 
       // HTML element state
-      if (type) {
+      if (type && modalOverlayRef.current) {
         modalOverlayRef.current.dataset.animation = type
         modalOverlayRef.current.removeAttribute('data-animation-pause')
-      } else {
+      } else if (modalOverlayRef.current) {
         modalOverlayRef.current.setAttribute('data-animation-pause', '')
       }
     },
-    pause: (timeout) => {
+    pause: (timeout?: number) => {
       // if timeout is not passed, pause indefinitely
       animation.current.type = false
-      modalOverlayRef.current.setAttribute('data-animation-pause', '')
+      modalOverlayRef.current?.setAttribute('data-animation-pause', '')
       timeout && setTimeout(animation.current.resume, timeout)
     },
     resume: () => {
       animation.current.type = animationType
-      modalOverlayRef.current.removeAttribute('data-animation-pause')
+      modalOverlayRef.current?.removeAttribute('data-animation-pause')
     }
   })
 
-  const push = (content, options = {}) => {
+  const push: ControlFunctionCollection['push'] = (content, options = {}) => {
     const { popLast = false, animation: animationType = animation.current.type } = options
 
     // pause if the animation is already active, but options.animation is false for this instance
@@ -228,7 +276,7 @@ export default forwardRef((props, ref) => {
       }
   }
 
-  const pop = (options = {}) => {
+  const pop: ControlFunctionCollection['pop'] = (options = {}) => {
     const { animation: animationType = animation.current.type } = options
 
     if (!modalsArr.current.length) return //no pages existed, skip this action
@@ -242,12 +290,12 @@ export default forwardRef((props, ref) => {
     }
 
     /* transition */
-    const len = modalOverlayRef.current.children?.length
+    const len = modalOverlayRef.current?.children?.length
     // select the modal before last one (or last in case of one modal)
-    const modal = modalOverlayRef.current.children[len > 1 ? len - 2 : 0]
-    modal.classList.add(styles['--back-transition'])
+    const modal = modalOverlayRef.current?.children[len && len > 1 ? len - 2 : 0]
+    modal?.classList.add(styles['--back-transition'])
     setTimeout(() => {
-      modal.classList.remove(styles['--back-transition'])
+      modal?.classList.remove(styles['--back-transition'])
       modalsArr.current.pop()
       forceUpdate()
       callback('pop', options)
@@ -255,14 +303,14 @@ export default forwardRef((props, ref) => {
 
     // if last modal, animate overlay hiding
     if (modalsArr.current.length <= 1) {
-      modal && modalOverlayRef.current.classList.add(styles['--out-transition'])
+      modal && modalOverlayRef.current?.classList.add(styles['--out-transition'])
       setTimeout(() => {
-        modal && modalOverlayRef.current.classList.remove(styles['--out-transition'])
+        modal && modalOverlayRef.current?.classList.remove(styles['--out-transition'])
       }, 250)
     }
   }
 
-  const close = (options = {}) => {
+  const close: ControlFunctionCollection['close'] = (options = {}) => {
     const { animation: animationType = animation.current.type } = options
 
     if (!animationType) {
@@ -274,19 +322,21 @@ export default forwardRef((props, ref) => {
     }
 
     /* transition */
-    const modal = modalOverlayRef.current.lastChild
+    const modal = modalOverlayRef.current?.lastChild as HTMLElement
     modal?.classList.add(styles['--back-transition'])
-    modal && modalOverlayRef.current.classList.add(styles['--out-transition'])
+    modal && modalOverlayRef.current?.classList.add(styles['--out-transition'])
     setTimeout(() => {
       modal?.classList.remove(styles['--back-transition'])
-      modal && modalOverlayRef.current.classList.remove(styles['--out-transition'])
+      modal && modalOverlayRef.current?.classList.remove(styles['--out-transition'])
       modalsArr.current.splice(0, modalsArr.current.length)
       forceUpdate()
       callback('close', options)
     }, 250)
   }
 
-  const hide = (options = {}) => {
+  const hide: ControlFunctionCollection['hide'] = (
+    options: ControlFunctionOption = {}
+  ) => {
     const { animation: animationType = animation.current.type } = options
 
     if (!animationType) {
@@ -297,36 +347,20 @@ export default forwardRef((props, ref) => {
     }
 
     /* transition */
-    const modal = modalOverlayRef.current.lastChild
+    const modal = modalOverlayRef.current?.lastChild as HTMLElement
     modal?.classList.add(styles['--back-transition'])
-    modal && modalOverlayRef.current.classList.add(styles['--out-transition'])
+    modal && modalOverlayRef.current?.classList.add(styles['--out-transition'])
     setTimeout(() => {
       modal?.classList.remove(styles['--back-transition'])
-      modal && modalOverlayRef.current.classList.remove(styles['--out-transition'])
+      modal && modalOverlayRef.current?.classList.remove(styles['--out-transition'])
       setHidden(true)
       callback('hide', options)
     }, 250)
   }
 
-  /**
-   * @param {*} arg0 either React Component to show, ie. push into the stack or options object
-   * @param {*} options if arg0 was a React Component then this parameter is options object, otherwise ignore
-   */
-  const show = (arg0, options = {}) => {
-    let { animation: animationType = animation.current.type } = options
 
-    // the case arg0 is option and only need to show the hidden pages
-    if (arg0 && arg0.animation) {
-      animationType = arg0.animation
-
-      // pause if the animation is already active, but options.animation is false for this instance
-      if (!animationType && !!animation.current.type) animation.current.pause(250)
-
-      callback('show', options)
-    }
-
-    // the case where arg0 is React Component, then push it into stack and pass option object
-    if (arg0 && !arg0.animation) push(arg0, options)
+  const show: ControlFunctionCollection['show'] = (content, options = {}) => {
+    if (content) push(content, options)
 
     setHidden(false)
   }
@@ -346,8 +380,8 @@ export default forwardRef((props, ref) => {
       ref={modalOverlayRef}
       style={{
         display: !modalsArr.current.length || isHidden ? 'none' : undefined,
-        '--modal-color-overlay': colorOverlay || undefined,
-        '--modal-color-bg': colorBackground || undefined,
+        ['--modal-color-overlay' as any]: colorOverlay || undefined,
+        ['--modal-color-bg' as any]: colorBackground || undefined,
         background:
           modalsArr.current.length > 1 && !(type == 'floating')
             ? 'var(--modal-color-bg)'
@@ -362,23 +396,29 @@ export default forwardRef((props, ref) => {
 })
 
 class ModalState {
-  modalRefs = {}
+  modalRefs: {
+    [key: string]: RefObject<HTMLDivElement & ControlFunctionCollection> | undefined
+  } = {}
 
-  getModal = (key = 'default') => ({
-    push: (content, options) => this.modalRefs[key]?.current?.push(content, options),
-    pop: (options) => this.modalRefs[key]?.current?.pop(options),
-    close: (options) => this.modalRefs[key]?.current?.close(options),
-    transit: (content, options) =>
+  getModal = (key: string = 'default') => ({
+    push: (content: ReactNode, options: ControlFunctionOption) =>
+      this.modalRefs[key]?.current?.push(content, options),
+    pop: (options: ControlFunctionOption) => this.modalRefs[key]?.current?.pop(options),
+    close: (options: ControlFunctionOption) =>
+      this.modalRefs[key]?.current?.close(options),
+    transit: (content: ReactNode, options: ControlFunctionOption) =>
       this.modalRefs[key]?.current?.push(content, {
         popLast: true,
         ...options
       }),
-    hide: (options) => this.modalRefs[key]?.current?.hide(options),
-    show: (content, options) => this.modalRefs[key]?.current?.show(content, options),
+    hide: (options: ControlFunctionOption) => this.modalRefs[key]?.current?.hide(options),
+    show: (content: ReactNode, options: ControlFunctionOption) =>
+      this.modalRefs[key]?.current?.show(content, options),
     animation: {
       getType: () => this.modalRefs[key]?.current?.animation.current.type,
-      setType: (type) => this.modalRefs[key]?.current?.animation.current.setType(type),
-      pause: (timeout) =>
+      setType: (type: string) =>
+        {this.modalRefs[key]?.current?.animation.current.setType(type)},
+      pause: (timeout: number) =>
         this.modalRefs[key]?.current?.animation.current.pause(timeout),
       resume: () => this.modalRefs[key]?.current?.animation.current.resume()
     }
@@ -387,17 +427,16 @@ class ModalState {
   /**
    * Get the functions of an already bound modal instance, given its key.
    * If a key isn't passed, its value would be 'default'.
-   * 
+   *
    * Although the HTMLElement of the modal is located at the bottom of the <body> tag,
    * it inherits the context from the component in which it's declared.
    *
    * @param {string} [key]
    * @returns modal object with { push, pop, close, hide, show } functions
    */
-  useModal = (key = 'default') => {
-    if(!this.modalRefs[key])
-      this.modalRefs[key] = useRef(null)
-    
+  useModal = (key: string = 'default') => {
+    if (!this.modalRefs[key]) this.modalRefs[key] = useRef(null)
+
     return [this.getModal(key), this.modalRefs[key]]
 
     // We could here simply do `return this.modalRefs[key]?.current` and then all functionalities will be exposed.
