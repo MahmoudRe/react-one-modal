@@ -188,7 +188,7 @@
 }
 
 .overlay[data-animation='slide-bottom'] .modal {
-  transition: all 0.25s ease-in-out;
+  /* transition: all 0.25s ease-in-out; */
   animation: slideInBottom 0.25s cubic-bezier(0, 0.3, 0.15, 1.1);
 }
 .overlay[data-animation='slide-bottom']

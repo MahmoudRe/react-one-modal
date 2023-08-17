@@ -5,179 +5,13 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
-  PropsWithChildren,
   ReactNode,
-  RefObject,
-  MutableRefObject
+  RefObject
 } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './style.module.css'
-
-interface DragOptions {
-  drag: boolean
-  positions: number[]
-  startPosition: number
-  swipeThreshold: number
-  dynamicHeight: number
-  headerSelector: string
-}
-
-function dragElement(el: HTMLElement, options: DragOptions) {
-  let yDiff = 0,
-    yPrev = 0,
-    scrollEnd = true
-
-  let {
-    positions = [700, 400, 100],
-    startPosition: currPosition = positions[0],
-    swipeThreshold = 10,
-    dynamicHeight,
-    headerSelector
-  } = options
-
-  //set position of initial open
-  if (dynamicHeight) el.style.height = 'calc(100% - ' + positions[0] + 'px)'
-  else el.style.height = 'calc(100% - ' + positions[positions.length - 1] + 'px)'
-
-  el.style.top = 'calc(' + currPosition + 'px)'
-
-  // set up event listener for the start of the drag
-  let headerElement = document.querySelector<HTMLElement>(headerSelector)
-  if (headerElement) {
-    headerElement.onmousedown = dragStart
-    headerElement.ontouchstart = dragStart
-  } else {
-    el.onmousedown = dragStart
-    el.ontouchstart = dragStart
-  }
-
-  function isScrollEnd(element: HTMLElement | null): boolean {
-    if (element === el || element?.parentElement === el) return element?.scrollTop === 0
-
-    if (element?.scrollTop === 0) return isScrollEnd(element?.parentElement)
-
-    return false
-  }
-
-  function dragStart(event: MouseEvent | TouchEvent) {
-    let ev = { clientY: 0, touches: [{ clientY: 0 }], ...event }
-
-    scrollEnd = isScrollEnd(ev.target as HTMLElement)
-
-    // get the mouse cursor position at startup:
-    yPrev = ev.clientY || ev.touches[0].clientY
-    document.onmouseup = dragClose
-    document.ontouchend = dragClose
-
-    // call a function whenever the cursor moves:
-    document.onmousemove = dragMove
-    document.addEventListener('touchmove', dragMove, { passive: false })
-
-    el.style.transition = 'none'
-  }
-
-  function dragMove(event: MouseEvent | TouchEvent) {
-    let ev = { clientY: 0, touches: [{ clientY: 0 }], ...event }
-
-    // calculate the new cursor position:
-    yDiff = yPrev - (ev.clientY || ev.touches[0].clientY)
-    yPrev = ev.clientY || ev.touches[0].clientY
-
-    // set the element's new position
-    if (el.offsetTop - yDiff > positions[positions.length - 1] && scrollEnd) {
-      // prevent scrolling if we didn't react the top nor nested elements is scrolled
-      event.preventDefault()
-
-      // delay height change according to scroll direction to prevent flickering at bottom of sheet
-      if (yDiff > 0) {
-        // scroll up: decrease height later
-        el.style.top = el.offsetTop - yDiff + 'px'
-        if (dynamicHeight)
-          el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
-      } else {
-        // scroll down: increase the height first
-        if (dynamicHeight)
-          el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
-        el.style.top = el.offsetTop - yDiff + 'px'
-      }
-    } else {
-      // enable scroll + prevent drag down after reaching top
-      scrollEnd = false
-    }
-  }
-
-  function dragClose() {
-    // stop moving when mouse button is released:
-    document.onmouseup = null
-    document.ontouchend = null
-    document.onmousemove = null
-    document.removeEventListener('touchmove', dragMove as EventListener, false)
-    el.style.transition = 'all .25s cubic-bezier(0, 0.3, 0.15, 1)'
-
-    let nextPosition = currPosition
-
-    // swipe up
-    if (yDiff > swipeThreshold && scrollEnd) {
-      nextPosition =
-        positions[Math.min(positions.length - 1, positions.indexOf(currPosition) + 1)]
-    }
-    // swipe down
-    else if (yDiff < -1 * swipeThreshold && scrollEnd) {
-      nextPosition = positions[Math.max(0, positions.indexOf(currPosition) - 1)]
-    }
-    // drag up/down
-    else {
-      let currTop = parseInt(el.style.top)
-      nextPosition = positions.reduce(
-        (acc, pos) => (Math.abs(acc - currTop) < Math.abs(pos - currTop) ? acc : pos),
-        currPosition
-      )
-    }
-
-    if (dynamicHeight && parseInt(el.style.top) < nextPosition)
-      el.style.transition += ', height .25s cubic-bezier(0, 0.3, 0.15, 1) .1s'
-
-    currPosition = nextPosition
-    el.style.top = nextPosition + 'px'
-
-    if (dynamicHeight) el.style.height = 'calc(100% - ' + nextPosition + 'px)'
-  }
-}
-
-interface ModalProps {
-  className?: string
-  classNameOverlay?: string
-  attributes?: {}
-  size?: number
-  colorOverlay?: string // default #00000099, also it can be set by css variable --modal-color-overlay
-  colorBackground?: string // default 'white', also it can be set by css variable --modal-color-bg
-  type: 'floating' | 'full-page' | 'bottom-sheet'
-  bottomSheetOptions?: DragOptions
-  position?: 'top' | 'center' | 'bottom'
-  callback?: (name: string, option?: ControlFunctionOption, content?: ReactNode) => void
-  animation: false | 'slide' | 'slide-bottom' | 'zoom-in'
-  children?: ReactNode
-  attributesOverlay: PropsWithChildren
-}
-
-interface ControlFunctionCollection {
-  push: (content: ReactNode, options?: ControlFunctionOption) => void
-  pop: (options?: ControlFunctionOption) => void
-  close: (options?: ControlFunctionOption) => void
-  hide: (options?: ControlFunctionOption) => void
-  show: (content: ReactNode, options?: ControlFunctionOption) => void
-  animation: MutableRefObject<{
-    type: string
-    setType: (type: string) => void
-    pause: (timeout: number) => void
-    resume: () => void
-  }>
-}
-
-interface ControlFunctionOption {
-  animation?: ModalProps['animation']
-  popLast?: boolean
-}
+import { BottomSheetOptions, ControlFunctionCollection, ControlFunctionOption, ModalProps } from './typings'
+import { dragElement } from './bottom-sheet-drag'
 
 export default forwardRef((props: ModalProps, ref) => {
   let {
@@ -188,7 +22,7 @@ export default forwardRef((props: ModalProps, ref) => {
     colorOverlay, // default #00000099, also it can be set by css variable --modal-color-overlay
     colorBackground, // default 'white', also it can be set by css variable --modal-color-bg
     type = 'floating', // ['floating', 'full-page', 'bottom-sheet']
-    bottomSheetOptions = {} as DragOptions,
+    bottomSheetOptions = {} as BottomSheetOptions,
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
     callback = (_) => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
     animation: animationType = props.type == 'full-page'
@@ -231,7 +65,7 @@ export default forwardRef((props: ModalProps, ref) => {
     }
   })
 
-  const push: ControlFunctionCollection['push'] = (content, options = {}) => {
+  function push(content: ReactNode, options: ControlFunctionOption = {}) {
     const { popLast = false, animation: animationType = animation.current.type } = options
 
     // pause if the animation is already active, but options.animation is false for this instance
@@ -241,9 +75,9 @@ export default forwardRef((props: ModalProps, ref) => {
       <div
         key={Math.random()} // since the key is set only on push, random value should be fine
         className={styles.modal + ' ' + className}
-        ref={(ref) => {
-          if (ref && type === 'bottom-sheet' && bottomSheetOptions.drag)
-            dragElement(ref, bottomSheetOptions)
+        ref={(el) => {
+          if (el && type === 'bottom-sheet' && bottomSheetOptions.drag)
+            dragElement(el, bottomSheetOptions, pop)
         }}
         {...attributes}
       >
@@ -276,7 +110,7 @@ export default forwardRef((props: ModalProps, ref) => {
       }
   }
 
-  const pop: ControlFunctionCollection['pop'] = (options = {}) => {
+  function pop(options: ControlFunctionOption = {}) {
     const { animation: animationType = animation.current.type } = options
 
     if (!modalsArr.current.length) return //no pages existed, skip this action
@@ -299,7 +133,7 @@ export default forwardRef((props: ModalProps, ref) => {
       modalsArr.current.pop()
       forceUpdate()
       callback('pop', options)
-    }, 250)
+    }, 500)
 
     // if last modal, animate overlay hiding
     if (modalsArr.current.length <= 1) {
@@ -310,7 +144,7 @@ export default forwardRef((props: ModalProps, ref) => {
     }
   }
 
-  const close: ControlFunctionCollection['close'] = (options = {}) => {
+  function close(options: ControlFunctionOption = {}) {
     const { animation: animationType = animation.current.type } = options
 
     if (!animationType) {
@@ -334,9 +168,7 @@ export default forwardRef((props: ModalProps, ref) => {
     }, 250)
   }
 
-  const hide: ControlFunctionCollection['hide'] = (
-    options: ControlFunctionOption = {}
-  ) => {
+  function hide(options: ControlFunctionOption = {}) {
     const { animation: animationType = animation.current.type } = options
 
     if (!animationType) {
@@ -358,8 +190,7 @@ export default forwardRef((props: ModalProps, ref) => {
     }, 250)
   }
 
-
-  const show: ControlFunctionCollection['show'] = (content, options = {}) => {
+  function show(content: ReactNode, options: ControlFunctionOption = {}) {
     if (content) push(content, options)
 
     setHidden(false)
@@ -416,8 +247,9 @@ class ModalState {
       this.modalRefs[key]?.current?.show(content, options),
     animation: {
       getType: () => this.modalRefs[key]?.current?.animation.current.type,
-      setType: (type: string) =>
-        {this.modalRefs[key]?.current?.animation.current.setType(type)},
+      setType: (type: string) => {
+        this.modalRefs[key]?.current?.animation.current.setType(type)
+      },
       pause: (timeout: number) =>
         this.modalRefs[key]?.current?.animation.current.pause(timeout),
       resume: () => this.modalRefs[key]?.current?.animation.current.resume()
