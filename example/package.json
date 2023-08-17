@@ -16,7 +16,8 @@
     "react-advance-modal": "file:.."
   },
   "devDependencies": {
-    "@babel/plugin-syntax-object-rest-spread": "^7.8.3"
+    "@babel/plugin-syntax-object-rest-spread": "^7.8.3",
+    "@babel/plugin-proposal-private-property-in-object": "7.21.4"
   },
   "eslintConfig": {
     "extends": "react-app"
