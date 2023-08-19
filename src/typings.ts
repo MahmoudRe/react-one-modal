@@ -21,27 +21,30 @@ export interface ModalProps {
   type: 'floating' | 'full-page' | 'bottom-sheet'
   bottomSheetOptions?: BottomSheetOptions
   position?: 'top' | 'center' | 'bottom'
-  callback?: (name: string, option?: ControlFunctionOption, content?: ReactNode) => void
+  callback?: (name: string, option?: ModalControlFunctionsOption, content?: ReactNode) => void
   animation: false | 'slide' | 'slide-bottom' | 'zoom-in'
   children?: ReactNode
   attributesOverlay: PropsWithChildren
 }
 
-export interface ControlFunctionCollection {
-  push: (content: ReactNode, options?: ControlFunctionOption) => void
-  pop: (options?: ControlFunctionOption) => void
-  close: (options?: ControlFunctionOption) => void
-  hide: (options?: ControlFunctionOption) => void
-  show: (content: ReactNode, options?: ControlFunctionOption) => void
-  animation: MutableRefObject<{
-    type: string
-    setType: (type: string) => void
-    pause: (timeout: number) => void
-    resume: () => void
-  }>
+export interface AnimationControlFunctions {
+  _type?:  ModalProps['animation']
+  type: ModalProps['animation']
+  pause: (timeout?: number) => void
+  resume: () => void
 }
 
-export interface ControlFunctionOption {
+export interface ModalControlFunctions {
+  push: (content: ReactNode, options?: ModalControlFunctionsOption) => void
+  pop: (options?: ModalControlFunctionsOption) => void
+  transit?: (content: ReactNode, options?: ModalControlFunctionsOption) => void
+  close: (options?: ModalControlFunctionsOption) => void
+  hide: (options?: ModalControlFunctionsOption) => void
+  show: (content: ReactNode, options?: ModalControlFunctionsOption) => void
+  animation: AnimationControlFunctions
+}
+
+export interface ModalControlFunctionsOption {
   animation?: ModalProps['animation']
   popLast?: boolean
 }
