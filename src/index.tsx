@@ -7,7 +7,8 @@ import React, {
   useImperativeHandle,
   ReactNode,
   RefObject,
-  MutableRefObject
+  MutableRefObject,
+  ForwardedRef
 } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './style.module.css'
@@ -20,7 +21,7 @@ import {
 } from './typings'
 import { dragElement } from './bottom-sheet-drag'
 
-export default forwardRef((props: ModalProps, ref) => {
+export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunctions>) => {
   let {
     className = '',
     classNameOverlay = '', // className for modal container/overlay
@@ -86,8 +87,7 @@ export default forwardRef((props: ModalProps, ref) => {
         key={Math.random()} // since the key is set only on push, random value should be fine
         className={styles.modal + ' ' + className}
         ref={(el) => {
-          if (el && type === 'bottom-sheet' && bottomSheetOptions.drag)
-            dragElement(el, bottomSheetOptions, pop)
+          if (el && type === 'bottom-sheet' && bottomSheetOptions.drag) dragElement(el, bottomSheetOptions, pop)
         }}
         {...attributes}
       >
@@ -230,10 +230,7 @@ export default forwardRef((props: ModalProps, ref) => {
         display: !modalsArr.current.length || isHidden ? 'none' : undefined,
         ['--modal-color-overlay' as any]: colorOverlay || undefined,
         ['--modal-color-bg' as any]: colorBackground || undefined,
-        background:
-          modalsArr.current.length > 1 && !(type == 'floating')
-            ? 'var(--modal-color-bg)'
-            : undefined
+        background: modalsArr.current.length > 1 && !(type == 'floating') ? 'var(--modal-color-bg)' : undefined
       }}
       {...attributesOverlay}
     >
@@ -245,12 +242,11 @@ export default forwardRef((props: ModalProps, ref) => {
 
 class ModalState {
   static modalRefs: {
-    [key: string]: RefObject<HTMLDivElement & ModalControlFunctions>
+    [key: string]: RefObject<ModalControlFunctions>
   } = {}
 
   static getModal = (key: string = 'default'): ModalControlFunctions => ({
-    push: (content, options) =>
-      ModalState.modalRefs[key]?.current?.push(content, options),
+    push: (content, options) => ModalState.modalRefs[key]?.current?.push(content, options),
     pop: (options) => ModalState.modalRefs[key]?.current?.pop(options),
     close: (options) => ModalState.modalRefs[key]?.current?.close(options),
     transit: (content, options) =>
@@ -259,18 +255,15 @@ class ModalState {
         ...options
       }),
     hide: (options) => ModalState.modalRefs[key]?.current?.hide(options),
-    show: (content, options) =>
-      ModalState.modalRefs[key]?.current?.show(content, options),
+    show: (content, options) => ModalState.modalRefs[key]?.current?.show(content, options),
     animation: {
       get type() {
         return ModalState.modalRefs[key]?.current?.animation.type ?? false
       },
       set type(type: ModalProps['animation']) {
-        if (ModalState.modalRefs[key]?.current)
-          ModalState.modalRefs[key]!.current!.animation.type = type
+        if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.type = type
       },
-      pause: (timeout?: number) =>
-        ModalState.modalRefs[key]?.current?.animation.pause(timeout),
+      pause: (timeout?: number) => ModalState.modalRefs[key]?.current?.animation.pause(timeout),
       resume: () => ModalState.modalRefs[key]?.current?.animation.resume()
     }
   })
@@ -285,8 +278,8 @@ class ModalState {
    * @param {string} [key]
    * @returns modal object with { push, pop, close, hide, show } functions
    */
-  static useModal = (key: string = 'default'): [ModalControlFunctions, RefObject<unknown> | undefined] => {
-    if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = useRef<any>(null)
+  static useModal = (key: string = 'default'): [ModalControlFunctions, RefObject<ModalControlFunctions> | undefined] => {
+    if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = useRef<ModalControlFunctions>(null)
 
     return [ModalState.getModal(key), ModalState.modalRefs[key]]
 

@@ -1,4 +1,4 @@
-import { ReactNode, PropsWithChildren, MutableRefObject } from 'react'
+import { ReactNode, PropsWithChildren, ForwardRefExoticComponent, RefAttributes } from 'react'
 
 export interface BottomSheetOptions {
   drag: boolean
@@ -18,17 +18,17 @@ export interface ModalProps {
   size?: number
   colorOverlay?: string // default #00000099, also it can be set by css variable --modal-color-overlay
   colorBackground?: string // default 'white', also it can be set by css variable --modal-color-bg
-  type: 'floating' | 'full-page' | 'bottom-sheet'
+  type?: 'floating' | 'full-page' | 'bottom-sheet'
   bottomSheetOptions?: BottomSheetOptions
   position?: 'top' | 'center' | 'bottom'
   callback?: (name: string, option?: ModalControlFunctionsOption, content?: ReactNode) => void
-  animation: false | 'slide' | 'slide-bottom' | 'zoom-in'
+  animation?: false | 'slide' | 'slide-bottom' | 'zoom-in'
   children?: ReactNode
-  attributesOverlay: PropsWithChildren
+  attributesOverlay?: PropsWithChildren
 }
 
 export interface AnimationControlFunctions {
-  _type?:  ModalProps['animation']
+  _type?: ModalProps['animation']
   type: ModalProps['animation']
   pause: (timeout?: number) => void
   resume: () => void
