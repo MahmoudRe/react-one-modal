@@ -56,7 +56,7 @@ const FullPageModalStep2 = () => {
             <>
               <div> Last step! </div>
               <button onClick={modal.pop}> Back </button>
-              <button onClick={modal.close}> Close </button>
+              <button onClick={modal.empty}> Close </button>
             </>
           )
         }
@@ -64,7 +64,7 @@ const FullPageModalStep2 = () => {
         Got to last
       </button>
       <button onClick={modal.pop}> Back </button>
-      <button onClick={modal.close}> Close </button>
+      <button onClick={modal.empty}> Close </button>
     </div>
   )
 }

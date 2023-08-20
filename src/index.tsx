@@ -12,13 +12,7 @@ import React, {
 } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './style.module.css'
-import {
-  ModalAnimation,
-  BottomSheetOptions,
-  Modal,
-  ModalOneTimeOptions,
-  ModalProps
-} from './typings'
+import { ModalAnimation, BottomSheetOptions, Modal, ModalOneTimeOptions, ModalProps } from './typings'
 import { dragElement } from './bottom-sheet-drag'
 
 export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
@@ -153,14 +147,14 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     }
   }
 
-  function close(options: ModalOneTimeOptions = {}) {
+  function empty(options: ModalOneTimeOptions = {}) {
     const { animation: animationType = animation.current.type } = options
 
     if (!animationType) {
       modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
-      callback('close', options)
+      callback('empty', options)
       return
     }
 
@@ -173,7 +167,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       modal && modalOverlayRef.current?.classList.remove(styles['--out-transition'])
       modalsArr.current.splice(0, modalsArr.current.length)
       forceUpdate()
-      callback('close', options)
+      callback('empty', options)
     }, 250)
   }
 
@@ -208,7 +202,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   useImperativeHandle(ref, () => ({
     push,
     pop,
-    close,
+    empty,
     hide,
     show,
     animation: animation.current
@@ -247,7 +241,7 @@ class ModalState {
   static getModal = (key: string = 'default'): Modal => ({
     push: (content, options) => ModalState.modalRefs[key]?.current?.push(content, options),
     pop: (options) => ModalState.modalRefs[key]?.current?.pop(options),
-    close: (options) => ModalState.modalRefs[key]?.current?.close(options),
+    empty: (options) => ModalState.modalRefs[key]?.current?.empty(options),
     transit: (content, options) =>
       ModalState.modalRefs[key]?.current?.push(content, {
         popLast: true,
@@ -275,11 +269,9 @@ class ModalState {
    * it inherits the context from the component in which it's declared.
    *
    * @param {string} [key]
-   * @returns modal object with { push, pop, close, hide, show } functions
+   * @returns modal object with { push, pop, empty, hide, show } functions
    */
-  static useModal = (
-    key: string = 'default'
-  ): [Modal, RefObject<Modal> | undefined] => {
+  static useModal = (key: string = 'default'): [Modal, RefObject<Modal> | undefined] => {
     if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = useRef<Modal>(null)
 
     return [ModalState.getModal(key), ModalState.modalRefs[key]]
@@ -293,4 +285,4 @@ class ModalState {
 }
 
 export const { useModal, getModal } = ModalState
-export { Modal, ModalOneTimeOptions, ModalProps, ModalAnimation, BottomSheetOptions, }
+export { Modal, ModalOneTimeOptions, ModalProps, ModalAnimation, BottomSheetOptions }

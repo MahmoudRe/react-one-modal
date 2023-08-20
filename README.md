@@ -70,7 +70,7 @@ const MyComponent = () => {
         Next Step
       </button>
 
-      <button onClick={() => { modal.close() }}>
+      <button onClick={() => { modal.empty() }}>
         Close
       </button>
     </>
@@ -137,7 +137,7 @@ const FloatingModalContent = () => {
       
       // Modal content ...
 
-      <button onClick={modal.close}> Close </button>
+      <button onClick={modal.empty}> Close </button>
     </div>
   )
 }
@@ -151,7 +151,7 @@ const FloatingBottomModalContent = () => {
       
       // Modal content ...
 
-      <button onClick={modal.close}> Close </button>
+      <button onClick={modal.empty}> Close </button>
     </div>
   )
 }
@@ -209,7 +209,7 @@ const FullPageModalStep2 = () => {
         Go to last
       </button>
       <button onClick={modal.pop}> Back </button>
-      <button onClick={modal.close}> Close </button>
+      <button onClick={modal.empty}> Close </button>
     </div>
   )
 }
@@ -224,10 +224,10 @@ const FullPageModalLastStep = () => {
       // Content ...
 
       <button onClick={modal.pop}> Back </button>
-      <button onClick={modal.close}> Close </button>
+      <button onClick={modal.empty}> Close </button>
       <button onClick={() => {
         yourCallback();
-        modal.close();
+        modal.empty();
       }}> Done! </button>
     </div>
   )

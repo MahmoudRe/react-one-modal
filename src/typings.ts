@@ -4,7 +4,7 @@ export interface Modal {
   push: (content: ReactNode, options?: ModalOneTimeOptions) => void
   pop: (options?: ModalOneTimeOptions) => void
   transit?: (content: ReactNode, options?: ModalOneTimeOptions) => void
-  close: (options?: ModalOneTimeOptions) => void
+  empty: (options?: ModalOneTimeOptions) => void
   hide: (options?: ModalOneTimeOptions) => void
   show: (content: ReactNode, options?: ModalOneTimeOptions) => void
   animation: ModalAnimation
@@ -32,7 +32,7 @@ export interface ModalProps {
   position?: 'top' | 'center' | 'bottom'
   callback?: (name: string, option?: ModalOneTimeOptions, content?: ReactNode) => any
   animation?: {
-    type?: ModalAnimation["type"]
+    type?: ModalAnimation['type']
   }
   children?: ReactNode
   attributesOverlay?: PropsWithChildren
@@ -47,5 +47,5 @@ export interface ModalAnimation {
 export interface ModalOneTimeOptions {
   animation?: ModalProps['animation']
   popLast?: boolean
-  [key: string]: any      // to allow this pattern: `onClick={modal.pop}` instead of `onClick={() => modal.pop()}`
+  [key: string]: any // to allow this pattern: `onClick={modal.pop}` instead of `onClick={() => modal.pop()}`
 }
