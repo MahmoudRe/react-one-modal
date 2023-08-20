@@ -32,24 +32,25 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     attributesOverlay // pass the reset to modal container/overlay
   } = props
 
-  let {
-    type: animationType = props.type == 'full-page'
-      ? 'slide'
-      : props.type == 'bottom-sheet' || props.position == 'bottom'
-      ? 'slide-bottom'
-      : 'zoom-in' // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
-  } = animationProps
-
   const modalOverlayRef = useRef<HTMLDivElement>(null)
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
   const modalsArr = useRef<ReactNode[]>([]) // useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
   const [isHidden, setHidden] = useState(false)
-  const animation: MutableRefObject<ModalAnimation> = useRef({
+
+  const animationType = useRef<ModalAnimation['type']>(
+    (animationProps && animationProps.type) ?? props.type == 'full-page'
+      ? 'slide'
+      : props.type == 'bottom-sheet' || props.position == 'bottom'
+      ? 'slide-bottom'
+      : 'zoom-in' // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
+  )
+  const animation = useRef<ModalAnimation>({
+    disable: !animationProps || !!animationProps.disable,
     get type() {
-      return animationType
+      return animationType.current
     },
     set type(type: ModalAnimation['type']) {
-      animationType = type ? type : false // current value
+      animationType.current = type
 
       // HTML element state
       if (type && modalOverlayRef.current) {
@@ -215,7 +216,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   return createPortal(
     <div
       className={styles.overlay + ' ' + classNameOverlay}
-      data-animation={animationType}
+      data-animation={animationType.current}
       data-modal-type={type}
       data-modal-position={position}
       ref={modalOverlayRef}
@@ -250,8 +251,16 @@ class ModalState {
     hide: (options) => ModalState.modalRefs[key]?.current?.hide(options),
     show: (content, options) => ModalState.modalRefs[key]?.current?.show(content, options),
     animation: {
+      get disable() {
+        return !!ModalState.modalRefs[key]?.current?.animation.disable
+      },
+      set disable(bool: boolean) {
+        if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.disable = bool
+      },
       get type() {
-        return ModalState.modalRefs[key]?.current?.animation.type ?? false
+        if (ModalState.modalRefs[key]?.current?.animation.type)
+          throw new Error("Can't reading value of `type` property of modal: Modal isn't found")
+        return ModalState.modalRefs[key]!.current!.animation.type
       },
       set type(type: ModalAnimation['type']) {
         if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.type = type

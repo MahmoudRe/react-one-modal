@@ -31,7 +31,8 @@ export interface ModalProps {
   bottomSheetOptions?: BottomSheetOptions
   position?: 'top' | 'center' | 'bottom'
   callback?: (name: string, option?: ModalOneTimeOptions, content?: ReactNode) => any
-  animation?: {
+  animation?: false | {
+    disable?: ModalAnimation['disable']
     type?: ModalAnimation['type']
   }
   children?: ReactNode
@@ -39,7 +40,8 @@ export interface ModalProps {
 }
 
 export interface ModalAnimation {
-  type: false | 'slide' | 'slide-bottom' | 'zoom-in'
+  disable: boolean
+  type: 'slide' | 'slide-bottom' | 'zoom-in'
   pause: (timeout?: number) => void
   resume: () => void
 }
