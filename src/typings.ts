@@ -1,5 +1,14 @@
 import { ReactNode, PropsWithChildren } from 'react'
 
+export interface Modal {
+  push: (content: ReactNode, options?: ModalOneTimeOptions) => void
+  pop: (options?: ModalOneTimeOptions) => void
+  transit?: (content: ReactNode, options?: ModalOneTimeOptions) => void
+  close: (options?: ModalOneTimeOptions) => void
+  hide: (options?: ModalOneTimeOptions) => void
+  show: (content: ReactNode, options?: ModalOneTimeOptions) => void
+  animation: ModalAnimation
+}
 export interface BottomSheetOptions {
   drag: boolean
   positions: number[]
@@ -21,31 +30,21 @@ export interface ModalProps {
   type?: 'floating' | 'full-page' | 'bottom-sheet'
   bottomSheetOptions?: BottomSheetOptions
   position?: 'top' | 'center' | 'bottom'
-  callback?: (name: string, option?: ModalControlFunctionsOption, content?: ReactNode) => void
+  callback?: (name: string, option?: ModalOneTimeOptions, content?: ReactNode) => any
   animation?: {
-    type?: AnimationControlFunctions["type"]
+    type?: ModalAnimation["type"]
   }
   children?: ReactNode
   attributesOverlay?: PropsWithChildren
 }
 
-export interface AnimationControlFunctions {
+export interface ModalAnimation {
   type: false | 'slide' | 'slide-bottom' | 'zoom-in'
   pause: (timeout?: number) => void
   resume: () => void
 }
 
-export interface ModalControlFunctions {
-  push: (content: ReactNode, options?: ModalControlFunctionsOption) => void
-  pop: (options?: ModalControlFunctionsOption) => void
-  transit?: (content: ReactNode, options?: ModalControlFunctionsOption) => void
-  close: (options?: ModalControlFunctionsOption) => void
-  hide: (options?: ModalControlFunctionsOption) => void
-  show: (content: ReactNode, options?: ModalControlFunctionsOption) => void
-  animation: AnimationControlFunctions
-}
-
-export interface ModalControlFunctionsOption {
+export interface ModalOneTimeOptions {
   animation?: ModalProps['animation']
   popLast?: boolean
   [key: string]: any      // to allow this pattern: `onClick={modal.pop}` instead of `onClick={() => modal.pop()}`

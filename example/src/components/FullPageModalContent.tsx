@@ -1,6 +1,6 @@
-import { getModal, ModalControlFunctions } from 'react-advance-modal'
+import { getModal, Modal } from 'react-advance-modal'
 
-const FullPageModalStep1 = ({ modal, className }: { modal: ModalControlFunctions; className: string }) => {
+const FullPageModalStep1 = ({ modal, className }: { modal: Modal; className: string }) => {
   return (
     <div className={`page ${className}`} style={{ backgroundColor: '#6d9ce8' }}>
       <h2> Full Page Modal Content Step 1 </h2>

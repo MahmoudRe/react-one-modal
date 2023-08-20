@@ -13,15 +13,15 @@ import React, {
 import { createPortal } from 'react-dom'
 import styles from './style.module.css'
 import {
-  AnimationControlFunctions,
+  ModalAnimation,
   BottomSheetOptions,
-  ModalControlFunctions,
-  ModalControlFunctionsOption,
+  Modal,
+  ModalOneTimeOptions,
   ModalProps
 } from './typings'
 import { dragElement } from './bottom-sheet-drag'
 
-export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunctions>) => {
+export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const {
     className = '',
     classNameOverlay = '', // className for modal container/overlay
@@ -50,11 +50,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunc
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
   const modalsArr = useRef<ReactNode[]>([]) // useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
   const [isHidden, setHidden] = useState(false)
-  const animation: MutableRefObject<AnimationControlFunctions> = useRef({
+  const animation: MutableRefObject<ModalAnimation> = useRef({
     get type() {
       return animationType
     },
-    set type(type: AnimationControlFunctions['type']) {
+    set type(type: ModalAnimation['type']) {
       animationType = type ? type : false // current value
 
       // HTML element state
@@ -75,7 +75,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunc
     }
   })
 
-  function push(content: ReactNode, options: ModalControlFunctionsOption = {}) {
+  function push(content: ReactNode, options: ModalOneTimeOptions = {}) {
     const { popLast = false, animation: animationType = animation.current.type } = options
 
     // pause if the animation is already active, but options.animation is false for this instance
@@ -119,7 +119,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunc
       }
   }
 
-  function pop(options: ModalControlFunctionsOption = {}) {
+  function pop(options: ModalOneTimeOptions = {}) {
     const { animation: animationType = animation.current.type } = options
 
     if (!modalsArr.current.length) return //no pages existed, skip this action
@@ -153,7 +153,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunc
     }
   }
 
-  function close(options: ModalControlFunctionsOption = {}) {
+  function close(options: ModalOneTimeOptions = {}) {
     const { animation: animationType = animation.current.type } = options
 
     if (!animationType) {
@@ -177,7 +177,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunc
     }, 250)
   }
 
-  function hide(options: ModalControlFunctionsOption = {}) {
+  function hide(options: ModalOneTimeOptions = {}) {
     const { animation: animationType = animation.current.type } = options
 
     if (!animationType) {
@@ -199,7 +199,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunc
     }, 250)
   }
 
-  function show(content: ReactNode, options: ModalControlFunctionsOption = {}) {
+  function show(content: ReactNode, options: ModalOneTimeOptions = {}) {
     if (content) push(content, options)
 
     setHidden(false)
@@ -241,10 +241,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunc
 
 class ModalState {
   static modalRefs: {
-    [key: string]: RefObject<ModalControlFunctions>
+    [key: string]: RefObject<Modal>
   } = {}
 
-  static getModal = (key: string = 'default'): ModalControlFunctions => ({
+  static getModal = (key: string = 'default'): Modal => ({
     push: (content, options) => ModalState.modalRefs[key]?.current?.push(content, options),
     pop: (options) => ModalState.modalRefs[key]?.current?.pop(options),
     close: (options) => ModalState.modalRefs[key]?.current?.close(options),
@@ -259,7 +259,7 @@ class ModalState {
       get type() {
         return ModalState.modalRefs[key]?.current?.animation.type ?? false
       },
-      set type(type: AnimationControlFunctions['type']) {
+      set type(type: ModalAnimation['type']) {
         if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.type = type
       },
       pause: (timeout?: number) => ModalState.modalRefs[key]?.current?.animation.pause(timeout),
@@ -279,8 +279,8 @@ class ModalState {
    */
   static useModal = (
     key: string = 'default'
-  ): [ModalControlFunctions, RefObject<ModalControlFunctions> | undefined] => {
-    if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = useRef<ModalControlFunctions>(null)
+  ): [Modal, RefObject<Modal> | undefined] => {
+    if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = useRef<Modal>(null)
 
     return [ModalState.getModal(key), ModalState.modalRefs[key]]
 
@@ -293,4 +293,4 @@ class ModalState {
 }
 
 export const { useModal, getModal } = ModalState
-export { AnimationControlFunctions, BottomSheetOptions, ModalControlFunctions, ModalControlFunctionsOption, ModalProps }
+export { Modal, ModalOneTimeOptions, ModalProps, ModalAnimation, BottomSheetOptions, }
