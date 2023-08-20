@@ -239,36 +239,45 @@ class ModalState {
     [key: string]: RefObject<Modal>
   } = {}
 
-  static getModal = (key: string = 'default'): Modal => ({
-    push: (content, options) => ModalState.modalRefs[key]?.current?.push(content, options),
-    pop: (options) => ModalState.modalRefs[key]?.current?.pop(options),
-    empty: (options) => ModalState.modalRefs[key]?.current?.empty(options),
-    transit: (content, options) =>
-      ModalState.modalRefs[key]?.current?.push(content, {
-        popLast: true,
-        ...options
-      }),
-    hide: (options) => ModalState.modalRefs[key]?.current?.hide(options),
-    show: (content, options) => ModalState.modalRefs[key]?.current?.show(content, options),
-    animation: {
-      get disable() {
-        return !!ModalState.modalRefs[key]?.current?.animation.disable
-      },
-      set disable(bool: boolean) {
-        if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.disable = bool
-      },
-      get type() {
-        if (ModalState.modalRefs[key]?.current?.animation.type)
-          throw new Error("Can't reading value of `type` property of modal: Modal isn't found")
-        return ModalState.modalRefs[key]!.current!.animation.type
-      },
-      set type(type: ModalAnimation['type']) {
-        if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.type = type
-      },
-      pause: (timeout?: number) => ModalState.modalRefs[key]?.current?.animation.pause(timeout),
-      resume: () => ModalState.modalRefs[key]?.current?.animation.resume()
+  static getModal = (key: string = 'default'): Modal => {
+    if (!ModalState.modalRefs[key])
+      console.warn(
+        `No modal is rendered yet with this key: "${key}". Please double check the key name and make sure` +
+          " you bind a Modal component with this key via useModal(key: string) inside an already rendered component. " +
+          "Only ignore this warning if you are sure that the binding happen before calling any of the functions of this object"
+      )
+      
+    return {
+      push: (content, options) => ModalState.modalRefs[key]?.current?.push(content, options),
+      pop: (options) => ModalState.modalRefs[key]?.current?.pop(options),
+      empty: (options) => ModalState.modalRefs[key]?.current?.empty(options),
+      transit: (content, options) =>
+        ModalState.modalRefs[key]?.current?.push(content, {
+          popLast: true,
+          ...options
+        }),
+      hide: (options) => ModalState.modalRefs[key]?.current?.hide(options),
+      show: (content, options) => ModalState.modalRefs[key]?.current?.show(content, options),
+      animation: {
+        get disable() {
+          return !!ModalState.modalRefs[key]?.current?.animation.disable
+        },
+        set disable(bool: boolean) {
+          if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.disable = bool
+        },
+        get type() {
+          if (ModalState.modalRefs[key]?.current?.animation.type)
+            throw new Error("Can't reading value of `type` property of modal: Modal isn't found")
+          return ModalState.modalRefs[key]!.current!.animation.type
+        },
+        set type(type: ModalAnimation['type']) {
+          if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.type = type
+        },
+        pause: (timeout?: number) => ModalState.modalRefs[key]?.current?.animation.pause(timeout),
+        resume: () => ModalState.modalRefs[key]?.current?.animation.resume()
+      }
     }
-  })
+  }
 
   /**
    * Get the functions of an already bound modal instance, given its key.
