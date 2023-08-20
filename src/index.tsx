@@ -22,7 +22,7 @@ import {
 import { dragElement } from './bottom-sheet-drag'
 
 export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunctions>) => {
-  let {
+  const {
     className = '',
     classNameOverlay = '', // className for modal container/overlay
     attributes = {},
@@ -33,28 +33,29 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunc
     bottomSheetOptions = {} as BottomSheetOptions,
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
     callback = (_) => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
-    animation: animationType = props.type == 'full-page'
-      ? 'slide'
-      : props.type == 'bottom-sheet' || props.position == 'bottom'
-      ? 'slide-bottom'
-      : 'zoom-in', // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
+    animation: animationProps = {},
     children, // if existed, add them as the first
     attributesOverlay // pass the reset to modal container/overlay
   } = props
+
+  let {
+    type: animationType = props.type == 'full-page'
+      ? 'slide'
+      : props.type == 'bottom-sheet' || props.position == 'bottom'
+      ? 'slide-bottom'
+      : 'zoom-in' // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
+  } = animationProps
 
   const modalOverlayRef = useRef<HTMLDivElement>(null)
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
   const modalsArr = useRef<ReactNode[]>([]) // useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
   const [isHidden, setHidden] = useState(false)
   const animation: MutableRefObject<AnimationControlFunctions> = useRef({
-    _type: animationType,
     get type() {
-      return animation.current._type ?? false
+      return animationType
     },
-    set type(type: ModalProps['animation']) {
-      // Internal state
-      animationType = animation.current._type ?? false // preserve the old value to use when resume
-      animation.current._type = type // current value
+    set type(type: AnimationControlFunctions['type']) {
+      animationType = type ? type : false // current value
 
       // HTML element state
       if (type && modalOverlayRef.current) {
@@ -66,12 +67,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<ModalControlFunc
     },
     pause: (timeout?: number) => {
       // if timeout is not passed, pause indefinitely
-      animation.current._type = false
       modalOverlayRef.current?.setAttribute('data-animation-pause', '')
       timeout && setTimeout(animation.current.resume, timeout)
     },
     resume: () => {
-      animation.current._type = animationType
       modalOverlayRef.current?.removeAttribute('data-animation-pause')
     }
   })
@@ -260,7 +259,7 @@ class ModalState {
       get type() {
         return ModalState.modalRefs[key]?.current?.animation.type ?? false
       },
-      set type(type: ModalProps['animation']) {
+      set type(type: AnimationControlFunctions['type']) {
         if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.type = type
       },
       pause: (timeout?: number) => ModalState.modalRefs[key]?.current?.animation.pause(timeout),
@@ -278,7 +277,9 @@ class ModalState {
    * @param {string} [key]
    * @returns modal object with { push, pop, close, hide, show } functions
    */
-  static useModal = (key: string = 'default'): [ModalControlFunctions, RefObject<ModalControlFunctions> | undefined] => {
+  static useModal = (
+    key: string = 'default'
+  ): [ModalControlFunctions, RefObject<ModalControlFunctions> | undefined] => {
     if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = useRef<ModalControlFunctions>(null)
 
     return [ModalState.getModal(key), ModalState.modalRefs[key]]
@@ -292,3 +293,4 @@ class ModalState {
 }
 
 export const { useModal, getModal } = ModalState
+export { AnimationControlFunctions, BottomSheetOptions, ModalControlFunctions, ModalControlFunctionsOption, ModalProps }

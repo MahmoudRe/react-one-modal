@@ -1,4 +1,4 @@
-import { ReactNode, PropsWithChildren, ForwardRefExoticComponent, RefAttributes } from 'react'
+import { ReactNode, PropsWithChildren } from 'react'
 
 export interface BottomSheetOptions {
   drag: boolean
@@ -22,14 +22,15 @@ export interface ModalProps {
   bottomSheetOptions?: BottomSheetOptions
   position?: 'top' | 'center' | 'bottom'
   callback?: (name: string, option?: ModalControlFunctionsOption, content?: ReactNode) => void
-  animation?: false | 'slide' | 'slide-bottom' | 'zoom-in'
+  animation?: {
+    type?: AnimationControlFunctions["type"]
+  }
   children?: ReactNode
   attributesOverlay?: PropsWithChildren
 }
 
 export interface AnimationControlFunctions {
-  _type?: ModalProps['animation']
-  type: ModalProps['animation']
+  type: false | 'slide' | 'slide-bottom' | 'zoom-in'
   pause: (timeout?: number) => void
   resume: () => void
 }
