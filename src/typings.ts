@@ -48,4 +48,5 @@ export interface ModalControlFunctions {
 export interface ModalControlFunctionsOption {
   animation?: ModalProps['animation']
   popLast?: boolean
+  [key: string]: any      // to allow this pattern: `onClick={modal.pop}` instead of `onClick={() => modal.pop()}`
 }
