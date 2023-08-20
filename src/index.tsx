@@ -239,14 +239,24 @@ class ModalState {
     [key: string]: RefObject<Modal>
   } = {}
 
+  /**
+   * Get the Modal control functions of an already bound modal component, given its key.
+   *
+   * @param {string} [key]  If a key isn't passed, its value would be 'default'.
+   * @returns {Modal} modal object with { push, pop, empty, hide, show, animation } functionalities
+   */
   static getModal = (key: string = 'default'): Modal => {
     if (!ModalState.modalRefs[key])
       console.warn(
         `No modal is rendered yet with this key: "${key}". Please double check the key name and make sure` +
-          " you bind a Modal component with this key via useModal(key: string) inside an already rendered component. " +
-          "Only ignore this warning if you are sure that the binding happen before calling any of the functions of this object"
+          ' you bind a Modal component with this key via useModal(key: string) inside an already rendered component. ' +
+          'Only ignore this warning if you are sure that the binding happen before calling any of the functions of this object'
       )
-      
+
+    // We could here simply do `return this.modalRefs[key]?.current` and then all functionalities will be exposed.
+    // However, at the start, ref is null and `this.modalRefs[key]?.current` is resolved to undefined.
+    // That is way useRef() hook returns {current: VALUE} object such that "ref.current" refers to a mutable VALUE.
+    // By using function closure, `this.modalRefs[key]?.current` is resolved when each of these function is called.
     return {
       push: (content, options) => ModalState.modalRefs[key]?.current?.push(content, options),
       pop: (options) => ModalState.modalRefs[key]?.current?.pop(options),
@@ -280,25 +290,15 @@ class ModalState {
   }
 
   /**
-   * Get the functions of an already bound modal instance, given its key.
-   * If a key isn't passed, its value would be 'default'.
+   * Bind a modal instance to a modal component through `ref`.
    *
-   * Although the HTMLElement of the modal is located at the bottom of the <body> tag,
-   * it inherits the context from the component in which it's declared.
-   *
-   * @param {string} [key]
-   * @returns modal object with { push, pop, empty, hide, show } functions
+   * @param {string} [key = "default"] If a key isn't passed, its value would be 'default'.
+   * @returns {[Modal, RefObject<Modal>]} Tuple array with first element is Modal control functions, and second element ref object.
    */
-  static useModal = (key: string = 'default'): [Modal, RefObject<Modal> | undefined] => {
+  static useModal = (key: string = 'default'): [Modal, RefObject<Modal>] => {
     if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = useRef<Modal>(null)
 
     return [ModalState.getModal(key), ModalState.modalRefs[key]]
-
-    // We could here simply do `return this.modalRefs[key]?.current` and then all functionalities will be exposed.
-    // However, at the start, ref is null and `this.modalRefs[key]?.current` is resolved to undefined.
-    // Hence, when ref value is changed to an HTMLElement after the first render, there is no way .
-    // That is way useRef() hook returns {current: VALUE} object such that "ref.current" refers to a mutable VALUE.
-    // By using function closure, `this.modalRefs[key]?.current` is resolved when each of these function is called.
   }
 }
 
