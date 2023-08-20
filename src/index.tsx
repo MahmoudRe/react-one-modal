@@ -7,7 +7,6 @@ import React, {
   useImperativeHandle,
   ReactNode,
   RefObject,
-  MutableRefObject,
   ForwardedRef
 } from 'react'
 import { createPortal } from 'react-dom'
@@ -37,7 +36,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const modalsArr = useRef<ReactNode[]>([]) // useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
   const [isHidden, setHidden] = useState(false)
 
-  const animationType = useRef<ModalAnimation['type']>(
+  const _animationType = useRef<ModalAnimation['type']>(
     (animationProps && animationProps.type) ?? props.type == 'full-page'
       ? 'slide'
       : props.type == 'bottom-sheet' || props.position == 'bottom'
@@ -47,10 +46,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const animation = useRef<ModalAnimation>({
     disable: !animationProps || !!animationProps.disable,
     get type() {
-      return animationType.current
+      return _animationType.current
     },
     set type(type: ModalAnimation['type']) {
-      animationType.current = type
+      _animationType.current = type
 
       // HTML element state
       if (type && modalOverlayRef.current) {
@@ -71,10 +70,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   })
 
   function push(content: ReactNode, options: ModalOneTimeOptions = {}) {
-    const { popLast = false, animation: animationType = animation.current.type } = options
+    const { popLast = false, animation: animationOption = {} } = options
+    const disableAnimation = !animationOption || animationOption.disable
 
-    // pause if the animation is already active, but options.animation is false for this instance
-    if (!animationType && !!animation.current.type) animation.current.pause(250)
+    if (disableAnimation && !animation.current.disable) animation.current.pause(250)
 
     modalsArr.current.push(
       <div
@@ -92,7 +91,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     callback('push', options, content)
 
     if (modalsArr.current.length > size)
-      if (animationType)
+      if (!disableAnimation)
         setTimeout(() => {
           modalsArr.current.shift()
           forceUpdate()
@@ -103,7 +102,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       }
 
     if (popLast && modalsArr.current.length > 1)
-      if (animationType)
+      if (!disableAnimation)
         setTimeout(() => {
           modalsArr.current.splice(modalsArr.current.length - 2, 1) // remove before last
           forceUpdate()
@@ -115,11 +114,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   }
 
   function pop(options: ModalOneTimeOptions = {}) {
-    const { animation: animationType = animation.current.type } = options
+    const { animation: animationOption = {} } = options
+    const disableAnimation = !animationOption || animationOption.disable
 
     if (!modalsArr.current.length) return //no pages existed, skip this action
 
-    if (!animationType) {
+    if (!disableAnimation) {
       modalsArr.current.pop()
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
@@ -149,9 +149,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   }
 
   function empty(options: ModalOneTimeOptions = {}) {
-    const { animation: animationType = animation.current.type } = options
+    const { animation: animationOption = {} } = options
+    const disableAnimation = !animationOption || animationOption.disable
 
-    if (!animationType) {
+    if (!disableAnimation) {
       modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
@@ -173,9 +174,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   }
 
   function hide(options: ModalOneTimeOptions = {}) {
-    const { animation: animationType = animation.current.type } = options
+    const { animation: animationOption = {} } = options
+    const disableAnimation = !animationOption || animationOption.disable
 
-    if (!animationType) {
+    if (!disableAnimation) {
       if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       setHidden(true)
       callback('hide', options)
@@ -216,7 +218,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   return createPortal(
     <div
       className={styles.overlay + ' ' + classNameOverlay}
-      data-animation={animationType.current}
+      data-animation={animation.current.type}
       data-modal-type={type}
       data-modal-position={position}
       ref={modalOverlayRef}
