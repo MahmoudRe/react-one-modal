@@ -19,6 +19,7 @@ import {
   ModalProps,
   HTMLDivElementRef
 } from './typings'
+import { runOnce } from './utils'
 import { dragElement } from './bottom-sheet-drag'
 
 export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
@@ -108,11 +109,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           className={styles.modal + ' ' + className}
           ref={(el) => {
             if (!el || hasCalled) return // run only once
-            if (el) hasCalled = true
+            hasCalled = true
 
             if (type === 'bottom-sheet' && bottomSheetOptions.drag) dragElement(el, bottomSheetOptions, pop)
 
-            const resolveHandler = () => {
+            const resolveHandler = runOnce(() => {
               if (popLast && modalsArr.current.length > 1) {
                 modalsArr.current.splice(modalsArr.current.length - 2, 1) // remove before last
                 forceUpdate()
@@ -122,13 +123,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
               }
 
               resolve([content, elementRef])
-            }
+            })
 
-            if (disableAnimation) {
-              resolveHandler
-            } else {
-              el.addEventListener('animationend', resolveHandler)
-              setTimeout(() => el.removeEventListener('animationend', resolveHandler), 250)
+            if (disableAnimation) resolveHandler()
+            else {
+              el.addEventListener('animationend', resolveHandler, { once: true })
+              el.addEventListener('animationcancel', resolveHandler, { once: true })
+              setTimeout(resolveHandler, 250) //fallback support legacy browser
             }
 
             elementRef.current = el
