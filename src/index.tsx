@@ -11,7 +11,14 @@ import React, {
 } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './style.module.css'
-import { ModalAnimation, BottomSheetOptions, Modal, ModalOneTimeOptions, ModalProps } from './typings'
+import {
+  ModalAnimation,
+  BottomSheetOptions,
+  Modal,
+  ModalOneTimeOptions,
+  ModalProps,
+  HTMLDivElementRef
+} from './typings'
 import { dragElement } from './bottom-sheet-drag'
 
 export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
@@ -25,15 +32,17 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     type = 'floating', // ['floating', 'full-page', 'bottom-sheet']
     bottomSheetOptions = {} as BottomSheetOptions,
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
-    callback = (_) => {}, // callback after a control function (push/pop/show/hide... etc). The first argument is a string of the name of the function that is called. When new content is pushed, the second argument is the content itself.
     animation: animationProps = {},
     children, // if existed, add them as the first
     attributesOverlay // pass the reset to modal container/overlay
   } = props
 
   const modalOverlayRef = useRef<HTMLDivElement>(null)
+
+  // `useRef` with `forceUpdate` instead of useState to have up-to-date value for pages array, and push to the existed array directly
+  const modalsArr = useRef<[ReactNode, HTMLDivElementRef][]>([])
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
-  const modalsArr = useRef<ReactNode[]>([]) // useRef instead of useState to have up-to-date value for pages array, and push new pages to the existed array directly
+
   const [isHidden, setHidden] = useState(false)
 
   const _animationType = useRef<ModalAnimation['type']>(
@@ -44,7 +53,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       : 'zoom-in' // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
   )
   const animation = useRef<ModalAnimation>({
-    disable: !animationProps || !!animationProps.disable,
+    disable: animationProps === false || !!animationProps.disable,
     get type() {
       return _animationType.current
     },
@@ -64,66 +73,86 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       modalOverlayRef.current?.setAttribute('data-animation-pause', '')
       timeout && setTimeout(animation.current.resume, timeout)
     },
-    resume: () => {
+    resume: (timeout?: number) => {
+      // if timeout is not passed, resume indefinitely
       modalOverlayRef.current?.removeAttribute('data-animation-pause')
+      timeout && setTimeout(animation.current.pause, timeout)
     }
   })
 
-  function push(content: ReactNode, options: ModalOneTimeOptions = {}) {
-    const { popLast = false, animation: animationOption = {} } = options
-    const disableAnimation = !animationOption || animationOption.disable
+  const _handleAnimationOption = (options: ModalOneTimeOptions) => {
+    const { animation: animationOptions } = options
+
+    const disableAnimation =
+      animationOptions === false ||
+      (animationOptions !== true && animationOptions?.disable) ||
+      // defining `animationOptions` is sufficient to do animation on this function call, no need to set disable = false
+      (animationOptions === undefined && animation.current.disable)
 
     if (disableAnimation && !animation.current.disable) animation.current.pause(250)
+    if (!disableAnimation && animation.current.disable) animation.current.resume(250)
 
-    modalsArr.current.push(
-      <div
-        key={Math.random()} // since the key is set only on push, random value should be fine
-        className={styles.modal + ' ' + className}
-        ref={(el) => {
-          if (el && type === 'bottom-sheet' && bottomSheetOptions.drag) dragElement(el, bottomSheetOptions, pop)
-        }}
-        {...attributes}
-      >
-        {content}
-      </div>
-    )
-    forceUpdate()
-    callback('push', options, content)
-
-    if (modalsArr.current.length > size)
-      if (!disableAnimation)
-        setTimeout(() => {
-          modalsArr.current.shift()
-          forceUpdate()
-        }, 250)
-      else {
-        modalsArr.current.shift()
-        forceUpdate()
-      }
-
-    if (popLast && modalsArr.current.length > 1)
-      if (!disableAnimation)
-        setTimeout(() => {
-          modalsArr.current.splice(modalsArr.current.length - 2, 1) // remove before last
-          forceUpdate()
-        }, 250)
-      else {
-        modalsArr.current.splice(modalsArr.current.length - 2, 1) // remove before last
-        forceUpdate()
-      }
+    return disableAnimation
   }
 
-  function pop(options: ModalOneTimeOptions = {}) {
-    const { animation: animationOption = {} } = options
-    const disableAnimation = !animationOption || animationOption.disable
+  const push: Modal['push'] = (content, options = {}) =>
+    new Promise((resolve) => {
+      const { popLast = false } = options
+      const disableAnimation = _handleAnimationOption(options)
+      const elementRef: HTMLDivElementRef = { current: null } // like ref, since can't useRef() here
+      let hasCalled = false // flag to run ref callback only once
 
+      modalsArr.current.push([
+        <div
+          key={Math.random()} // since the key is set only on push, random value should be fine
+          className={styles.modal + ' ' + className}
+          ref={(el) => {
+            if (!el || hasCalled) return // run only once
+            if (el) hasCalled = true
+
+            if (type === 'bottom-sheet' && bottomSheetOptions.drag) dragElement(el, bottomSheetOptions, pop)
+
+            const resolveHandler = () => {
+              if (popLast && modalsArr.current.length > 1) {
+                modalsArr.current.splice(modalsArr.current.length - 2, 1) // remove before last
+                forceUpdate()
+              } else if (modalsArr.current.length > size) {
+                modalsArr.current.shift() // remove last element
+                forceUpdate()
+              }
+
+              resolve([content, elementRef])
+            }
+
+            if (disableAnimation) {
+              resolveHandler
+            } else {
+              el.addEventListener('animationend', resolveHandler)
+              setTimeout(() => el.removeEventListener('animationend', resolveHandler), 250)
+            }
+
+            elementRef.current = el
+          }}
+          {...attributes}
+        >
+          {content}
+        </div>,
+        elementRef
+      ])
+      forceUpdate()
+    })
+
+  const transit: Modal['transit'] = (content, options) => {
+    return push(content, { popLast: true, ...options })
+  }
+
+  const pop: Modal['pop'] = (options = {}) => {
     if (!modalsArr.current.length) return //no pages existed, skip this action
 
-    if (!disableAnimation) {
+    const disableAnimation = _handleAnimationOption(options)
+    if (disableAnimation) {
       modalsArr.current.pop()
-      if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
-      callback('pop', options)
       return
     }
 
@@ -136,7 +165,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       modal?.classList.remove(styles['--back-transition'])
       modalsArr.current.pop()
       forceUpdate()
-      callback('pop', options)
     }, 500)
 
     // if last modal, animate overlay hiding
@@ -148,15 +176,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     }
   }
 
-  function empty(options: ModalOneTimeOptions = {}) {
-    const { animation: animationOption = {} } = options
-    const disableAnimation = !animationOption || animationOption.disable
-
-    if (!disableAnimation) {
+  const empty: Modal['empty'] = (options = {}) => {
+    const disableAnimation = _handleAnimationOption(options)
+    if (disableAnimation) {
       modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
-      if (animation.current.type) animation.current.pause(250) // pause if animation is already active
       forceUpdate()
-      callback('empty', options)
       return
     }
 
@@ -169,18 +193,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       modal && modalOverlayRef.current?.classList.remove(styles['--out-transition'])
       modalsArr.current.splice(0, modalsArr.current.length)
       forceUpdate()
-      callback('empty', options)
     }, 250)
   }
 
-  function hide(options: ModalOneTimeOptions = {}) {
-    const { animation: animationOption = {} } = options
-    const disableAnimation = !animationOption || animationOption.disable
-
-    if (!disableAnimation) {
-      if (animation.current.type) animation.current.pause(250) // pause if animation is already active
+  const hide: Modal['hide'] = (options: ModalOneTimeOptions = {}) => {
+    const disableAnimation = _handleAnimationOption(options)
+    if (disableAnimation) {
       setHidden(true)
-      callback('hide', options)
       return
     }
 
@@ -192,11 +211,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       modal?.classList.remove(styles['--back-transition'])
       modal && modalOverlayRef.current?.classList.remove(styles['--out-transition'])
       setHidden(true)
-      callback('hide', options)
     }, 250)
   }
 
-  function show(content: ReactNode, options: ModalOneTimeOptions = {}) {
+  const show: Modal['show'] = (content: ReactNode, options: ModalOneTimeOptions = {}) => {
     if (content) push(content, options)
 
     setHidden(false)
@@ -205,6 +223,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   useImperativeHandle(ref, () => ({
     push,
     pop,
+    transit,
     empty,
     hide,
     show,
@@ -230,7 +249,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       }}
       {...attributesOverlay}
     >
-      {modalsArr.current}
+      {modalsArr.current.map((e) => e[0])}
     </div>,
     document.body
   )
@@ -240,6 +259,21 @@ class ModalState {
   static modalRefs: {
     [key: string]: RefObject<Modal>
   } = {}
+
+  /**
+   * Promisify modalRef retrieval from modalRefs object, and reject promise on fail.
+   *
+   * @param {string} key
+   * @returns {Promise<Modal>} promise resolve to modalRef if existed, otherwise reject
+   */
+  static _getModalRef = (key: string): Promise<Modal> => {
+    const modalRef = ModalState.modalRefs[key]?.current
+    if (!modalRef)
+      // prefers `throw` over `Promise.reject` for using this function as check in get/set animation properties
+      throw Error(`Using control function on undefined Modal with key: ${key}`)
+
+    return Promise.resolve(modalRef)
+  }
 
   /**
    * Get the Modal control functions of an already bound modal component, given its key.
@@ -256,37 +290,35 @@ class ModalState {
       )
 
     // We could here simply do `return this.modalRefs[key]?.current` and then all functionalities will be exposed.
-    // However, at the start, ref is null and `this.modalRefs[key]?.current` is resolved to undefined.
-    // That is way useRef() hook returns {current: VALUE} object such that "ref.current" refers to a mutable VALUE.
-    // By using function closure, `this.modalRefs[key]?.current` is resolved when each of these function is called.
+    // However, ref is `null` at the start, and is defined after Modal component is rendered.
+    // That is way useRef() hook returns {current: VALUE} as reference to the mutable VALUE instead of directly return VALUE.
+    // By using function closure, `this.modalRefs[key]?.current` is resolved when each of these function is called, and
+    // by using _getModalRef(), the returned promise is rejected if the this.modalRefs[key] is undefined yet.
+
     return {
-      push: (content, options) => ModalState.modalRefs[key]?.current?.push(content, options),
-      pop: (options) => ModalState.modalRefs[key]?.current?.pop(options),
-      empty: (options) => ModalState.modalRefs[key]?.current?.empty(options),
-      transit: (content, options) =>
-        ModalState.modalRefs[key]?.current?.push(content, {
-          popLast: true,
-          ...options
-        }),
-      hide: (options) => ModalState.modalRefs[key]?.current?.hide(options),
-      show: (content, options) => ModalState.modalRefs[key]?.current?.show(content, options),
+      push: (...args) => ModalState._getModalRef(key).then((ref) => ref.push(...args)),
+      pop: (...args) => ModalState._getModalRef(key).then((ref) => ref.pop(...args)),
+      empty: (...args) => ModalState._getModalRef(key).then((ref) => ref.empty(...args)),
+      transit: (...args) => ModalState._getModalRef(key).then((ref) => ref.transit(...args)),
+      hide: (...args) => ModalState._getModalRef(key).then((ref) => ref.hide(...args)),
+      show: (...args) => ModalState._getModalRef(key).then((ref) => ref.show(...args)),
       animation: {
         get disable() {
+          ModalState._getModalRef(key) // throw warning Error if `modalRefs[key]?.current` is undefined
           return !!ModalState.modalRefs[key]?.current?.animation.disable
         },
-        set disable(bool: boolean) {
-          if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.disable = bool
+        set disable(bool: ModalAnimation['disable']) {
+          ModalState._getModalRef(key).then((ref) => (ref.animation.disable = bool))
         },
         get type() {
-          if (ModalState.modalRefs[key]?.current?.animation.type)
-            throw new Error("Can't reading value of `type` property of modal: Modal isn't found")
-          return ModalState.modalRefs[key]!.current!.animation.type
+          ModalState._getModalRef(key) // throw warning Error if `modalRefs[key]?.current` is undefined
+          return ModalState.modalRefs[key]?.current?.animation.type ?? 'slide'
         },
         set type(type: ModalAnimation['type']) {
-          if (ModalState.modalRefs[key]?.current) ModalState.modalRefs[key]!.current!.animation.type = type
+          ModalState._getModalRef(key).then((ref) => (ref.animation.type = type))
         },
-        pause: (timeout?: number) => ModalState.modalRefs[key]?.current?.animation.pause(timeout),
-        resume: () => ModalState.modalRefs[key]?.current?.animation.resume()
+        pause: (...args) => ModalState._getModalRef(key).then((ref) => ref.animation.pause(...args)),
+        resume: (...args) => ModalState._getModalRef(key).then((ref) => ref.animation.resume(...args))
       }
     }
   }
