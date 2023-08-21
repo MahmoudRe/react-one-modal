@@ -2,7 +2,7 @@ import { ReactNode, PropsWithChildren } from 'react'
 
 export interface Modal {
   push: (content: ReactNode, options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
-  pop: (options?: ModalOneTimeOptions) => void
+  pop: (options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
   transit: (content: ReactNode, options?: ModalOneTimeOptions) => void
   empty: (options?: ModalOneTimeOptions) => void
   hide: (options?: ModalOneTimeOptions) => void

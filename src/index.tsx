@@ -103,6 +103,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const elementRef: HTMLDivElementRef = { current: null } // like ref, since can't useRef() here
       let hasCalled = false // flag to run ref callback only once
 
+      // make sure the ---out-transition has been removed
+      modalOverlayRef.current?.classList.remove(styles['--out-transition'])
+
       modalsArr.current.push([
         <div
           key={Math.random()} // since the key is set only on push, random value should be fine
@@ -147,35 +150,40 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     return push(content, { popLast: true, ...options })
   }
 
-  const pop: Modal['pop'] = (options = {}) => {
-    if (!modalsArr.current.length) return //no pages existed, skip this action
+  const pop: Modal['pop'] = (options = {}) =>
+    new Promise((resolve) => {
+      const len = modalsArr.current.length
+      if (!len) throw Error('No modal in the stack to pop') //no pages existed, skip this action
 
-    const disableAnimation = _handleAnimationOption(options)
-    if (disableAnimation) {
-      modalsArr.current.pop()
-      forceUpdate()
-      return
-    }
+      const disableAnimation = _handleAnimationOption(options)
+      if (disableAnimation) {
+        const res = modalsArr.current.pop()
+        forceUpdate()
+        resolve(res as [ReactNode, HTMLDivElementRef])
+        return
+      }
 
-    /* transition */
-    const len = modalOverlayRef.current?.children?.length
-    // select the modal before last one (or last in case of one modal)
-    const modal = modalOverlayRef.current?.children[len && len > 1 ? len - 2 : 0]
-    modal?.classList.add(styles['--back-transition'])
-    setTimeout(() => {
-      modal?.classList.remove(styles['--back-transition'])
-      modalsArr.current.pop()
-      forceUpdate()
-    }, 500)
+      /* transition */
+      // select the modal before last one (or last in case of one modal)
+      const modalEl = modalsArr.current[len > 1 ? len - 2 : 0][1].current
+      if(!modalEl) throw Error('No modal to animate out!'); // this shouldn't happen, just in case!!
 
-    // if last modal, animate overlay hiding
-    if (modalsArr.current.length <= 1) {
-      modal && modalOverlayRef.current?.classList.add(styles['--out-transition'])
-      setTimeout(() => {
-        modal && modalOverlayRef.current?.classList.remove(styles['--out-transition'])
-      }, 250)
-    }
-  }
+      modalEl.classList.add(styles['--back-transition'])
+
+      const resolveHandler = runOnce(() => {
+        modalEl.classList.remove(styles['--back-transition'])
+        const res = modalsArr.current.pop()
+        forceUpdate()
+        resolve(res as [ReactNode, HTMLDivElementRef])
+      })
+
+      modalEl.addEventListener('animationend', resolveHandler, { once: true })
+      modalEl.addEventListener('animationcancel', resolveHandler, { once: true })
+      setTimeout(resolveHandler, 250) //fallback support legacy browser
+
+      // if last modal, animate overlay hiding
+      if (len <= 1) modalOverlayRef.current?.classList.add(styles['--out-transition'])
+    })
 
   const empty: Modal['empty'] = (options = {}) => {
     const disableAnimation = _handleAnimationOption(options)
