@@ -109,10 +109,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       modalsArr.current.push([
         <div
           key={Math.random()} // since the key is set only on push, random value should be fine
-          className={styles.modal + ' ' + className}
+          className={className}
           ref={(el) => {
             if (!el || hasCalled) return // run only once
             hasCalled = true
+
+            setTimeout(() => el.classList.add(styles.modal), 10)
 
             if (type === 'bottom-sheet' && bottomSheetOptions.drag) dragElement(el, bottomSheetOptions, pop)
 
@@ -130,9 +132,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
             if (disableAnimation) resolveHandler()
             else {
-              el.addEventListener('animationend', resolveHandler, { once: true })
-              el.addEventListener('animationcancel', resolveHandler, { once: true })
-              setTimeout(resolveHandler, 250) //fallback support legacy browser
+              el.addEventListener('transitionend', resolveHandler, { once: true })
+              el.addEventListener('transitioncancel', resolveHandler, { once: true })
+              // setTimeout(resolveHandler, 250) //fallback support legacy browser
             }
 
             elementRef.current = el
@@ -177,9 +179,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         resolve(res as [ReactNode, HTMLDivElementRef])
       })
 
-      modalEl.addEventListener('animationend', resolveHandler, { once: true })
-      modalEl.addEventListener('animationcancel', resolveHandler, { once: true })
-      setTimeout(resolveHandler, 250) //fallback support legacy browser
+      modalEl.addEventListener('transitionend', resolveHandler, { once: true })
+      modalEl.addEventListener('transitioncancel', resolveHandler, { once: true })
+      // setTimeout(resolveHandler, 250) //fallback support legacy browser
 
       // if last modal, animate overlay hiding
       if (len <= 1) modalOverlayRef.current?.classList.add(styles['--out-transition'])

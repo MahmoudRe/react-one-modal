@@ -37,7 +37,7 @@
   animation: overlayFadeIn 0.25s ease;
 }
 .overlay[data-modal-type='floating'].--out-transition {
-  animation: overlayFadeOut 0.25s ease forwards;
+  animation: overlayFadeOut 0.25s ease both;
 }
 @keyframes overlayFadeIn {
   from {
@@ -66,7 +66,6 @@
   position: absolute;
   background: var(--modal-color-bg, white);
   /* padding: 2rem; */
-  transition: all 0.25s ease;
   white-space: initial;
 }
 .overlay[data-modal-type='full-page'] .modal {
@@ -85,125 +84,67 @@
 
 /* In/Out zoom-in animation -------- */
 
-@keyframes zoomInAnimation {
-  from {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+.overlay[data-animation='zoom-in'] > * {
+  transition: transform 0.15s, opacity 0.15s;
+  transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.2);
+  transform: scale(0.5);
+  opacity: 0;
+  visibility: hidden;
 }
-@keyframes zoomOutBottom {
-  from {
-    transform: scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: scale(0.6);
-    opacity: 0;
-  }
-}
-
 .overlay[data-animation='zoom-in'] .modal {
-  transition: all 0.15s ease-in-out;
-  animation: zoomInAnimation 0.15s cubic-bezier(0.18, 0.8, 0.74, 1.14);
+  transform: scale(1);
+  opacity: 1;
+  visibility: visible;
 }
-.overlay[data-animation='zoom-in']
-  .modal.--back-transition
-  + div {
-  animation: zoomOutBottom 0.15s ease forwards;
-  pointer-events: none;
-}
-.overlay[data-animation='zoom-in']
-  .modal.--back-transition:last-child {
-  transform: scale(0.5);
+.overlay[data-animation='zoom-in'] .modal.--back-transition + div,
+.overlay[data-animation='zoom-in'] .modal.--back-transition:last-child,
+.overlay[data-animation='zoom-in'] .modal:not(:last-child):not(.--back-transition) {
+  transition-timing-function: ease-in-out;
+  transform: scale(0.6);
   opacity: 0;
   pointer-events: none;
-}
-.overlay[data-animation='zoom-in']
-  .modal:not(:last-child):not(.--back-transition) {
-  transform: scale(0.5);
-  opacity: 0;
-  pointer-events: none;
+  visibility: visible;
 }
 
 /* In/Out slide animation -------- */
 
-@keyframes slideIn {
-  from {
-    transform: translate(100vw, 0);
-  }
-  to {
-    transform: translate(0, 0);
-  }
+.overlay[data-animation='slide'] > * {
+  transition: transform 0.25s ease;
+  transform: translate(100vw, 0);
+  visibility: hidden;
 }
-@keyframes slideOut {
-  from {
-    transform: translate(0, 0);
-  }
-  to {
-    transform: translate(100vw, 0);
-  }
-}
-
 .overlay[data-animation='slide'] .modal {
-  animation: slideIn 0.25s ease;
+  transform: translate(0, 0);
+  visibility: visible;
 }
-.overlay[data-animation='slide']
-  .modal.--back-transition
-  + div {
-  animation: slideOut 0.25s ease forwards;
-  pointer-events: none;
-}
-.overlay[data-animation='slide']
-  .modal.--back-transition:last-child {
+.overlay[data-animation='slide'] .modal.--back-transition + div,
+.overlay[data-animation='slide'] .modal.--back-transition:last-child {
   transform: translate(100vw, 0);
   pointer-events: none;
+  visibility: visible;
 }
-.overlay[data-animation='slide']
-  .modal:not(:last-child):not(.--back-transition) {
+.overlay[data-animation='slide'] .modal:not(:last-child):not(.--back-transition) {
   transform: translate(-100vw, 0);
   pointer-events: none;
+  visibility: visible;
 }
 
 /* In/Out slide bottom animation -------- */
 
-@keyframes slideInBottom {
-  from {
-    transform: translate(0, 100vh);
-  }
-  to {
-    transform: translate(0, 0);
-  }
+.overlay[data-animation='slide-bottom'] > * {
+  transition: transform 0.25s cubic-bezier(0, 0.3, 0.15, 1.1);
+  transform: translate(0, 100vh);
+  visibility: hidden;
 }
-@keyframes slideOutBottom {
-  from {
-    transform: translate(0, 0);
-  }
-  to {
-    transform: translate(0, 100vh);
-  }
-}
-
 .overlay[data-animation='slide-bottom'] .modal {
-  /* transition: all 0.25s ease-in-out; */
-  animation: slideInBottom 0.25s cubic-bezier(0, 0.3, 0.15, 1.1);
+  transform: translate(0, 0);
+  visibility: visible;
 }
-.overlay[data-animation='slide-bottom']
-  .modal.--back-transition
-  + div {
-  animation: slideOutBottom 0.25s ease forwards;
-  pointer-events: none;
-}
-.overlay[data-animation='slide-bottom']
-  .modal.--back-transition:last-child {
+.overlay[data-animation='slide-bottom'] .modal.--back-transition + div,
+.overlay[data-animation='slide-bottom'] .modal.--back-transition:last-child,
+.overlay[data-animation='slide-bottom'] .modal:not(:last-child):not(.--back-transition) {
+  transition-timing-function: ease-in-out;
   transform: translate(0, 100vh);
   pointer-events: none;
-}
-.overlay[data-animation='slide-bottom']
-  .modal:not(:last-child):not(.--back-transition) {
-  transform: translate(0, 100vh);
-  pointer-events: none;
+  visibility: visible;
 }
