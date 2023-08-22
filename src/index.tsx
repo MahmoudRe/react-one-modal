@@ -35,7 +35,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     colorBackground, // default 'white', also it can be set by css variable --modal-color-bg
     attributes = {},
     attributesOverlay, // pass the reset to modal container/overlay
-    children // if existed, add them as the first
+    children, // if existed, add them as the first
+    onESC,
+    onClickOverlay
   } = props
 
   const modalOverlayRef = useRef<HTMLDivElement>(null)
@@ -262,7 +264,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       resolve(res ?? modalsArr.current[modalsArr.current.length - 1])
     })
 
-  useImperativeHandle(ref, () => ({
+  const controlFunctions = {
     push,
     pop,
     transit,
@@ -270,10 +272,23 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     hide,
     show,
     animation: animation.current
-  }))
+  }
+  useImperativeHandle(ref, () => controlFunctions)
 
   useEffect(() => {
     if (children) push(children)
+
+    const keyDownHandler = (ev: KeyboardEvent) => {
+      if (ev.key !== 'Escape') return
+      if (typeof onESC === 'string') controlFunctions[onESC]()
+      if (typeof onESC === 'function') onESC(ev)
+    }
+
+    onESC && document.addEventListener('keydown', keyDownHandler)
+
+    return () => {
+      onESC && document.removeEventListener('keydown', keyDownHandler)
+    }
   }, [])
 
   return createPortal(
@@ -283,6 +298,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       data-modal-type={type}
       data-modal-position={position}
       ref={modalOverlayRef}
+      onClick={(ev) => {
+        if (!onClickOverlay || ev.currentTarget != ev.target) return
+        if (typeof onClickOverlay === 'string') controlFunctions[onClickOverlay]()
+        if (typeof onClickOverlay === 'function') onClickOverlay(ev.nativeEvent)  //nativeEvent, just in case of using addEventListener() later
+      }}
       style={{
         display: !modalsArr.current.length || isHidden ? 'none' : undefined,
         ['--modal-color-overlay' as any]: colorBackgroundOverlay || undefined,

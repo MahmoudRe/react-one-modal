@@ -1,4 +1,4 @@
-import { ReactNode, PropsWithChildren } from 'react'
+import React, { ReactNode, PropsWithChildren } from 'react'
 
 export interface Modal {
   push: (content: ReactNode, options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
@@ -42,6 +42,8 @@ export interface ModalProps {
   attributes?: {}
   attributesOverlay?: PropsWithChildren
   children?: ReactNode
+  onESC?: 'hide' | 'empty' | 'pop' | null | { (event: KeyboardEvent): void }
+  onClickOverlay?: 'hide' | 'empty' | 'pop' | null | { (event: MouseEvent): void }
 }
 
 export interface ModalAnimation {
