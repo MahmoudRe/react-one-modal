@@ -24,18 +24,18 @@ import { dragElement } from './bottom-sheet-drag'
 
 export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const {
-    className = '',
-    classNameOverlay = '', // className for modal container/overlay
-    attributes = {},
-    size = 999, // the number of pages to preserve in the stack before start dropping out old pages
-    colorOverlay, // default #00000099, also it can be set by css variable --modal-color-overlay
-    colorBackground, // default 'white', also it can be set by css variable --modal-color-bg
     type = 'floating', // ['floating', 'full-page', 'bottom-sheet']
     bottomSheetOptions = {} as BottomSheetOptions,
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
+    stackSize = 999, // the number of pages to preserve in the stack before start dropping out old pages
     animation: animationProps = {},
-    children, // if existed, add them as the first
-    attributesOverlay // pass the reset to modal container/overlay
+    className = '',
+    classNameOverlay = '', // className for modal container/overlay
+    colorBackgroundOverlay, // default #00000099, also it can be set by css variable --modal-color-overlay
+    colorBackground, // default 'white', also it can be set by css variable --modal-color-bg
+    attributes = {},
+    attributesOverlay, // pass the reset to modal container/overlay
+    children // if existed, add them as the first
   } = props
 
   const modalOverlayRef = useRef<HTMLDivElement>(null)
@@ -123,7 +123,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
               if (popLast && modalsArr.current.length > 1) {
                 modalsArr.current.splice(modalsArr.current.length - 2, 1) // remove before last
                 forceUpdate()
-              } else if (modalsArr.current.length > size) {
+              } else if (modalsArr.current.length > stackSize) {
                 modalsArr.current.shift() // remove last element
                 forceUpdate()
               }
@@ -255,11 +255,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const show: Modal['show'] = (content: ReactNode, options: ModalOneTimeOptions = {}) =>
     new Promise((resolve) => {
-      let res;
-      if (content)  res = push(content, options)
+      let res
+      if (content) res = push(content, options)
 
       setHidden(false)
-      resolve(res ?? modalsArr.current[modalsArr.current.length - 1]);
+      resolve(res ?? modalsArr.current[modalsArr.current.length - 1])
     })
 
   useImperativeHandle(ref, () => ({
@@ -285,7 +285,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       ref={modalOverlayRef}
       style={{
         display: !modalsArr.current.length || isHidden ? 'none' : undefined,
-        ['--modal-color-overlay' as any]: colorOverlay || undefined,
+        ['--modal-color-overlay' as any]: colorBackgroundOverlay || undefined,
         ['--modal-color-bg' as any]: colorBackground || undefined,
         background: modalsArr.current.length > 1 && !(type == 'floating') ? 'var(--modal-color-bg)' : undefined
       }}

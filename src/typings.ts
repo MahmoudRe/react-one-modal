@@ -25,24 +25,23 @@ export interface BottomSheetOptions {
 }
 
 export interface ModalProps {
-  className?: string
-  classNameOverlay?: string
-  attributes?: {}
-  size?: number
-  colorOverlay?: string // default #00000099, also it can be set by css variable --modal-color-overlay
-  colorBackground?: string // default 'white', also it can be set by css variable --modal-color-bg
   type?: 'floating' | 'full-page' | 'bottom-sheet'
-  bottomSheetOptions?: BottomSheetOptions
   position?: 'top' | 'center' | 'bottom'
-  callback?: (name: string, option?: ModalOneTimeOptions, content?: ReactNode) => any
+  bottomSheetOptions?: BottomSheetOptions
+  stackSize?: number
   animation?:
     | false
     | {
         disable?: ModalAnimation['disable']
         type?: ModalAnimation['type']
       }
-  children?: ReactNode
+  className?: string
+  classNameOverlay?: string
+  colorBackground?: string // default 'white', also it can be set by css variable --modal-color-bg
+  colorBackgroundOverlay?: string // default #00000099, also it can be set by css variable --modal-color-overlay
+  attributes?: {}
   attributesOverlay?: PropsWithChildren
+  children?: ReactNode
 }
 
 export interface ModalAnimation {
