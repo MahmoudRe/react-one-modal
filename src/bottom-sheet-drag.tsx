@@ -12,7 +12,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     swipeThreshold = 10,
     dynamicHeight = true,
     closeByDragDown = true,
-    headerSelector
+    headerSelector = ''
   } = options
 
   // sort positions ASC just in case

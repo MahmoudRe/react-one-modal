@@ -14,14 +14,14 @@ export interface HTMLDivElementRef {
   current: HTMLDivElement | null
 }
 export interface BottomSheetOptions {
-  drag: boolean
-  positions: number[]
-  startPosition: number
-  closePosition: number
-  swipeThreshold: number
-  dynamicHeight: number
-  closeByDragDown: boolean
-  headerSelector: string
+  drag?: boolean
+  positions?: number[]
+  startPosition?: number
+  closePosition?: number
+  swipeThreshold?: number
+  dynamicHeight?: number
+  closeByDragDown?: boolean
+  headerSelector?: string
 }
 
 export interface ModalProps {
