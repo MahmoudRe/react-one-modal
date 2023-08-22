@@ -3,10 +3,10 @@ import { ReactNode, PropsWithChildren } from 'react'
 export interface Modal {
   push: (content: ReactNode, options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
   pop: (options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
-  transit: (content: ReactNode, options?: ModalOneTimeOptions) => void
-  empty: (options?: ModalOneTimeOptions) => void
-  hide: (options?: ModalOneTimeOptions) => void
-  show: (content: ReactNode, options?: ModalOneTimeOptions) => void
+  transit: (content: ReactNode, options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
+  empty: (options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef][]>
+  hide: (options?: ModalOneTimeOptions) => Promise<void>
+  show: (content: ReactNode, options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
   animation: ModalAnimation
 }
 

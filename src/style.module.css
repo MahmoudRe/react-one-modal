@@ -109,7 +109,7 @@
 /* In/Out slide animation -------- */
 
 .overlay[data-animation='slide'] > * {
-  transition: transform 0.25s ease;
+  transition: transform 0.25s ease-in-out;
   transform: translate(100vw, 0);
   visibility: hidden;
 }
@@ -125,6 +125,7 @@
 }
 .overlay[data-animation='slide'] .modal:not(:last-child):not(.--back-transition) {
   transform: translate(-100vw, 0);
+  transition-delay: 15ms;
   pointer-events: none;
   visibility: visible;
 }

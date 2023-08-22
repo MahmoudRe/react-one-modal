@@ -114,7 +114,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
             if (!el || hasCalled) return // run only once
             hasCalled = true
 
-            setTimeout(() => el.classList.add(styles.modal), 10)
+            //set class after the element is loaded into the DOM, so the transition takes affect
+            setTimeout(() => el.classList.add(styles.modal), 5)
 
             if (type === 'bottom-sheet' && bottomSheetOptions.drag) dragElement(el, bottomSheetOptions, pop)
 
@@ -168,7 +169,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       /* transition */
       // select the modal before last one (or last in case of one modal)
       const modalEl = modalsArr.current[len > 1 ? len - 2 : 0][1].current
-      if(!modalEl) throw Error('No modal to animate out!'); // this shouldn't happen, just in case!!
+      if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
 
       modalEl.classList.add(styles['--back-transition'])
 
@@ -187,49 +188,79 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (len <= 1) modalOverlayRef.current?.classList.add(styles['--out-transition'])
     })
 
-  const empty: Modal['empty'] = (options = {}) => {
-    const disableAnimation = _handleAnimationOption(options)
-    if (disableAnimation) {
-      modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
-      forceUpdate()
-      return
-    }
+  const empty: Modal['empty'] = (options = {}) =>
+    new Promise((resolve) => {
+      const len = modalsArr.current.length
+      const res = [...modalsArr.current]
 
-    /* transition */
-    const modal = modalOverlayRef.current?.lastChild as HTMLElement
-    modal?.classList.add(styles['--back-transition'])
-    modal && modalOverlayRef.current?.classList.add(styles['--out-transition'])
-    setTimeout(() => {
-      modal?.classList.remove(styles['--back-transition'])
-      modal && modalOverlayRef.current?.classList.remove(styles['--out-transition'])
-      modalsArr.current.splice(0, modalsArr.current.length)
-      forceUpdate()
-    }, 250)
-  }
+      const disableAnimation = _handleAnimationOption(options)
+      if (disableAnimation || !len) {
+        modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
+        forceUpdate()
+        resolve(res)
+        return
+      }
 
-  const hide: Modal['hide'] = (options: ModalOneTimeOptions = {}) => {
-    const disableAnimation = _handleAnimationOption(options)
-    if (disableAnimation) {
-      setHidden(true)
-      return
-    }
+      /* transition */
+      const modalEl = modalsArr.current[len - 1][1].current
+      if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
 
-    /* transition */
-    const modal = modalOverlayRef.current?.lastChild as HTMLElement
-    modal?.classList.add(styles['--back-transition'])
-    modal && modalOverlayRef.current?.classList.add(styles['--out-transition'])
-    setTimeout(() => {
-      modal?.classList.remove(styles['--back-transition'])
-      modal && modalOverlayRef.current?.classList.remove(styles['--out-transition'])
-      setHidden(true)
-    }, 250)
-  }
+      modalEl.classList.add(styles['--back-transition'])
 
-  const show: Modal['show'] = (content: ReactNode, options: ModalOneTimeOptions = {}) => {
-    if (content) push(content, options)
+      const resolveHandler = runOnce(() => {
+        modalEl.classList.remove(styles['--back-transition'])
+        modalsArr.current.splice(0, modalsArr.current.length)
+        forceUpdate()
+        resolve(res)
+      })
 
-    setHidden(false)
-  }
+      modalEl.addEventListener('transitionend', resolveHandler, { once: true })
+      modalEl.addEventListener('transitioncancel', resolveHandler, { once: true })
+      // setTimeout(resolveHandler, 250) //fallback support legacy browser
+
+      // if there was modal, animate overlay hiding
+      if (len) modalOverlayRef.current?.classList.add(styles['--out-transition'])
+    })
+
+  const hide: Modal['hide'] = (options: ModalOneTimeOptions = {}) =>
+    new Promise((resolve) => {
+      const len = modalsArr.current.length
+
+      const disableAnimation = _handleAnimationOption(options)
+      if (disableAnimation) {
+        setHidden(true)
+        resolve()
+        return
+      }
+
+      /* transition */
+      const modalEl = modalsArr.current[len - 1][1].current
+      if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
+
+      modalEl.classList.add(styles['--back-transition'])
+
+      const resolveHandler = runOnce(() => {
+        modalEl.classList.remove(styles['--back-transition'])
+        setHidden(true)
+        resolve()
+      })
+
+      modalEl.addEventListener('transitionend', resolveHandler, { once: true })
+      modalEl.addEventListener('transitioncancel', resolveHandler, { once: true })
+      // setTimeout(resolveHandler, 250) //fallback support legacy browser
+
+      // if there was modal, animate overlay hiding
+      if (len) modalOverlayRef.current?.classList.add(styles['--out-transition'])
+    })
+
+  const show: Modal['show'] = (content: ReactNode, options: ModalOneTimeOptions = {}) =>
+    new Promise((resolve) => {
+      let res;
+      if (content)  res = push(content, options)
+
+      setHidden(false)
+      resolve(res ?? modalsArr.current[modalsArr.current.length - 1]);
+    })
 
   useImperativeHandle(ref, () => ({
     push,
