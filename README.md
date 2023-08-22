@@ -237,11 +237,12 @@ const FullPageModalLastStep = () => {
 
 ## To Do
 
-- [ ] Promisify all control functions (push/pop/close/show/hide) to resolve when animation is done.
+- [x] Promisify all control functions (push/pop/close/show/hide) to resolve when animation is done.
 - [ ] Notification style modal (auto hide with optional close button)
+- [ ] Confirm style modal (Two bottom with callback + auto close)
 - [ ] Disable page scroll when modal is open
 - [x] Move to TypeScript
-- [ ] Close using ESC or clicking outside the modal
+- [x] Close using ESC or clicking outside the modal (Optionally)
 - [x] Auto load css when importing component, such that no need to import stylesheet by end user (check styled-components?)
 - [ ] Write proper documentation
 - [ ] Add `back`, `next`, `pushLast` control functions to traverse the stack while keeping all components live
