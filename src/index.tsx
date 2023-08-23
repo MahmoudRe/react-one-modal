@@ -29,6 +29,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
     stackSize = 999, // the number of pages to preserve in the stack before start dropping out old pages
     animation: animationProps = {},
+    rootElement = document.body, // HTMLElement where this modal will be appended to
     className = '',
     classNameOverlay = '', // className for modal container/overlay
     colorBackgroundOverlay, // default #00000099, also it can be set by css variable --modal-color-overlay
@@ -313,7 +314,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     >
       {modalsArr.current.map((e) => e[0])}
     </div>,
-    document.body
+    rootElement
   )
 })
 
