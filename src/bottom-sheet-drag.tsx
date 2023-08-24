@@ -1,4 +1,4 @@
-import { BottomSheetOptions } from "./typings"
+import { BottomSheetOptions } from './typings'
 
 export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeModal: Function) {
   let yDiff = 0,
@@ -9,16 +9,11 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     positions = [50, 90],
     startPosition: currPosition = positions[0],
     closePosition = Math.max(positions[0] / 2, 20),
-    swipeThreshold = 10,
+    swipeThreshold = 15,
     dynamicHeight = true,
     closeByDragDown = true,
     headerSelector
   } = options
-
-  const transition =
-    getComputedStyle(el).transition +
-    ', top .25s cubic-bezier(0, 0.3, 0.15, 1)' +
-    ', height .25s cubic-bezier(0, 0.3, 0.15, 1)'
 
   // sort positions ASC just in case
   positions.sort((a, b) => a - b)
@@ -26,9 +21,8 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
   const highestPositionPx = (highestPosition * window.innerHeight) / 100
 
   //set position of initial open
-  if (dynamicHeight) el.style.height = currPosition + '%'
-  else el.style.height = highestPosition + '%'
-  el.style.top = 'calc(100% - ' + currPosition + '%)'
+  el.style.setProperty('--bottom-sheet-height', (dynamicHeight ? currPosition : highestPosition) + '%')
+  el.style.setProperty('--bottom-sheet-top', 'calc(100% - ' + currPosition + '%)')
 
   // set up event listener for the start of the drag
   let headerElement = document.querySelector<HTMLElement>(headerSelector as string)
@@ -77,13 +71,15 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     // delay height change according to scroll direction to prevent flickering at bottom of sheet
     if (yDiff > 0) {
       // scroll up: decrease height later
-      el.style.top = el.offsetTop - yDiff + 'px'
-      const currentPositionPx = window.innerHeight - el.offsetTop - yDiff 
-      if (dynamicHeight || currentPositionPx > highestPositionPx) el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
+      el.style.setProperty('--bottom-sheet-top', el.offsetTop - yDiff + 'px')
+
+      const currentPositionPx = window.innerHeight - el.offsetTop - yDiff
+      if (dynamicHeight || currentPositionPx > highestPositionPx)
+        el.style.setProperty('--bottom-sheet-height', 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)')
     } else {
       // scroll down: increase the height first
-      if (dynamicHeight) el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
-      el.style.top = el.offsetTop - yDiff + 'px'
+      if (dynamicHeight) el.style.setProperty('--bottom-sheet-height', 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)')
+      el.style.setProperty('--bottom-sheet-top', el.offsetTop - yDiff + 'px')
     }
   }
 
@@ -93,10 +89,10 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     document.ontouchend = null
     document.onmousemove = null
     document.removeEventListener('touchmove', dragMove as EventListener, false)
-    el.style.transition = transition
+    el.style.transition = ''
 
     let nextPosition = currPosition
-    let currFloatingPos = 100 - (parseInt(el.style.top) / window.innerHeight) * 100 // get percentage of the top, then (100 - *) to get percentage from the bottom
+    let currFloatingPos = 100 - (parseInt(getComputedStyle(el).top) / window.innerHeight) * 100 // get percentage of the top, then (100 - *) to get percentage from the bottom
 
     // swipe up
     if (yDiff > swipeThreshold && scrollEnd) {
@@ -124,9 +120,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     }
 
     currPosition = nextPosition
-    el.style.top = 'calc(100% - ' + nextPosition + '%)'
-
-    if (dynamicHeight) el.style.height = nextPosition + '%'
-    else el.style.height = highestPosition + '%' // in case height has increased by drag above highestPosition
+    el.style.setProperty('--bottom-sheet-top', 'calc(100% - ' + nextPosition + '%)')
+    el.style.setProperty('--bottom-sheet-height', (dynamicHeight ? nextPosition : highestPosition) + '%')
   }
 }
