@@ -22,10 +22,12 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
 
   // sort positions ASC just in case
   positions.sort((a, b) => a - b)
+  const highestPosition = positions[positions.length - 1]
+  const highestPositionPx = (highestPosition * window.innerHeight) / 100
 
   //set position of initial open
   if (dynamicHeight) el.style.height = currPosition + '%'
-  else el.style.height = positions[positions.length - 1] + '%'
+  else el.style.height = highestPosition + '%'
   el.style.top = 'calc(100% - ' + currPosition + '%)'
 
   // set up event listener for the start of the drag
@@ -63,12 +65,11 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
 
   function dragMove(ev: MouseEvent | TouchEvent | any) {
     // calculate the new cursor position:
-    yDiff = yPrev - (ev.clientY || ev.touches[0].clientY)     // if yDiff is positive, direction is up, and vise versa
+    yDiff = yPrev - (ev.clientY || ev.touches[0].clientY) // if yDiff is positive, direction is up, and vise versa
     yPrev = ev.clientY || ev.touches[0].clientY
 
-    // if direction is up and at the last position enable scrolling, or if scroll hasn't reached top yet
-    if(yDiff > 0 && currPosition === positions[positions.length - 1] || !scrollEnd)
-      return;
+    // if direction is up and at the highest position enable scrolling, or if scroll hasn't reached top yet
+    if ((yDiff > 0 && currPosition === highestPosition) || !scrollEnd) return
 
     // prevent scrolling if we didn't react the top nor nested elements is scrolled
     ev.preventDefault()
@@ -77,12 +78,11 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     if (yDiff > 0) {
       // scroll up: decrease height later
       el.style.top = el.offsetTop - yDiff + 'px'
-      if (dynamicHeight)
-        el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
+      const currentPositionPx = window.innerHeight - el.offsetTop - yDiff 
+      if (dynamicHeight || currentPositionPx > highestPositionPx) el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
     } else {
       // scroll down: increase the height first
-      if (dynamicHeight)
-        el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
+      if (dynamicHeight) el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
       el.style.top = el.offsetTop - yDiff + 'px'
     }
   }
@@ -100,8 +100,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
 
     // swipe up
     if (yDiff > swipeThreshold && scrollEnd) {
-      nextPosition =
-        positions[Math.min(positions.length - 1, positions.indexOf(currPosition) + 1)]
+      nextPosition = positions[Math.min(positions.length - 1, positions.indexOf(currPosition) + 1)]
     }
     // swipe down
     else if (yDiff < -1 * swipeThreshold && scrollEnd) {
@@ -119,8 +118,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     // drag up/down
     else {
       nextPosition = positions.reduce(
-        (acc, pos) =>
-          Math.abs(acc - currFloatingPos) < Math.abs(pos - currFloatingPos) ? acc : pos,
+        (acc, pos) => (Math.abs(acc - currFloatingPos) < Math.abs(pos - currFloatingPos) ? acc : pos),
         currPosition
       )
     }
@@ -129,5 +127,6 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     el.style.top = 'calc(100% - ' + nextPosition + '%)'
 
     if (dynamicHeight) el.style.height = nextPosition + '%'
+    else el.style.height = highestPosition + '%' // in case height has increased by drag above highestPosition
   }
 }
