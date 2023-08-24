@@ -6,9 +6,9 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     scrollEnd = true
 
   let {
-    positions = [50, 100],
+    positions = [50, 90],
     startPosition: currPosition = positions[0],
-    closePosition = positions[0] / 2,
+    closePosition = Math.max(positions[0] / 2, 20),
     swipeThreshold = 10,
     dynamicHeight = true,
     closeByDragDown = true,
@@ -58,29 +58,27 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
 
   function dragMove(ev: MouseEvent | TouchEvent | any) {
     // calculate the new cursor position:
-    yDiff = yPrev - (ev.clientY || ev.touches[0].clientY)
+    yDiff = yPrev - (ev.clientY || ev.touches[0].clientY)     // if yDiff is positive, direction is up, and vise versa
     yPrev = ev.clientY || ev.touches[0].clientY
 
-    // set the element's new position
-    if (el.offsetTop - yDiff > positions[positions.length - 1] && scrollEnd) {
-      // prevent scrolling if we didn't react the top nor nested elements is scrolled
-      ev.preventDefault()
+    // if direction is up and at the last position enable scrolling, or if scroll hasn't reached top yet
+    if(yDiff > 0 && currPosition === positions[positions.length - 1] || !scrollEnd)
+      return;
 
-      // delay height change according to scroll direction to prevent flickering at bottom of sheet
-      if (yDiff > 0) {
-        // scroll up: decrease height later
-        el.style.top = el.offsetTop - yDiff + 'px'
-        if (dynamicHeight)
-          el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
-      } else {
-        // scroll down: increase the height first
-        if (dynamicHeight)
-          el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
-        el.style.top = el.offsetTop - yDiff + 'px'
-      }
+    // prevent scrolling if we didn't react the top nor nested elements is scrolled
+    ev.preventDefault()
+
+    // delay height change according to scroll direction to prevent flickering at bottom of sheet
+    if (yDiff > 0) {
+      // scroll up: decrease height later
+      el.style.top = el.offsetTop - yDiff + 'px'
+      if (dynamicHeight)
+        el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
     } else {
-      // enable scroll + prevent drag down after reaching top
-      scrollEnd = false
+      // scroll down: increase the height first
+      if (dynamicHeight)
+        el.style.height = 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)'
+      el.style.top = el.offsetTop - yDiff + 'px'
     }
   }
 
