@@ -15,6 +15,11 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     headerSelector
   } = options
 
+  const transition =
+    getComputedStyle(el).transition +
+    ', top .25s cubic-bezier(0, 0.3, 0.15, 1)' +
+    ', height .25s cubic-bezier(0, 0.3, 0.15, 1)'
+
   // sort positions ASC just in case
   positions.sort((a, b) => a - b)
 
@@ -88,7 +93,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     document.ontouchend = null
     document.onmousemove = null
     document.removeEventListener('touchmove', dragMove as EventListener, false)
-    el.style.transition = 'all .25s cubic-bezier(0, 0.3, 0.15, 1)'
+    el.style.transition = transition
 
     let nextPosition = currPosition
     let currFloatingPos = 100 - (parseInt(el.style.top) / window.innerHeight) * 100 // get percentage of the top, then (100 - *) to get percentage from the bottom
@@ -119,9 +124,6 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
         currPosition
       )
     }
-
-    if (dynamicHeight && parseInt(el.style.top) < nextPosition)
-      el.style.transition += ', height .25s cubic-bezier(0, 0.3, 0.15, 1) .1s'
 
     currPosition = nextPosition
     el.style.top = 'calc(100% - ' + nextPosition + '%)'
