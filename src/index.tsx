@@ -25,7 +25,7 @@ import { dragElement } from './bottom-sheet-drag'
 export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const {
     type = 'floating', // ['floating', 'full-page', 'bottom-sheet']
-    bottomSheetOptions = {} as BottomSheetOptions,
+    bottomSheetOptions = {},
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
     stackSize = 999, // the number of pages to preserve in the stack before start dropping out old pages
     animation: animationProps = {},
@@ -54,7 +54,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       ? 'slide'
       : props.type == 'bottom-sheet' || props.position == 'bottom'
       ? 'slide-bottom'
-      : 'zoom-in' // choose from [ false | 'slide' | 'slide-bottom' | 'zoom-in' ]
+      : 'zoom-in'
   )
   const animation = useRef<ModalAnimation>({
     disable: animationProps === false || !!animationProps.disable,
@@ -62,15 +62,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       return _animationType.current
     },
     set type(type: ModalAnimation['type']) {
+      if (!type || !modalOverlayRef.current) return
       _animationType.current = type
-
-      // HTML element state
-      if (type && modalOverlayRef.current) {
-        modalOverlayRef.current.dataset.animation = type
-        modalOverlayRef.current.removeAttribute('data-animation-pause')
-      } else if (modalOverlayRef.current) {
-        modalOverlayRef.current.setAttribute('data-animation-pause', '')
-      }
+      modalOverlayRef.current.dataset.animation = type  // Update DOM
     },
     pause: (timeout?: number) => {
       // if timeout is not passed, pause indefinitely
@@ -302,7 +296,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       onClick={(ev) => {
         if (!onClickOverlay || ev.currentTarget != ev.target) return
         if (typeof onClickOverlay === 'string') controlFunctions[onClickOverlay]()
-        if (typeof onClickOverlay === 'function') onClickOverlay(ev.nativeEvent)  //nativeEvent, just in case of using addEventListener() later
+        if (typeof onClickOverlay === 'function') onClickOverlay(ev.nativeEvent) //nativeEvent, just in case of using addEventListener() later
       }}
       style={{
         display: !modalsArr.current.length || isHidden ? 'none' : undefined,
