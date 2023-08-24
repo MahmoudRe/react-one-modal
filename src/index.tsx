@@ -302,7 +302,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         display: !modalsArr.current.length || isHidden ? 'none' : undefined,
         ['--modal-color-overlay' as any]: colorBackgroundOverlay || undefined,
         ['--modal-color-bg' as any]: colorBackground || undefined,
-        background: modalsArr.current.length > 1 && !(type == 'floating') ? 'var(--modal-color-bg)' : undefined
       }}
       {...attributesOverlay}
     >
