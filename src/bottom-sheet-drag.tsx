@@ -1,16 +1,17 @@
-import { BottomSheetOptions } from './typings'
+import { BottomSheetOptions, ScrollPosition } from './typings'
+import { getScrollPosition } from './utils'
 
 export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeModal: Function) {
   let yDiff = 0,
     yPrev = 0,
-    scrollEnd = true
+    scrollPosition: ScrollPosition = 'top'
 
   let {
     positions = [50, 90],
     startPosition: currPosition = positions[0],
     closePosition = Math.max(positions[0] / 2, 20),
     swipeThreshold = 15,
-    dynamicHeight = true,
+    dynamicHeight = false,
     closeByDragDown = true,
     headerSelector
   } = options
@@ -34,16 +35,8 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     el.ontouchstart = dragStart
   }
 
-  function isScrollEnd(element: HTMLElement): boolean {
-    if (element === el || element.parentElement === el) return element.scrollTop === 0
-
-    if (element?.scrollTop === 0) return isScrollEnd(element.parentElement as HTMLElement)
-
-    return false
-  }
-
   function dragStart(ev: MouseEvent | TouchEvent | any) {
-    scrollEnd = isScrollEnd(ev.target as HTMLElement)
+    scrollPosition = getScrollPosition(ev.target, el)
 
     // get the mouse cursor position at startup:
     yPrev = ev.clientY || ev.touches[0].clientY
@@ -62,22 +55,27 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     yDiff = yPrev - (ev.clientY || ev.touches[0].clientY) // if yDiff is positive, direction is up, and vise versa
     yPrev = ev.clientY || ev.touches[0].clientY
 
-    // if direction is up and at the highest position enable scrolling, or if scroll hasn't reached top yet
-    if ((yDiff > 0 && currPosition === highestPosition) || !scrollEnd) return
+    // enable scrolling in these situation
+    if (
+      (yDiff > 0 && currPosition === highestPosition && scrollPosition === 'top') || //on drag up
+      (yDiff < 0 && currPosition === highestPosition && scrollPosition === 'bottom') || //on drag down
+      scrollPosition === 'middle'
+    )
+      return
 
     // prevent scrolling if we didn't react the top nor nested elements is scrolled
     ev.preventDefault()
 
-    // delay height change according to scroll direction to prevent flickering at bottom of sheet
+    // delay height change according to drag direction to prevent flickering at bottom of sheet
     if (yDiff > 0) {
-      // scroll up: decrease height later
+      // drag up: decrease height later
       el.style.setProperty('--bottom-sheet-top', el.offsetTop - yDiff + 'px')
 
       const currentPositionPx = window.innerHeight - el.offsetTop - yDiff
       if (dynamicHeight || currentPositionPx > highestPositionPx)
         el.style.setProperty('--bottom-sheet-height', 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)')
     } else {
-      // scroll down: increase the height first
+      // drag down: increase the height first
       if (dynamicHeight) el.style.setProperty('--bottom-sheet-height', 'calc(100% - ' + (el.offsetTop - yDiff) + 'px)')
       el.style.setProperty('--bottom-sheet-top', el.offsetTop - yDiff + 'px')
     }
@@ -95,11 +93,11 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     let currFloatingPos = 100 - (parseInt(getComputedStyle(el).top) / window.innerHeight) * 100 // get percentage of the top, then (100 - *) to get percentage from the bottom
 
     // swipe up
-    if (yDiff > swipeThreshold && scrollEnd) {
+    if (yDiff > swipeThreshold && scrollPosition === 'top') {
       nextPosition = positions[Math.min(positions.length - 1, positions.indexOf(currPosition) + 1)]
     }
     // swipe down
-    else if (yDiff < -1 * swipeThreshold && scrollEnd) {
+    else if (yDiff < -1 * swipeThreshold && scrollPosition === 'top') {
       nextPosition = positions[Math.max(0, positions.indexOf(currPosition) - 1)]
       if (closeByDragDown && positions.indexOf(currPosition) === 0) {
         closeModal()

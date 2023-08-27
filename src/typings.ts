@@ -59,3 +59,5 @@ export interface ModalOneTimeOptions {
   popLast?: boolean
   [key: string]: any // to allow this pattern: `onClick={modal.pop}` instead of `onClick={() => modal.pop()}`
 }
+
+export type ScrollPosition = 'top' | 'middle' | 'bottom' | 'no-scroll'
