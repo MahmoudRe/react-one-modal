@@ -6,7 +6,7 @@ import { ScrollPosition } from "./typings"
  * @param {Function} fn
  * @returns {Function} 
  */
-export function runOnce(fn: Function): Function {
+export function runOnce(fn: Function) {
   let flag = false
   return function () {
     if (flag) return
