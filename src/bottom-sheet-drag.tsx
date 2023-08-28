@@ -59,7 +59,8 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
 
     // enable scrolling in these situation
     if (
-      (yDiff > 0 && currPosition === highestPosition && scrollPosition === 'top') ||
+      // (yDiff > 0 && currPosition === highestPosition && scrollPosition === 'top') || // Natural feel, TODO fix: jitter effect
+      (yDiff > 0 && currPosition === highestPosition && scrollPosition !== 'no-scroll') || //on drag up
       (yDiff < 0 && currPosition === highestPosition && scrollPosition === 'bottom') || //on drag down
       scrollPosition === 'middle'
     )
