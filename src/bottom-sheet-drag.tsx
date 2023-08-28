@@ -45,19 +45,21 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
 
     // call a function whenever the cursor moves:
     document.onmousemove = dragMove
-    document.addEventListener('touchmove', dragMove, { passive: false })
+    document.addEventListener('touchmove', dragMoveTouch, { passive: false })
 
     el.style.transition = 'none'
   }
 
-  function dragMove(ev: MouseEvent | TouchEvent | any) {
+  function dragMoveTouch(ev: TouchEvent) {
+    document.removeEventListener('touchmove', dragMoveTouch, false)
+
     // calculate the new cursor position:
-    yDiff = yPrev - (ev.clientY || ev.touches[0].clientY) // if yDiff is positive, direction is up, and vise versa
-    yPrev = ev.clientY || ev.touches[0].clientY
+    yDiff = yPrev - ev.touches[0].clientY // if yDiff is positive, direction is up, and vise versa
+    yPrev = ev.touches[0].clientY
 
     // enable scrolling in these situation
     if (
-      (yDiff > 0 && currPosition === highestPosition && scrollPosition === 'top') || //on drag up
+      (yDiff > 0 && currPosition === highestPosition && scrollPosition === 'top') ||
       (yDiff < 0 && currPosition === highestPosition && scrollPosition === 'bottom') || //on drag down
       scrollPosition === 'middle'
     )
@@ -65,6 +67,15 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
 
     // prevent scrolling if we didn't react the top nor nested elements is scrolled
     ev.preventDefault()
+    document.addEventListener('touchmove', dragMove, { passive: false })
+  }
+
+  function dragMove(ev: MouseEvent | TouchEvent | any) {
+    ev.preventDefault()
+
+    // calculate the new cursor position:
+    yDiff = yPrev - (ev.clientY || ev.touches[0].clientY) // if yDiff is positive, direction is up, and vise versa
+    yPrev = ev.clientY || ev.touches[0].clientY
 
     // delay height change according to drag direction to prevent flickering at bottom of sheet
     if (yDiff > 0) {
