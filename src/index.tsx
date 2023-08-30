@@ -30,6 +30,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     stackSize = 999, // the number of pages to preserve in the stack before start dropping out old pages
     animation: animationProps = {},
     rootElement = document.body, // HTMLElement where this modal will be appended to
+    allowBodyScroll = false,
     className = '',
     classNameOverlay = '', // className for modal container/overlay
     colorBackgroundOverlay, // default #00000099, also it can be set by css variable --modal-color-overlay
@@ -64,7 +65,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     set type(type: ModalAnimation['type']) {
       if (!type || !modalOverlayRef.current) return
       _animationType.current = type
-      modalOverlayRef.current.dataset.animation = type  // Update DOM
+      modalOverlayRef.current.dataset.animation = type // Update DOM
     },
     pause: (timeout?: number) => {
       // if timeout is not passed, pause indefinitely
@@ -99,6 +100,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const disableAnimation = _handleAnimationOption(options)
       const elementRef: HTMLDivElementRef = { current: null } // like ref, since can't useRef() here
       let hasCalled = false // flag to run ref callback only once
+
+      if (!allowBodyScroll) document.body.setAttribute('data-prevent-scroll', '')
 
       // make sure the ---out-transition has been removed
       modalOverlayRef.current?.classList.remove(styles['--out-transition'])
@@ -159,6 +162,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (disableAnimation) {
         const res = modalsArr.current.pop()
         forceUpdate()
+        if (len <= 1) document.body.removeAttribute('data-prevent-scroll')
         resolve(res as [ReactNode, HTMLDivElementRef])
         return
       }
@@ -174,6 +178,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalEl.classList.remove(styles['--back-transition'])
         const res = modalsArr.current.pop()
         forceUpdate()
+        if (len <= 1) document.body.removeAttribute('data-prevent-scroll')
         resolve(res as [ReactNode, HTMLDivElementRef])
       })
 
@@ -194,6 +199,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (disableAnimation || !len) {
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         forceUpdate()
+        document.body.removeAttribute('data-prevent-scroll')
         resolve(res)
         return
       }
@@ -208,6 +214,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalEl.classList.remove(styles['--back-transition'])
         modalsArr.current.splice(0, modalsArr.current.length)
         forceUpdate()
+        document.body.removeAttribute('data-prevent-scroll')
         resolve(res)
       })
 
@@ -226,6 +233,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const disableAnimation = _handleAnimationOption(options)
       if (disableAnimation) {
         setHidden(true)
+        document.body.removeAttribute('data-prevent-scroll')
         resolve()
         return
       }
@@ -239,6 +247,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
         setHidden(true)
+        document.body.removeAttribute('data-prevent-scroll')
         resolve()
       })
 
@@ -256,6 +265,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (content) res = push(content, options)
 
       setHidden(false)
+      if (!allowBodyScroll) document.body.setAttribute('data-prevent-scroll', '')
       resolve(res ?? modalsArr.current[modalsArr.current.length - 1])
     })
 
@@ -301,7 +311,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       style={{
         display: !modalsArr.current.length || isHidden ? 'none' : undefined,
         ['--modal-color-overlay' as any]: colorBackgroundOverlay || undefined,
-        ['--modal-color-bg' as any]: colorBackground || undefined,
+        ['--modal-color-bg' as any]: colorBackground || undefined
       }}
       {...attributesOverlay}
     >

@@ -36,6 +36,7 @@ export interface ModalProps {
         type?: ModalAnimation['type']
       }
   rootElement?: HTMLElement
+  allowBodyScroll?: boolean
   className?: string
   classNameOverlay?: string
   colorBackground?: string // default 'white', also it can be set by css variable --modal-color-bg

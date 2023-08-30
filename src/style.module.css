@@ -173,3 +173,9 @@
   top: 100%;
   visibility: visible;
 }
+
+/* ------------------- */
+
+[data-prevent-scroll] {
+  overflow: hidden !important;
+}
