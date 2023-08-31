@@ -26,7 +26,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
   el.style.setProperty('--bottom-sheet-top', 'calc(100% - ' + currPosition + '%)')
 
   // set up event listener for the start of the drag
-  let headerElement = document.querySelector<HTMLElement>(headerSelector as string)
+  let headerElement = el.querySelector<HTMLElement>(headerSelector as string)
   if (headerElement) {
     headerElement.addEventListener('mousedown', dragStart)
     headerElement.addEventListener('touchstart', dragStart, { passive: false })
