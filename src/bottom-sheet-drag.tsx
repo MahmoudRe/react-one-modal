@@ -109,11 +109,11 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     let currFloatingPos = 100 - (parseInt(getComputedStyle(el).top) / window.innerHeight) * 100 // get percentage of the top, then (100 - *) to get percentage from the bottom
 
     // swipe up
-    if (yDiff > swipeThreshold && scrollPosition === 'top') {
+    if (yDiff > swipeThreshold) {
       nextPosition = positions[Math.min(positions.length - 1, positions.indexOf(currPosition) + 1)]
     }
     // swipe down
-    else if (yDiff < -1 * swipeThreshold && scrollPosition === 'top') {
+    else if (yDiff < -1 * swipeThreshold) {
       nextPosition = positions[Math.max(0, positions.indexOf(currPosition) - 1)]
       if (closeByDragDown && positions.indexOf(currPosition) === 0) {
         closeModal()
