@@ -156,16 +156,20 @@
 /* In/Out slide bottom-sheet animation -------- */
 
 .overlay[data-modal-type='bottom-sheet'][data-animation='slide-bottom'] > * {
-  transition: top 0.25s cubic-bezier(0, 0.3, 0.15, 1), height 0.25s cubic-bezier(0, 0.3, 0.15, 1);
+  transition: top 0.25s cubic-bezier(0, 0.3, 0.15, 1), height 0.25s cubic-bezier(0, 0.3, 0.15, 1) -0.25s;
   top: 100%;
   height: 100%;
   visibility: hidden;
 }
 
+.overlay[data-modal-type='bottom-sheet'] [data-delay-height] {
+  transition: top 0.25s cubic-bezier(0, 0.3, 0.15, 1), height 0.25s cubic-bezier(0, 0.3, 0.15, 1) 0.25s;
+}
+
 .overlay[data-modal-type='bottom-sheet'] [data-prevent-scroll],
 .overlay[data-modal-type='bottom-sheet'] [data-prevent-scroll] * {
-  overflow-y: hidden !important;    /* fallback, TODO FIX: cause page refresh on drag-down */
-  overflow-y: clip !important;
+  overflow-y: hidden !important; /* fallback, TODO FIX: cause page refresh on drag-down */
+  overflow-y: clip !important; /* This fix the above issue, but only on supported browsers */
 }
 
 .overlay[data-modal-type='bottom-sheet'][data-animation='slide-bottom'] .modal {

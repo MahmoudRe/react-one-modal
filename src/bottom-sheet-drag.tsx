@@ -52,6 +52,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     document.addEventListener('touchmove', dragMoveTouch)
 
     el.style.transition = 'none'
+    el.removeAttribute('data-delay-height')
   }
 
   function dragMoveTouch(ev: TouchEvent) {
@@ -134,6 +135,8 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     }
 
     currPosition = nextPosition
+
+    if (nextPosition < currFloatingPos) el.setAttribute('data-delay-height', '')
     el.style.setProperty('--bottom-sheet-top', 'calc(100% - ' + nextPosition + '%)')
     el.style.setProperty('--bottom-sheet-height', (dynamicHeight ? nextPosition : highestPosition) + '%')
   }
