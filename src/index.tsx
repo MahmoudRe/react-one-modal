@@ -117,7 +117,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
             //set class after the element is loaded into the DOM, so the transition takes affect
             setTimeout(() => el.classList.add(styles.modal), 5)
 
-            if (type === 'bottom-sheet' && bottomSheetOptions.drag) dragElement(el, bottomSheetOptions, pop)
+            if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
 
             const resolveHandler = runOnce(() => {
               if (popLast && modalsArr.current.length > 1) {

@@ -11,7 +11,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     startPosition: currPosition = positions[0],
     closePosition = Math.max(positions[0] / 2, 20),
     swipeThreshold = 15,
-    dynamicHeight = false,
+    dynamicHeight = true,
     closeByDragDown = true,
     headerSelector
   } = options

@@ -14,7 +14,7 @@ export interface HTMLDivElementRef {
   current: HTMLDivElement | null
 }
 export interface BottomSheetOptions {
-  drag?: boolean
+  disableDrag?: boolean
   positions?: number[]
   startPosition?: number
   closePosition?: number
