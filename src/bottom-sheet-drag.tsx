@@ -13,7 +13,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     swipeThreshold = 15,
     dynamicHeight = true,
     closeByDragDown = true,
-    headerSelector
+    headerSelector = '.bottom-sheet-header'
   } = options
 
   // sort positions ASC just in case
@@ -26,7 +26,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
   el.style.setProperty('--bottom-sheet-top', 'calc(100% - ' + currPosition + '%)')
 
   // set up event listener for the start of the drag
-  let headerElement = el.querySelector<HTMLElement>(headerSelector as string)
+  let headerElement = el.querySelector<HTMLElement>(headerSelector)
   if (headerElement) {
     headerElement.addEventListener('mousedown', dragStart)
     headerElement.addEventListener('touchstart', dragStart, { passive: false })
