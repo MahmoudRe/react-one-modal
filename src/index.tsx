@@ -33,8 +33,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     allowBodyScroll = false,
     className = '',
     classNameOverlay = '', // className for modal container/overlay
-    colorBackgroundOverlay, // default #00000099, also it can be set by css variable --modal-color-overlay
-    colorBackground, // default 'white', also it can be set by css variable --modal-color-bg
+    colorBackgroundOverlay, // default #00000099, also it can be set by css variable --one-modal-color-overlay
+    colorBackground, // default 'white', also it can be set by css variable --one-modal-color-bg
     attributes = {},
     attributesOverlay, // pass the reset to modal container/overlay
     children, // if existed, add them as the first
@@ -310,8 +310,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       }}
       style={{
         display: !modalsArr.current.length || isHidden ? 'none' : undefined,
-        ['--modal-color-overlay' as any]: colorBackgroundOverlay || undefined,
-        ['--modal-color-bg' as any]: colorBackground || undefined
+        ['--one-modal-color-overlay' as any]: colorBackgroundOverlay || undefined,
+        ['--one-modal-color-bg' as any]: colorBackground || undefined
       }}
       {...attributesOverlay}
     >

@@ -1,8 +1,8 @@
 .overlay {
   /* variable and default value */
   /* 
-    --modal-color-overlay: #00000099;
-    --modal-color-bg: white;
+    --one-modal-color-overlay: #00000099;
+    --one-modal-color-bg: white;
   */
 
   position: fixed;
@@ -27,7 +27,7 @@
 }
 
 .overlay[data-modal-type='full-page'] {
-  filter: drop-shadow(0 0 15px var(--modal-color-overlay, #00000099));
+  filter: drop-shadow(0 0 15px var(--one-modal-color-overlay, #00000099));
 }
 .overlay[data-modal-type='full-page'].--out-transition {
   background: transparent !important;
@@ -35,7 +35,7 @@
 
 .overlay[data-modal-type='bottom-sheet'],
 .overlay[data-modal-type='floating'] {
-  background: var(--modal-color-overlay, #00000099);
+  background: var(--one-modal-color-overlay, #00000099);
   animation: overlayFadeIn 0.25s ease;
 }
 .overlay[data-modal-type='bottom-sheet'].--out-transition,
@@ -47,12 +47,12 @@
     background: #00000000;
   }
   to {
-    background: var(--modal-color-overlay, #00000099);
+    background: var(--one-modal-color-overlay, #00000099);
   }
 }
 @keyframes overlayFadeOut {
   from {
-    background: var(--modal-color-overlay, #00000099);
+    background: var(--one-modal-color-overlay, #00000099);
   }
   to {
     background: #00000000;
@@ -67,9 +67,10 @@
 /* ------- modal styling --------- */
 .modal {
   position: absolute;
-  background: var(--modal-color-bg, white);
-  /* padding: 2rem; */
+  background: var(--one-modal-color-bg, white);
+  max-height: 100%;
   white-space: initial;
+  overflow: auto;
 }
 .overlay[data-modal-type='full-page'] .modal {
   width: 100%;
@@ -77,10 +78,12 @@
 }
 .overlay[data-modal-type='floating'] .modal {
   border-radius: 1rem;
-  padding: 1rem;
+  margin: 1rem;
+  max-height: 95%;
+  max-width: 60rem;
 }
 .overlay[data-modal-type='bottom-sheet'] .modal {
-  background: var(--modal-color-bg, transparent);
+  background: var(--one-modal-color-bg, transparent);
   width: 100%;
   height: 100%;
 }

@@ -39,8 +39,8 @@ export interface ModalProps {
   allowBodyScroll?: boolean
   className?: string
   classNameOverlay?: string
-  colorBackground?: string // default 'white', also it can be set by css variable --modal-color-bg
-  colorBackgroundOverlay?: string // default #00000099, also it can be set by css variable --modal-color-overlay
+  colorBackground?: string // default 'white', also it can be set by css variable --one-modal-color-bg
+  colorBackgroundOverlay?: string // default #00000099, also it can be set by css variable --one-modal-color-overlay
   attributes?: {}
   attributesOverlay?: PropsWithChildren
   children?: ReactNode
