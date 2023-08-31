@@ -16,6 +16,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  overscroll-behavior: none; /* https://stackoverflow.com/questions/5802467/prevent-scrolling-of-parent-element-when-inner-element-scroll-position-reaches-t */
+  -ms-scroll-chaining: none;
 }
 
 .overlay[data-animation-pause],
@@ -158,6 +160,12 @@
   top: 100%;
   height: 100%;
   visibility: hidden;
+}
+
+.overlay[data-modal-type='bottom-sheet'] [data-prevent-scroll],
+.overlay[data-modal-type='bottom-sheet'] [data-prevent-scroll] * {
+  overflow-y: hidden !important;    /* fallback, TODO FIX: cause page refresh on drag-down */
+  overflow-y: clip !important;
 }
 
 .overlay[data-modal-type='bottom-sheet'][data-animation='slide-bottom'] .modal {

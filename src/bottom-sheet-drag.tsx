@@ -28,30 +28,34 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
   // set up event listener for the start of the drag
   let headerElement = document.querySelector<HTMLElement>(headerSelector as string)
   if (headerElement) {
-    headerElement.onmousedown = dragStart
-    headerElement.ontouchstart = dragStart
+    headerElement.addEventListener('mousedown', dragStart)
+    headerElement.addEventListener('touchstart', dragStart, { passive: false })
   } else {
-    el.onmousedown = dragStart
-    el.ontouchstart = dragStart
+    el.addEventListener('mousedown', dragStart)
+    el.addEventListener('touchstart', dragStart, { passive: false })
   }
 
   function dragStart(ev: MouseEvent | TouchEvent | any) {
     scrollPosition = getScrollPosition(ev.target, el)
 
-    // get the mouse cursor position at startup:
-    yPrev = ev.clientY || ev.touches[0].clientY
-    document.onmouseup = dragEnd
-    document.ontouchend = dragEnd
+    // prevent drag-down causing refresh on mobiles if no-scroll
+    if (scrollPosition === 'no-scroll') {
+      ev.preventDefault()
+      ev.stopPropagation()
+    }
 
-    // call a function whenever the cursor moves:
-    document.onmousemove = dragMove
-    document.addEventListener('touchmove', dragMoveTouch, { passive: false })
+    // get initial position to calculate yDiff on first dragMove
+    yPrev = ev.clientY || ev.touches[0].clientY
+
+    document.addEventListener('mouseup', dragEnd)
+    document.addEventListener('mousemove', dragMove)
+    document.addEventListener('touchmove', dragMoveTouch)
 
     el.style.transition = 'none'
   }
 
   function dragMoveTouch(ev: TouchEvent) {
-    document.removeEventListener('touchmove', dragMoveTouch, false)
+    document.removeEventListener('touchmove', dragMoveTouch)
 
     // calculate the new cursor position:
     yDiff = yPrev - ev.touches[0].clientY // if yDiff is positive, direction is up, and vise versa
@@ -67,13 +71,12 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
       return
 
     // prevent scrolling if we didn't react the top nor nested elements is scrolled
-    ev.preventDefault()
-    document.addEventListener('touchmove', dragMove, { passive: false })
+    el.setAttribute('data-prevent-scroll', '')
+    document.addEventListener('touchmove', dragMove)
+    document.addEventListener('touchend', dragEnd)
   }
 
   function dragMove(ev: MouseEvent | TouchEvent | any) {
-    ev.preventDefault()
-
     // calculate the new cursor position:
     yDiff = yPrev - (ev.clientY || ev.touches[0].clientY) // if yDiff is positive, direction is up, and vise versa
     yPrev = ev.clientY || ev.touches[0].clientY
@@ -94,11 +97,12 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
   }
 
   function dragEnd() {
-    // stop moving when mouse button is released:
-    document.onmouseup = null
-    document.ontouchend = null
-    document.onmousemove = null
-    document.removeEventListener('touchmove', dragMove as EventListener, false)
+    document.removeEventListener('mouseup', dragEnd)
+    document.removeEventListener('touchend', dragEnd)
+    document.removeEventListener('mousemove', dragMove)
+    document.removeEventListener('touchmove', dragMove)
+
+    el.removeAttribute('data-prevent-scroll')
     el.style.transition = ''
 
     let nextPosition = currPosition
