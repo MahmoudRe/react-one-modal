@@ -4,7 +4,9 @@ import FloatingModalContent from './components/FloatingModalContent'
 import BottomModalContent from './components/BottomModalContent'
 import FullPageModalContent from './components/FullPageModalContent'
 
-const App = () => {
+import './App.css';
+
+function App() {
   const [modal, modalRef] = useModal()
   const [modalBottom, modalBottomRef] = useModal('bottom')
   const [modalFullPage, modalFullPageRef] = useModal('full-page')
@@ -12,7 +14,8 @@ const App = () => {
 
   return (
     <>
-      <h1> Welcome to React Super Dialog </h1>
+      <div> Welcome to </div>
+      <h1> React One Modal </h1>
 
       <button onClick={() => modal.show(<FloatingModalContent />)}>Show floating modal</button>
       <button onClick={() => modalBottom.show(<BottomModalContent />)}>Show floating bottom modal</button>
@@ -30,9 +33,9 @@ const App = () => {
       <Modal ref={modalRef} />
       <Modal ref={modalBottomRef} position='bottom' />
       <Modal ref={modalFullPageRef} type='full-page' />
-      <Modal ref={modalBottomSheetRef} type='bottom-sheet' />
+      <Modal ref={modalBottomSheetRef} type='floating' />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
