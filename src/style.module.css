@@ -59,6 +59,11 @@
   }
 }
 
+.overlay[data-modal-position='top'] {
+  align-items: start;
+  padding-top: 2rem;
+}
+
 .overlay[data-modal-position='bottom'] {
   align-items: end;
   padding-bottom: 3rem;
