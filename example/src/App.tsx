@@ -1,16 +1,19 @@
-import Modal, { useModal } from 'react-advance-modal'
+import Modal, { ModalProps, useModal } from 'react-advance-modal'
 
 import FloatingModalContent from './components/FloatingModalContent'
-import BottomModalContent from './components/BottomModalContent'
-import FullPageModalContent from './components/FullPageModalContent'
-
-import './App.css';
+import { useState } from 'react'
+import Radio from './components/Radio'
 
 function App() {
+  const [type, setType] = useState<ModalProps['type']>('floating')
+  const [position, setPosition] = useState<ModalProps['position']>('center')
+  const [animation, setAnimation] = useState<ModalProps['animation']>()
+  const [stackSize, setStackSize] = useState<ModalProps['stackSize']>()
+  const [allowBodyScroll, setAllowBodyScroll] = useState<ModalProps['allowBodyScroll']>()
+  const [onESC, setOnESC] = useState<ModalProps['onESC']>()
+  const [onClickOverlay, setOnClickOverlay] = useState<ModalProps['onClickOverlay']>()
+
   const [modal, modalRef] = useModal()
-  const [modalBottom, modalBottomRef] = useModal('bottom')
-  const [modalFullPage, modalFullPageRef] = useModal('full-page')
-  const [modalBottomSheet, modalBottomSheetRef] = useModal('bottom-sheet')
 
   return (
     <article className='w-full'>
@@ -42,26 +45,111 @@ function App() {
           </div>
         </div>
       </header>
-      
-      <button onClick={() => modal.show(<FloatingModalContent />)}>Show floating modal</button>
-      <button onClick={() => modalBottom.show(<BottomModalContent />)}>Show floating bottom modal</button>
-      <button onClick={() => modalFullPage.push(<FullPageModalContent modal={modalFullPage} className='full-page' />)}>
-        Show full page modal
-      </button>
-      <button
-        onClick={() =>
-          modalBottomSheet.show(<FullPageModalContent modal={modalBottomSheet} className='bottom-sheet' />)
-        }
-      >
-        Show bottom sheet modal
-      </button>
 
-      <Modal ref={modalRef} />
-      <Modal ref={modalBottomRef} position='bottom' />
-      <Modal ref={modalFullPageRef} type='full-page' />
-      <Modal ref={modalBottomSheetRef} type='floating' />
+      <main className='min-h-screen grid items-center md:grid-cols-2 mx-10'>
+        <div className='prose'>
+          <h2 className='text-3xl mt-12'>Customize your modal!</h2>
+          <h4>Type: </h4>
+          <form className='join'>
+            <Radio name='type' value='floating' onChange={() => setType('floating')} defaultChecked />
+            <Radio name='type' value='full-page' onChange={() => setType('full-page')} />
+            <Radio name='type' value='bottom-sheet' onChange={() => setType('bottom-sheet')} />
+          </form>
+          {type === 'floating' && (
+            <>
+              <h4>Position: </h4>
+              <form className='join'>
+                <Radio name='position' value='top' onChange={() => setPosition('top')} />
+                <Radio name='position' value='center' onChange={() => setPosition('center')} defaultChecked />
+                <Radio name='position' value='bottom' onChange={() => setPosition('bottom')} />
+              </form>
+            </>
+          )}
+          <h4>Animation: </h4>
+          <form className='join'>
+            <Radio name='animation' value='false' onChange={() => setAnimation(false)} />
+            <Radio
+              name='animation'
+              value='zoom-in'
+              onChange={() => setAnimation({ type: 'zoom-in' })}
+              defaultChecked={type === 'floating'}
+            />
+            <Radio
+              name='animation'
+              value='slide'
+              onChange={() => setAnimation({ type: 'slide' })}
+              defaultChecked={type === 'full-page'}
+            />
+            <Radio
+              name='animation'
+              value='slide-bottom'
+              onChange={() => setAnimation({ type: 'slide-bottom' })}
+              defaultChecked={type === 'bottom-sheet'}
+            />
+          </form>
+          <h4>On ESC button: </h4>
+          <form className='join'>
+            <Radio name='onESC' value='null' onChange={() => setOnESC(null)} defaultChecked />
+            <Radio name='onESC' value='hide' onChange={() => setOnESC('hide')} />
+            <Radio name='onESC' value='empty' onChange={() => setOnESC('empty')} />
+            <Radio name='onESC' value='pop' onChange={() => setOnESC('pop')} />
+            <Radio
+              name='onESC'
+              value='[Custom callback]'
+              onChange={() => setOnESC(() => () => alert('ESC is pressed! Your custom callback!'))}
+            />
+          </form>
+          <h4>On click overlay: </h4>
+          <form className='join'>
+            <Radio name='onESC' value='null' onChange={() => setOnClickOverlay(null)} defaultChecked />
+            <Radio name='onESC' value='hide' onChange={() => setOnClickOverlay('hide')} />
+            <Radio name='onESC' value='empty' onChange={() => setOnClickOverlay('empty')} />
+            <Radio name='onESC' value='pop' onChange={() => setOnClickOverlay('pop')} />
+            <Radio
+              name='onESC'
+              value='[Custom callback]'
+              onChange={() =>
+                setOnClickOverlay(() => () => alert('A click on overlay is detected! Your custom callback!'))
+              }
+            />
+          </form>
+          <h4>Stack size: </h4>
+          <input
+            type='number'
+            placeholder='999'
+            className='input input-bordered max-w-xs'
+            min={1}
+            value={stackSize}
+            onChange={(e) => setStackSize(parseInt(e.target.value))}
+          />
+          <div className='form-control w-52'>
+            <label className='cursor-pointer label'>
+              <h4>Allow body scroll: </h4>
+              <input
+                type='checkbox'
+                className='cursor-pointer toggle toggle-accent mt-4'
+                onChange={(e) => setAllowBodyScroll(e.target.checked)}
+              />
+            </label>
+          </div>
+          <button className='btn btn-primary block mt-10 mb-10' onClick={() => modal.show(<FloatingModalContent />)}>
+            Open Modal
+          </button>
+        </div>
+      </main>
+
+      <Modal
+        ref={modalRef}
+        type={type}
+        position={position}
+        animation={animation}
+        stackSize={stackSize}
+        allowBodyScroll={allowBodyScroll}
+        onESC={onESC}
+        onClickOverlay={onClickOverlay}
+      />
     </article>
   )
 }
 
-export default App;
+export default App
