@@ -16,7 +16,7 @@ function App() {
     <article className='w-full'>
       <header className='hero min-h-screen bg-base-200'>
         <div className='hero-overlay absolute overflow-hidden'>
-          <div className='absolute md:w-2/5 md:h-2/5 w-60 h-60 top-[-20%] left-[-20%] opacity-70'>
+          <div className='absolute md:w-1/2 md:h-1/2 w-72 h-72 top-[-20%] left-[-20%] opacity-70 animate-[blob_15s_ease_infinite]'>
             <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 747.2 726.7'>
               <path
                 fill='hsl(var(--in))'
@@ -24,7 +24,7 @@ function App() {
               ></path>
             </svg>
           </div>
-          <div className='absolute md:w-2/5 md:h-2/5 w-60 h-60 bottom-[-15%] right-[-15%] opacity-70'>
+          <div className='absolute md:w-2/5 md:h-2/5 w-60 h-60 bottom-[-20%] right-[-15%] opacity-70 animate-[blob_20s_ease-in-out_infinite]'>
             <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 747.2 726.7'>
               <path
                 fill='hsl(var(--a))'
