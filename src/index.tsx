@@ -282,18 +282,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   useEffect(() => {
     if (children) push(children)
-
-    const keyDownHandler = (ev: KeyboardEvent) => {
-      if (ev.key !== 'Escape') return
-      if (typeof onESC === 'string') controlFunctions[onESC]()
-      if (typeof onESC === 'function') onESC(ev)
-    }
-
-    onESC && document.addEventListener('keydown', keyDownHandler)
-
-    return () => {
-      onESC && document.removeEventListener('keydown', keyDownHandler)
-    }
   }, [])
 
   return createPortal(
@@ -306,7 +294,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       onClick={(ev) => {
         if (!onClickOverlay || ev.currentTarget != ev.target) return
         if (typeof onClickOverlay === 'string') controlFunctions[onClickOverlay]()
-        if (typeof onClickOverlay === 'function') onClickOverlay(ev.nativeEvent) //nativeEvent, just in case of using addEventListener() later
+        if (typeof onClickOverlay === 'function') onClickOverlay(ev) //nativeEvent, just in case of using addEventListener() later
+      }}
+      onKeyDown={(ev) => {
+        if (!onESC || ev.key !== 'Escape') return
+        if (typeof onESC === 'string') controlFunctions[onESC]()
+        if (typeof onESC === 'function') onESC(ev)
       }}
       style={{
         display: !modalsArr.current.length || isHidden ? 'none' : undefined,
