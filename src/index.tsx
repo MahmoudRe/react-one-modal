@@ -19,7 +19,7 @@ import {
   ModalProps,
   HTMLDivElementRef
 } from './typings'
-import { runOnce } from './utils'
+import { focusFirstDescendant, runOnce } from './utils'
 import { dragElement } from './bottom-sheet-drag'
 
 export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
@@ -43,6 +43,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   } = props
 
   const modalOverlayRef = useRef<HTMLDivElement>(null)
+  const [pageActiveElement, setPageActiveElement] = useState<Element | null>(document.activeElement) // to save element with focus before modal has opened
 
   // `useRef` with `forceUpdate` instead of useState to have up-to-date value for pages array, and push to the existed array directly
   const modalsArr = useRef<[ReactNode, HTMLDivElementRef][]>([])
@@ -98,10 +99,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     new Promise((resolve) => {
       const { popLast = false } = options
       const disableAnimation = _handleAnimationOption(options)
-      const elementRef: HTMLDivElementRef = { current: null } // like ref, since can't useRef() here
+      const elementRef: HTMLDivElementRef = { current: null, activeElement: null } // like ref, since can't useRef() here
       let hasCalled = false // flag to run ref callback only once
 
       if (!allowBodyScroll) document.body.setAttribute('data-prevent-scroll', '')
+
+      // if this is the first push, save the focused element on the page to retain its focus after close
+      if (!modalsArr.current.length) setPageActiveElement(document.activeElement)
 
       // make sure the ---out-transition has been removed
       modalOverlayRef.current?.classList.remove(styles['--out-transition'])
@@ -127,6 +131,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
                 modalsArr.current.shift() // remove last element
                 forceUpdate()
               }
+
+              focusFirstDescendant(el)
+              elementRef.activeElement = document.activeElement
 
               resolve([content, elementRef])
             })
@@ -158,6 +165,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const len = modalsArr.current.length
       if (!len) throw Error('No modal in the stack to pop') //no pages existed, skip this action
 
+      // select before-last if existed or last (ie. first one)
+      const modal = modalsArr.current[len > 1 ? len - 2 : 0][1]
+
+      // return focus to previous element before modal has opened
+      if (len > 1 && !isHidden && modal.activeElement instanceof HTMLElement) modal.activeElement.focus()
+      else if (!isHidden && pageActiveElement instanceof HTMLElement) pageActiveElement.focus()
+
       const disableAnimation = _handleAnimationOption(options)
       if (disableAnimation) {
         const res = modalsArr.current.pop()
@@ -169,7 +183,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       /* transition */
       // select the modal before last one (or last in case of one modal)
-      const modalEl = modalsArr.current[len > 1 ? len - 2 : 0][1].current
+      const modalEl = modal.current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
 
       modalEl.classList.add(styles['--back-transition'])
@@ -195,6 +209,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const len = modalsArr.current.length
       const res = [...modalsArr.current]
 
+      const modal = modalsArr.current[len - 1][1]
+      if (!isHidden && pageActiveElement instanceof HTMLElement) pageActiveElement.focus()
+
       const disableAnimation = _handleAnimationOption(options)
       if (disableAnimation || !len) {
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
@@ -205,7 +222,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       }
 
       /* transition */
-      const modalEl = modalsArr.current[len - 1][1].current
+      const modalEl = modal.current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
 
       modalEl.classList.add(styles['--back-transition'])
@@ -230,6 +247,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     new Promise((resolve) => {
       const len = modalsArr.current.length
 
+      const modal = modalsArr.current[len - 1][1]
+      if (pageActiveElement instanceof HTMLElement) pageActiveElement.focus()
+
       const disableAnimation = _handleAnimationOption(options)
       if (disableAnimation) {
         setHidden(true)
@@ -239,7 +259,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       }
 
       /* transition */
-      const modalEl = modalsArr.current[len - 1][1].current
+      const modalEl = modal.current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
 
       modalEl.classList.add(styles['--back-transition'])
@@ -264,8 +284,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       let res
       if (content) res = push(content, options)
 
-      setHidden(false)
       if (!allowBodyScroll) document.body.setAttribute('data-prevent-scroll', '')
+
+      if (isHidden) setPageActiveElement(document.activeElement)
+      const modalActiveElement = modalsArr.current[modalsArr.current.length - 1][1].activeElement
+      if (modalActiveElement instanceof HTMLElement) modalActiveElement.focus()
+
+      setHidden(false)
       resolve(res ?? modalsArr.current[modalsArr.current.length - 1])
     })
 

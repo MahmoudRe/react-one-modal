@@ -11,7 +11,8 @@ export interface Modal {
 }
 
 export interface HTMLDivElementRef {
-  current: HTMLDivElement | null
+  current: HTMLDivElement | null,
+  activeElement: Element | null
 }
 export interface BottomSheetOptions {
   disableDrag?: boolean
