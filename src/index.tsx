@@ -97,7 +97,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const push: Modal['push'] = (content, options = {}) =>
     new Promise((resolve) => {
-      const { popLast = false } = options
+      const { popLast = false, role = 'dialog', attributes: oneTimeAttrs } = options
       const disableAnimation = _handleAnimationOption(options)
       const elementRef: HTMLDivElementRef = { current: null, activeElement: null } // like ref, since can't useRef() here
       let hasCalled = false // flag to run ref callback only once
@@ -114,6 +114,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         <div
           key={Math.random()} // since the key is set only on push, random value should be fine
           className={className}
+          role={role}
+          aria-modal='true'
           ref={(el) => {
             if (!el || hasCalled) return // run only once
             hasCalled = true
@@ -148,6 +150,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
             elementRef.current = el
           }}
           {...attributes}
+          {...oneTimeAttrs}
         >
           {content}
         </div>,
@@ -243,7 +246,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (len) modalOverlayRef.current?.classList.add(styles['--out-transition'])
     })
 
-  const hide: Modal['hide'] = (options: ModalOneTimeOptions = {}) =>
+  const hide: Modal['hide'] = (options = {}) =>
     new Promise((resolve) => {
       const len = modalsArr.current.length
 
@@ -279,7 +282,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (len) modalOverlayRef.current?.classList.add(styles['--out-transition'])
     })
 
-  const show: Modal['show'] = (content: ReactNode, options: ModalOneTimeOptions = {}) =>
+  const show: Modal['show'] = (content, options = {}) =>
     new Promise((resolve) => {
       let res
       if (content) res = push(content, options)

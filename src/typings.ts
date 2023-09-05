@@ -1,12 +1,12 @@
 import { KeyboardEvent, MouseEvent, ReactNode, PropsWithChildren } from 'react'
 
 export interface Modal {
-  push: (content: ReactNode, options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
+  push: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
   pop: (options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
-  transit: (content: ReactNode, options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
+  transit: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
   empty: (options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef][]>
   hide: (options?: ModalOneTimeOptions) => Promise<void>
-  show: (content: ReactNode, options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
+  show: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
   animation: ModalAnimation
 }
 
@@ -58,7 +58,13 @@ export interface ModalAnimation {
 
 export interface ModalOneTimeOptions {
   animation?: true | ModalProps['animation']
+  [key: string]: any // to allow this pattern: `onClick={modal.pop}` instead of `onClick={() => modal.pop()}`
+}
+
+export interface ModalPushOneTimeOptions extends ModalOneTimeOptions {
   popLast?: boolean
+  role?: 'dialog' | 'alertdialog'
+  attributes?: HTMLAttributes<HTMLDivElement>
   [key: string]: any // to allow this pattern: `onClick={modal.pop}` instead of `onClick={() => modal.pop()}`
 }
 
