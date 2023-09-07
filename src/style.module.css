@@ -20,6 +20,10 @@
   -ms-scroll-chaining: none;
 }
 
+.overlay[data-modal-open="false"] {
+  display: none;
+}
+
 .overlay[data-animation-pause],
 .overlay[data-animation-pause] > * {
   animation-iteration-count: 0 !important;

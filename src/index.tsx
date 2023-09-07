@@ -318,6 +318,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       data-animation={animation.current.type}
       data-modal-type={type}
       data-modal-position={position}
+      data-modal-open={!!(modalsArr.current.length && !isHidden)}
       ref={modalOverlayRef}
       onClick={(ev) => {
         if (!onClickOverlay || ev.currentTarget != ev.target) return
@@ -330,7 +331,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         if (typeof onESC === 'function') onESC(ev)
       }}
       style={{
-        display: !modalsArr.current.length || isHidden ? 'none' : undefined,
         ['--one-modal-color-overlay' as any]: colorBackgroundOverlay || undefined,
         ['--one-modal-color-bg' as any]: colorBackground || undefined
       }}
