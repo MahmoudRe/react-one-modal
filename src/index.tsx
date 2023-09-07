@@ -356,7 +356,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       }}
       {...attributesOverlay}
     >
-      {modalsArr.current.map((e) => e[0])}
+      <div tabIndex={0}></div> {/* bracket all modal-sheets with invisible `div` to traps focus (prevent page scroll when focus leaves modal and restored) */}
+      <div className={styles['modals-container']}>
+        {modalsArr.current.map((e) => e[0])}
+      </div>
+      <div tabIndex={0}></div>
     </div>,
     rootElement
   )

@@ -13,11 +13,16 @@
   z-index: 100;
   white-space: nowrap;
   overflow: hidden;
+  overscroll-behavior: none; /* https://stackoverflow.com/questions/5802467/prevent-scrolling-of-parent-element-when-inner-element-scroll-position-reaches-t */
+  -ms-scroll-chaining: none;
+}
+
+.modals-container {
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  overscroll-behavior: none; /* https://stackoverflow.com/questions/5802467/prevent-scrolling-of-parent-element-when-inner-element-scroll-position-reaches-t */
-  -ms-scroll-chaining: none;
 }
 
 .overlay[data-modal-open="false"] {
@@ -25,7 +30,7 @@
 }
 
 .overlay[data-animation-pause],
-.overlay[data-animation-pause] > * {
+.overlay[data-animation-pause] .modals-container > * {
   animation-iteration-count: 0 !important;
   transition: none !important;
 }
@@ -99,7 +104,7 @@
 
 /* In/Out zoom-in animation -------- */
 
-.overlay[data-animation='zoom-in'] > * {
+.overlay[data-animation='zoom-in'] .modals-container > * {
   transition: transform 0.15s, opacity 0.15s;
   transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.2);
   transform: scale(0.5);
@@ -123,7 +128,7 @@
 
 /* In/Out slide animation -------- */
 
-.overlay[data-animation='slide'] > * {
+.overlay[data-animation='slide'] .modals-container > * {
   transition: transform 0.25s ease-in-out;
   transform: translate(100vw, 0);
   visibility: hidden;
@@ -147,7 +152,7 @@
 
 /* In/Out slide bottom animation -------- */
 
-.overlay[data-animation='slide-bottom'] > * {
+.overlay[data-animation='slide-bottom'] .modals-container > * {
   transition: transform 0.25s cubic-bezier(0, 0.3, 0.15, 1.1);
   transform: translate(0, 100vh);
   visibility: hidden;
@@ -167,7 +172,7 @@
 
 /* In/Out slide bottom-sheet animation -------- */
 
-.overlay[data-modal-type='bottom-sheet'][data-animation='slide-bottom'] > * {
+.overlay[data-modal-type='bottom-sheet'][data-animation='slide-bottom'] .modals-container > * {
   transition: top 0.25s cubic-bezier(0, 0.3, 0.15, 1), height 0.25s cubic-bezier(0, 0.3, 0.15, 1) -0.25s;
   top: 100%;
   height: 100%;
