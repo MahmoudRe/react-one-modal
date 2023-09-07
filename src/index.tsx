@@ -19,7 +19,7 @@ import {
   ModalProps,
   HTMLDivElementRef
 } from './typings'
-import { focusFirstDescendant, runOnce } from './utils'
+import { focusFirstDescendant, focusLastDescendant, ignoreFocusTrap, runOnce } from './utils'
 import { dragElement } from './bottom-sheet-drag'
 
 export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
@@ -310,6 +310,26 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   useEffect(() => {
     if (children) push(children)
+
+    function trapFocus(ev: FocusEvent) {
+      if (ignoreFocusTrap || !modalsArr.current.length || isHidden) return
+
+      const modal = modalsArr.current[modalsArr.current.length - 1][1]
+
+      if (!modal.current) return
+
+      if (modal.current.contains(ev.target as Node)) {
+        modal.activeElement = ev.target as Element
+      } else {
+        focusFirstDescendant(modal.current)
+        if (modal.activeElement == document.activeElement) {
+          focusLastDescendant(modal.current)
+        }
+        modal.activeElement = document.activeElement
+      }
+    }
+
+    document.body.addEventListener('focus', trapFocus, true)
   }, [])
 
   return createPortal(

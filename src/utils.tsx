@@ -54,9 +54,11 @@ export function getScrollPosition(childElement: HTMLElement | null, parentElemen
   }
 }
 
-// This software includes material derived from: Modal Dialog Example
+// Bellow code Utils includes material derived from: Modal Dialog Example
 // https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/dialog/#top.
 // Copyright © 2023 World Wide Web Consortium. https://www.w3.org/copyright/software-license-2023/
+
+export let ignoreFocusTrap = false
 
 /**
  * @description Set focus on descendant nodes until the first focusable element is found.
@@ -64,37 +66,36 @@ export function getScrollPosition(childElement: HTMLElement | null, parentElemen
  * @returns {boolean} true if a focusable element is found and focus is set.
  */
 export function focusFirstDescendant(element: any): boolean {
-  for (let child of element.childNodes) {
-    if (attemptFocus(child) || focusFirstDescendant(child)) {
-      return true
-    }
+  for (let i = 0; i < element.children.length; i++) {
+    let child = element.children[i]
+    if (attemptFocus(child) || focusFirstDescendant(child)) return true
   }
   return false
 }
 
-export function attemptFocus(element: any) {
-  if (!isFocusable(element)) return false
+/**
+ * @description Find the last descendant node that is focusable.
+ * @param element
+ *          DOM node for which to find the last focusable descendant.
+ * @returns {boolean}
+ *  true if a focusable element is found and focus is set.
+ */
+export function focusLastDescendant(element: any): boolean {
+  for (let i = element.children.length - 1; i >= 0; i--) {
+    let child = element.children[i]
+    if (attemptFocus(child) || focusLastDescendant(child)) return true
+  }
+  return false
+}
+
+export function attemptFocus(element: any): boolean {
+  if (element.tabIndex < 0) return false
+  ignoreFocusTrap = true
   try {
     element.focus()
   } catch (e) {
     // continue regardless of error
   }
+  ignoreFocusTrap = false
   return document.activeElement === element
-}
-
-function isFocusable(element: any) {
-  if (element.tabIndex < 0 || element.disabled) return false
-
-  switch (element.nodeName) {
-    case 'A':
-      return !!element.href && element.rel != 'ignore'
-    case 'INPUT':
-      return element.type != 'hidden'
-    case 'BUTTON':
-    case 'SELECT':
-    case 'TEXTAREA':
-      return true
-    default:
-      return false
-  }
 }
