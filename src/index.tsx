@@ -7,7 +7,8 @@ import React, {
   useImperativeHandle,
   ReactNode,
   RefObject,
-  ForwardedRef
+  ForwardedRef,
+  useCallback
 } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './style.module.css'
@@ -28,7 +29,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     bottomSheetOptions = {},
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
     stackSize = 999, // the number of pages to preserve in the stack before start dropping out old pages
-    animation: animationProps = {},
+    animation: animationProps = false,
     rootElement = document.body, // HTMLElement where this modal will be appended to
     allowBodyScroll = false,
     className = '',
@@ -80,7 +81,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     }
   })
 
-  const _handleAnimationOption = (options: ModalOneTimeOptions) => {
+  const _handleAnimationOption = useCallback((options: ModalOneTimeOptions) => {
     const { animation: animationOptions } = options
 
     const disableAnimation =
@@ -93,7 +94,15 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     if (!disableAnimation && animation.current.disable) animation.current.resume(250)
 
     return disableAnimation
-  }
+  }, [])
+
+  // return focus to previous element before modal has opened
+  const _returnFocus = useCallback(() => {
+    const len = modalsArr.current.length
+    const modal = modalsArr.current[len - 1]?.[1]
+    if (len > 0 && !isHidden && modal.activeElement instanceof HTMLElement) modal.activeElement.focus()
+    else if (!isHidden && pageActiveElement instanceof HTMLElement) pageActiveElement.focus()
+  }, [isHidden, pageActiveElement])
 
   const push: Modal['push'] = (content, options = {}) =>
     new Promise((resolve) => {
@@ -171,15 +180,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       // select before-last if existed or last (ie. first one)
       const modal = modalsArr.current[len > 1 ? len - 2 : 0][1]
 
-      // return focus to previous element before modal has opened
-      if (len > 1 && !isHidden && modal.activeElement instanceof HTMLElement) modal.activeElement.focus()
-      else if (!isHidden && pageActiveElement instanceof HTMLElement) pageActiveElement.focus()
-
       const disableAnimation = _handleAnimationOption(options)
       if (disableAnimation) {
         const res = modalsArr.current.pop()
         forceUpdate()
         if (len <= 1) document.body.removeAttribute('data-prevent-scroll')
+        _returnFocus()
         resolve(res as [ReactNode, HTMLDivElementRef])
         return
       }
@@ -196,6 +202,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         const res = modalsArr.current.pop()
         forceUpdate()
         if (len <= 1) document.body.removeAttribute('data-prevent-scroll')
+        _returnFocus()
         resolve(res as [ReactNode, HTMLDivElementRef])
       })
 
@@ -220,6 +227,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         forceUpdate()
         document.body.removeAttribute('data-prevent-scroll')
+        _returnFocus()
         resolve(res)
         return
       }
@@ -235,6 +243,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalsArr.current.splice(0, modalsArr.current.length)
         forceUpdate()
         document.body.removeAttribute('data-prevent-scroll')
+        _returnFocus()
         resolve(res)
       })
 
@@ -257,6 +266,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (disableAnimation) {
         setHidden(true)
         document.body.removeAttribute('data-prevent-scroll')
+        _returnFocus()
         resolve()
         return
       }
@@ -271,6 +281,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalEl.classList.remove(styles['--back-transition'])
         setHidden(true)
         document.body.removeAttribute('data-prevent-scroll')
+        _returnFocus()
         resolve()
       })
 
