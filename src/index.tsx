@@ -452,7 +452,8 @@ class ModalState {
    * @returns {[Modal, RefObject<Modal>]} Tuple array with first element is Modal control functions, and second element ref object.
    */
   static useModal = (key: string = 'default'): [Modal, RefObject<Modal>] => {
-    if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = useRef<Modal>(null)
+    const newModalRef = useRef<Modal>(null)
+    if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = newModalRef
 
     return [ModalState.getModal(key), ModalState.modalRefs[key]]
   }
