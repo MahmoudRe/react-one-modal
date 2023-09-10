@@ -151,8 +151,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
             if (disableAnimation) resolveHandler()
             else {
-              el.addEventListener('transitionend', resolveHandler, { once: true })
-              el.addEventListener('transitioncancel', resolveHandler, { once: true })
+              // transitionend/cancel event can be triggered by child element as well, hence ignore those
+              el.addEventListener('transitionend', (e) => e.target === el && resolveHandler())
+              el.addEventListener('transitioncancel', (e) => e.target === el && resolveHandler())
               // setTimeout(resolveHandler, 250) //fallback support legacy browser
             }
 
@@ -206,8 +207,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         resolve(res as [ReactNode, HTMLDivElementRef])
       })
 
-      modalEl.addEventListener('transitionend', resolveHandler, { once: true })
-      modalEl.addEventListener('transitioncancel', resolveHandler, { once: true })
+      // transitionend/cancel event can be triggered by child element as well, hence ignore those
+      modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
+      modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
       // setTimeout(resolveHandler, 250) //fallback support legacy browser
 
       // if last modal, animate overlay hiding
@@ -247,8 +249,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         resolve(res)
       })
 
-      modalEl.addEventListener('transitionend', resolveHandler, { once: true })
-      modalEl.addEventListener('transitioncancel', resolveHandler, { once: true })
+      // transitionend/cancel event can be triggered by child element as well, hence ignore those
+      modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
+      modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
       // setTimeout(resolveHandler, 250) //fallback support legacy browser
 
       // if there was modal, animate overlay hiding
@@ -285,8 +288,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         resolve()
       })
 
-      modalEl.addEventListener('transitionend', resolveHandler, { once: true })
-      modalEl.addEventListener('transitioncancel', resolveHandler, { once: true })
+      // transitionend/cancel event can be triggered by child element as well, hence ignore those
+      modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
+      modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
       // setTimeout(resolveHandler, 250) //fallback support legacy browser
 
       // if there was modal, animate overlay hiding
