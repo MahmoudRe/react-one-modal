@@ -20,7 +20,8 @@ import {
   ModalProps,
   HTMLDivElementRef
 } from './typings'
-import { focusFirstDescendant, focusLastDescendant, ignoreFocusTrap, runOnce } from './utils'
+import { runOnce } from './utils'
+import Focus from './focus'
 import { dragElement } from './bottom-sheet-drag'
 
 export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
@@ -29,7 +30,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     bottomSheetOptions = {},
     position = 'center', // ['top', 'center', 'bottom'], in case of floating type
     stackSize = 999, // the number of pages to preserve in the stack before start dropping out old pages
-    animation: animationProps = false,
+    animation: animationProps = {},
     rootElement = document.body, // HTMLElement where this modal will be appended to
     allowBodyScroll = false,
     className = '',
@@ -44,7 +45,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   } = props
 
   const modalOverlayRef = useRef<HTMLDivElement>(null)
-  const [pageActiveElement, setPageActiveElement] = useState<Element | null>(document.activeElement) // to save element with focus before modal has opened
 
   // `useRef` with `forceUpdate` instead of useState to have up-to-date value for pages array, and push to the existed array directly
   const modalsArr = useRef<[ReactNode, HTMLDivElementRef][]>([])
@@ -96,14 +96,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     return disableAnimation
   }, [])
 
-  // return focus to previous element before modal has opened
-  const _returnFocus = useCallback(() => {
-    const len = modalsArr.current.length
-    const modal = modalsArr.current[len - 1]?.[1]
-    if (len > 0 && !isHidden && modal.activeElement instanceof HTMLElement) modal.activeElement.focus()
-    else if (!isHidden && pageActiveElement instanceof HTMLElement) pageActiveElement.focus()
-  }, [isHidden, pageActiveElement])
-
   const push: Modal['push'] = (content, options = {}) =>
     new Promise((resolve) => {
       const { popLast = false, role = 'dialog', attributes: oneTimeAttrs } = options
@@ -114,7 +106,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (!allowBodyScroll) document.body.setAttribute('data-prevent-scroll', '')
 
       // if this is the first push, save the focused element on the page to retain its focus after close
-      if (!modalsArr.current.length) setPageActiveElement(document.activeElement)
+      if (!modalsArr.current.length) Focus.pageActiveElement = document.activeElement
 
       // make sure the ---out-transition has been removed
       modalOverlayRef.current?.classList.remove(styles['--out-transition'])
@@ -143,7 +135,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
                 forceUpdate()
               }
 
-              focusFirstDescendant(el)
+              Focus.setOnFirstDescendant(el)
               elementRef.activeElement = document.activeElement
 
               resolve([content, elementRef])
@@ -186,7 +178,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         const res = modalsArr.current.pop()
         forceUpdate()
         if (len <= 1) document.body.removeAttribute('data-prevent-scroll')
-        _returnFocus()
+        Focus.setBackOnPrevious()
         resolve(res as [ReactNode, HTMLDivElementRef])
         return
       }
@@ -203,7 +195,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         const res = modalsArr.current.pop()
         forceUpdate()
         if (len <= 1) document.body.removeAttribute('data-prevent-scroll')
-        _returnFocus()
+        Focus.setBackOnPrevious()
         resolve(res as [ReactNode, HTMLDivElementRef])
       })
 
@@ -222,14 +214,14 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const res = [...modalsArr.current]
 
       const modal = modalsArr.current[len - 1][1]
-      if (!isHidden && pageActiveElement instanceof HTMLElement) pageActiveElement.focus()
+      if (!isHidden) Focus.set(Focus.pageActiveElement)
 
       const disableAnimation = _handleAnimationOption(options)
       if (disableAnimation || !len) {
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         forceUpdate()
         document.body.removeAttribute('data-prevent-scroll')
-        _returnFocus()
+        Focus.setBackOnPrevious()
         resolve(res)
         return
       }
@@ -245,7 +237,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalsArr.current.splice(0, modalsArr.current.length)
         forceUpdate()
         document.body.removeAttribute('data-prevent-scroll')
-        _returnFocus()
+        Focus.setBackOnPrevious()
         resolve(res)
       })
 
@@ -263,13 +255,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const len = modalsArr.current.length
 
       const modal = modalsArr.current[len - 1][1]
-      if (pageActiveElement instanceof HTMLElement) pageActiveElement.focus()
+      Focus.set(Focus.pageActiveElement)
 
       const disableAnimation = _handleAnimationOption(options)
       if (disableAnimation) {
         setHidden(true)
         document.body.removeAttribute('data-prevent-scroll')
-        _returnFocus()
         resolve()
         return
       }
@@ -284,7 +275,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalEl.classList.remove(styles['--back-transition'])
         setHidden(true)
         document.body.removeAttribute('data-prevent-scroll')
-        _returnFocus()
         resolve()
       })
 
@@ -304,9 +294,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       if (!allowBodyScroll) document.body.setAttribute('data-prevent-scroll', '')
 
-      if (isHidden) setPageActiveElement(document.activeElement)
-      const modalActiveElement = modalsArr.current[modalsArr.current.length - 1][1].activeElement
-      if (modalActiveElement instanceof HTMLElement) modalActiveElement.focus()
+      if (isHidden) Focus.pageActiveElement = document.activeElement
+      const modalActiveElement = modalsArr.current[modalsArr.current.length - 1]?.[1].activeElement
+      Focus.set(modalActiveElement)
 
       setHidden(false)
       resolve(res ?? modalsArr.current[modalsArr.current.length - 1])
@@ -326,25 +316,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   useEffect(() => {
     if (children) push(children)
 
-    function trapFocus(ev: FocusEvent) {
-      if (ignoreFocusTrap || !modalsArr.current.length || isHidden) return
-
-      const modal = modalsArr.current[modalsArr.current.length - 1][1]
-
-      if (!modal.current) return
-
-      if (modal.current.contains(ev.target as Node)) {
-        modal.activeElement = ev.target as Element
-      } else {
-        focusFirstDescendant(modal.current)
-        if (modal.activeElement == document.activeElement) {
-          focusLastDescendant(modal.current)
-        }
-        modal.activeElement = document.activeElement
-      }
-    }
-
-    document.body.addEventListener('focus', trapFocus, true)
+    Focus.init(modalsArr, modalOverlayRef)
   }, [])
 
   return createPortal(

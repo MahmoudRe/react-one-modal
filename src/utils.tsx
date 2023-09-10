@@ -54,48 +54,4 @@ export function getScrollPosition(childElement: HTMLElement | null, parentElemen
   }
 }
 
-// Bellow code Utils includes material derived from: Modal Dialog Example
-// https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/dialog/#top.
-// Copyright © 2023 World Wide Web Consortium. https://www.w3.org/copyright/software-license-2023/
 
-export let ignoreFocusTrap = false
-
-/**
- * @description Set focus on descendant nodes until the first focusable element is found.
- * @param element DOM node for which to find the first focusable descendant.
- * @returns {boolean} true if a focusable element is found and focus is set.
- */
-export function focusFirstDescendant(element: any): boolean {
-  for (let i = 0; i < element.children.length; i++) {
-    let child = element.children[i]
-    if (attemptFocus(child) || focusFirstDescendant(child)) return true
-  }
-  return false
-}
-
-/**
- * @description Find the last descendant node that is focusable.
- * @param element
- *          DOM node for which to find the last focusable descendant.
- * @returns {boolean}
- *  true if a focusable element is found and focus is set.
- */
-export function focusLastDescendant(element: any): boolean {
-  for (let i = element.children.length - 1; i >= 0; i--) {
-    let child = element.children[i]
-    if (attemptFocus(child) || focusLastDescendant(child)) return true
-  }
-  return false
-}
-
-export function attemptFocus(element: any): boolean {
-  if (element.tabIndex < 0) return false
-  ignoreFocusTrap = true
-  try {
-    element.focus()
-  } catch (e) {
-    // continue regardless of error
-  }
-  ignoreFocusTrap = false
-  return document.activeElement === element
-}
