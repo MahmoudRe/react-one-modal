@@ -171,24 +171,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (!len) throw Error('No modal in the stack to pop') //no pages existed, skip this action
 
       // select before-last if existed or last (ie. first one)
-      const modal = modalsArr.current[len > 1 ? len - 2 : 0][1]
-
-      const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation) {
-        const res = modalsArr.current.pop()
-        forceUpdate()
-        if (len <= 1) document.body.removeAttribute('data-prevent-scroll')
-        Focus.setBackOnPrevious()
-        resolve(res as [ReactNode, HTMLDivElementRef])
-        return
-      }
-
-      /* transition */
-      // select the modal before last one (or last in case of one modal)
-      const modalEl = modal.current
+      const modalEl = modalsArr.current[len > 1 ? len - 2 : 0]?.[1].current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
-
-      modalEl.classList.add(styles['--back-transition'])
 
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
@@ -198,6 +182,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         Focus.setBackOnPrevious()
         resolve(res as [ReactNode, HTMLDivElementRef])
       })
+
+      const disableAnimation = _handleAnimationOption(options)
+      if (disableAnimation) return resolveHandler()
+
+      /* transition */
+      modalEl.classList.add(styles['--back-transition'])
 
       // transitionend/cancel event can be triggered by child element as well, hence ignore those
       modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
@@ -211,65 +201,42 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const empty: Modal['empty'] = (options = {}) =>
     new Promise((resolve) => {
       const len = modalsArr.current.length
-      const res = [...modalsArr.current]
-
-      const modal = modalsArr.current[len - 1][1]
-      if (!isHidden) Focus.set(Focus.pageActiveElement)
-
-      const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation || !len) {
-        modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
-        forceUpdate()
-        document.body.removeAttribute('data-prevent-scroll')
-        Focus.setBackOnPrevious()
-        resolve(res)
-        return
-      }
-
-      /* transition */
-      const modalEl = modal.current
+      const res = [...modalsArr.current] // hard copy before empty
+      const modalEl = modalsArr.current[len - 1]?.[1].current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
-
-      modalEl.classList.add(styles['--back-transition'])
 
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
-        modalsArr.current.splice(0, modalsArr.current.length)
+        modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         forceUpdate()
         document.body.removeAttribute('data-prevent-scroll')
         Focus.setBackOnPrevious()
         resolve(res)
       })
 
+      const disableAnimation = _handleAnimationOption(options)
+      if (disableAnimation || !len || isHidden) return resolveHandler()
+
+      /* transition */
+      modalEl.classList.add(styles['--back-transition'])
+
       // transitionend/cancel event can be triggered by child element as well, hence ignore those
       modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
       modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
       // setTimeout(resolveHandler, 250) //fallback support legacy browser
 
-      // if there was modal, animate overlay hiding
-      if (len) modalOverlayRef.current?.classList.add(styles['--out-transition'])
+      // animate overlay hiding
+      modalOverlayRef.current?.classList.add(styles['--out-transition'])
     })
 
   const hide: Modal['hide'] = (options = {}) =>
     new Promise((resolve) => {
       const len = modalsArr.current.length
 
-      const modal = modalsArr.current[len - 1][1]
-      Focus.set(Focus.pageActiveElement)
-
-      const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation) {
-        setHidden(true)
-        document.body.removeAttribute('data-prevent-scroll')
-        resolve()
-        return
-      }
-
-      /* transition */
-      const modalEl = modal.current
+      const modalEl = modalsArr.current[len - 1]?.[1].current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
 
-      modalEl.classList.add(styles['--back-transition'])
+      Focus.set(Focus.pageActiveElement)
 
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
@@ -278,13 +245,19 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         resolve()
       })
 
+      const disableAnimation = _handleAnimationOption(options)
+      if (disableAnimation || !len || isHidden) return resolveHandler()
+
+      /* transition */
+      modalEl.classList.add(styles['--back-transition'])
+
       // transitionend/cancel event can be triggered by child element as well, hence ignore those
       modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
       modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
       // setTimeout(resolveHandler, 250) //fallback support legacy browser
 
-      // if there was modal, animate overlay hiding
-      if (len) modalOverlayRef.current?.classList.add(styles['--out-transition'])
+      // animate overlay hiding
+      modalOverlayRef.current?.classList.add(styles['--out-transition'])
     })
 
   const show: Modal['show'] = (content, options = {}) =>
@@ -343,10 +316,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       }}
       {...attributesOverlay}
     >
-      <div tabIndex={0}></div> {/* bracket all modal-sheets with invisible `div` to traps focus (prevent page scroll when focus leaves modal and restored) */}
-      <div className={styles['modals-container']}>
-        {modalsArr.current.map((e) => e[0])}
-      </div>
+      {/* bracket all modal-sheets with invisible `div` to traps focus (prevent page scroll when focus leaves modal and restored) */}
+      <div tabIndex={0}></div>
+      <div className={styles['modals-container']}>{modalsArr.current.map((e) => e[0])}</div>
       <div tabIndex={0}></div>
     </div>,
     rootElement
