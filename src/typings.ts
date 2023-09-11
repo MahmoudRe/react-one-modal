@@ -6,7 +6,7 @@ export interface Modal {
   transit: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
   empty: (options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef][]>
   hide: (options?: ModalOneTimeOptions) => Promise<void>
-  show: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
+  show: (content?: ReactNode, options?: ModalPushOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
   animation: ModalAnimation
 }
 
