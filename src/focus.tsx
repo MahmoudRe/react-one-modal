@@ -44,9 +44,8 @@ export default class Focus {
   static setBackOnPrevious() {
     const len = Focus.modalsArr.current.length
     const modal = Focus.modalsArr.current[len - 1]?.[1]
-    const isOpen = Focus.modalOverlayRef.current?.dataset.modalOpen
 
-    if (len > 0 && isOpen) Focus.set(modal.activeElement)
+    if (len > 0) Focus.set(modal.activeElement)
     else Focus.set(Focus.pageActiveElement)
   }
 

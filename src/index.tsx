@@ -179,7 +179,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         const res = modalsArr.current.pop()
         forceUpdate()
         if (len <= 1) document.body.removeAttribute('data-prevent-scroll')
-        Focus.setBackOnPrevious()
+        if (!isHidden) Focus.setBackOnPrevious()
         resolve(res as [ReactNode, HTMLDivElementRef])
       })
 
@@ -210,7 +210,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         forceUpdate()
         document.body.removeAttribute('data-prevent-scroll')
-        Focus.setBackOnPrevious()
+        if (!isHidden) Focus.setBackOnPrevious()
         resolve(res)
       })
 
@@ -236,10 +236,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const modalEl = modalsArr.current[len - 1]?.[1].current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
 
-      Focus.set(Focus.pageActiveElement)
-
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
+        if (!isHidden) Focus.set(Focus.pageActiveElement) // if already hidden, ignore!
         setHidden(true)
         document.body.removeAttribute('data-prevent-scroll')
         resolve()
@@ -400,7 +399,7 @@ class ModalState {
    * @returns {[Modal, RefObject<Modal>]} Tuple array with first element is Modal control functions, and second element ref object.
    */
   static useModal = (key: string = 'default'): [Modal, RefObject<Modal>] => {
-    const newModalRef = useRef<Modal>(null)
+    const newModalRef = useRef<Modal>(null) // react-hook should be outside any conditions
     if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = newModalRef
 
     return [ModalState.getModal(key), ModalState.modalRefs[key]]
