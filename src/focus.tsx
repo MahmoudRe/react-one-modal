@@ -1,53 +1,54 @@
-import { MutableRefObject, ReactNode, RefObject } from 'react'
-import { HTMLDivElementRef } from './typings'
-
-// Bellow class includes material derived from: Modal Dialog Example
-// https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/dialog/#top.
-// Copyright © 2023 World Wide Web Consortium. https://www.w3.org/copyright/software-license-2023/
 export default class Focus {
-  static ignoreTrap = false
   static pageActiveElement = document.activeElement // to save element with focus before modal has opened
-  static modalsArr: MutableRefObject<[ReactNode, HTMLDivElementRef][]> = { current: [] }
-  static modalOverlayRef: RefObject<HTMLDivElement> = { current: null }
 
-  static init(
-    modalsArr: MutableRefObject<[ReactNode, HTMLDivElementRef][]>,
-    modalOverlayRef: RefObject<HTMLDivElement>
-  ) {
-    Focus.modalsArr = modalsArr
-    Focus.modalOverlayRef = modalOverlayRef
-    document.body.addEventListener('focus', Focus.trap, true)
-  }
+  static handleModalOpen(modalEl: HTMLElement | null, modalSheetEl: HTMLElement | null) {
+    if(!modalEl || !modalSheetEl) return
 
-  static trap(ev: FocusEvent) {
-    if (Focus.ignoreTrap || !Focus.modalsArr.current.length) return
+    // if other modals are opened with higher z-inder, set this to inert
+    const zIndexCurrModal = parseInt(getComputedStyle(modalEl).zIndex)
+    const isUpperModalExisted = [...document.querySelectorAll('data-modal-open')]
+      .map(
+        (e) =>
+          e === modalEl ||
+          zIndexCurrModal > parseInt(getComputedStyle(e).zIndex) ||
+          modalEl.compareDocumentPosition(e) === Node.DOCUMENT_POSITION_PRECEDING
+      )
+      .some(e => !e)
 
-    const modal = Focus.modalsArr.current[Focus.modalsArr.current.length - 1][1]
-    const isOpen = Focus.modalOverlayRef.current?.dataset.modalOpen
+    if (isUpperModalExisted) modalEl.setAttribute('inert', '') 
+    else {
+      modalEl.removeAttribute('inert')
+      Focus.setOnFirstDescendant(modalSheetEl)
+      setInertOnAll(modalEl)
+    }
 
-    if (!modal.current || !isOpen) return
+    function setInertOnAll(el: HTMLElement | null) {
+      if (!el || el === document.body || !el.parentElement) return
 
-    if (modal.current.contains(ev.target as Node)) {
-      modal.activeElement = ev.target as Element
-    } else {
-      Focus.setOnFirstDescendant(modal.current)
-      if (modal.activeElement == document.activeElement) {
-        Focus.setOnLastDescendant(modal.current)
+      for (let sibling of el.parentElement.children) {
+        if (sibling == el || !(sibling instanceof HTMLElement)) continue
+
+        if (!sibling.hasAttribute('inert')) {
+          sibling.dataset.omodalInert = modalEl?.dataset.omodalId
+          sibling.setAttribute('inert', '')
+        }
       }
-      modal.activeElement = document.activeElement
+
+      setInertOnAll(el.parentElement)
     }
   }
 
-  /**
-   * set focus back to previous element before modal has opened
-   */
-  static setBackOnPrevious() {
-    const len = Focus.modalsArr.current.length
-    const modal = Focus.modalsArr.current[len - 1]?.[1]
-
-    if (len > 0) Focus.set(modal.activeElement)
-    else Focus.set(Focus.pageActiveElement)
+  static handleModalClose(modalId: string) {
+    const elements = document.querySelectorAll(`[data-omodal-inert="${modalId}"]`)
+    for (let e of elements) {
+      e.removeAttribute('inert')
+      e.removeAttribute('data-omodal-inert')
+    }
   }
+
+  // Bellow class includes material derived from: Modal Dialog Example
+  // https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/dialog/#top.
+  // Copyright © 2023 World Wide Web Consortium. https://www.w3.org/copyright/software-license-2023/
 
   /**
    * @description Set focus on descendant nodes until the first focusable element is found.
@@ -84,12 +85,10 @@ export default class Focus {
   }
 
   static set(element: any) {
-    Focus.ignoreTrap = true
     try {
       element.focus()
     } catch (e) {
       // continue regardless of error
     }
-    Focus.ignoreTrap = false
   }
 }
