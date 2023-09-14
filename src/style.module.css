@@ -25,7 +25,7 @@
   align-items: center;
 }
 
-.overlay[data-modal-open="false"] {
+.overlay:not([data-modal-open]) {
   display: none;
 }
 

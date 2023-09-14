@@ -297,7 +297,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       data-animation={animation.current.type}
       data-modal-type={type}
       data-modal-position={position}
-      data-modal-open={!!(modalsArr.current.length && !isHidden)}
+      data-modal-open={modalsArr.current.length && !isHidden ? '' : undefined}
       ref={modalOverlayRef}
       onClick={(ev) => {
         if (!onClickOverlay || ev.currentTarget != ev.target) return
