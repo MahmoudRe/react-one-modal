@@ -16,7 +16,7 @@ export default class Focus {
 
     // if other modals are opened with higher z-inder, set this to inert
     const zIndexCurrModal = parseInt(getComputedStyle(modalEl).zIndex)
-    const isUpperModalExisted = [...document.querySelectorAll('data-modal-open')]
+    const isUpperModalExisted = [...document.querySelectorAll('[data-modal-open]')]
       .map(
         (e) =>
           e === modalEl ||
@@ -74,7 +74,7 @@ export default class Focus {
    * @param element DOM node for which to find the first focusable descendant.
    * @returns {boolean} true if a focusable element is found and focus is set.
    */
-  static setOnFirstDescendant(element: any): boolean {
+  static setOnFirstDescendant(element: Element): boolean {
     for (let i = 0; i < element.children.length; i++) {
       let child = element.children[i]
       if (Focus.attempt(child) || Focus.setOnFirstDescendant(child)) return true
@@ -89,7 +89,7 @@ export default class Focus {
    * @returns {boolean}
    *  true if a focusable element is found and focus is set.
    */
-  static setOnLastDescendant(element: any): boolean {
+  static setOnLastDescendant(element: Element): boolean {
     for (let i = element.children.length - 1; i >= 0; i--) {
       let child = element.children[i]
       if (Focus.attempt(child) || Focus.setOnLastDescendant(child)) return true

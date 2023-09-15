@@ -104,7 +104,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const elementRef: HTMLDivElementRef = { current: null, activeElement: null } // like ref, since can't useRef() here
       let hasCalled = false // flag to run ref callback only once
 
-      if (!isHidden) focus.preventPageScroll()  // prevent scroll before animation start
+      if (!isHidden) focus.preventPageScroll() // prevent scroll before animation start
 
       // make sure the ---out-transition has been removed
       modalOverlayRef.current?.classList.remove(styles['--out-transition'])
@@ -131,7 +131,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
                 forceUpdate()
               }
 
-              focus.handleModalOpen(el)
+              if(modalsArr.current.length === 1 && !isHidden) focus.handleModalOpen(el)
               resolve([content, elementRef])
             })
 
@@ -176,6 +176,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         const res = modalsArr.current.pop()
         forceUpdate()
         if (modalsArr.current.length === 0 && !isHidden) focus.handleModalClose()
+        else if (!isHidden) Focus.set(modalsArr.current[modalsArr.current.length - 1][1].activeElement)
         resolve(res as [ReactNode, HTMLDivElementRef])
       })
 
@@ -255,14 +256,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const show: Modal['show'] = (content, options = {}) =>
     new Promise((resolve) => {
+      focus.preventPageScroll()
+
       let res
       if (content) res = push(content, options)
-
-      if (isHidden) {
-        focus.handleModalOpen(modalsArr.current[modalsArr.current.length - 1][1].current)
-      } else {
-        const modalActiveElement = modalsArr.current[modalsArr.current.length - 1]?.[1].activeElement
-        modalActiveElement && Focus.setOnFirstDescendant(modalActiveElement)
+      else if (isHidden) {
+        const activeModal = modalsArr.current[modalsArr.current.length - 1]?.[1].current
+        focus.handleModalOpen(activeModal)
       }
 
       setHidden(false)
