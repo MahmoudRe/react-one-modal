@@ -131,7 +131,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
                 forceUpdate()
               }
 
-              if(modalsArr.current.length === 1 && !isHidden) focus.handleModalOpen(el)
+              if (modalsArr.current.length === 1 && !isHidden) focus.handleModalOpen(el)
               resolve([content, elementRef])
             })
 
@@ -296,7 +296,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       role='dialog'
       aria-modal='true'
       onKeyDown={(ev) => {
-        if (!onESC || ev.key !== 'Escape') return
+        if (!onESC || ev.key !== 'Escape' || modalOverlayRef.current?.hasAttribute('inert')) return
         if (typeof onESC === 'string') controlFunctions[onESC]()
         if (typeof onESC === 'function') onESC(ev)
       }}
