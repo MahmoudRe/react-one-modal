@@ -1,9 +1,9 @@
-import { RefObject } from "react"
+import { RefObject } from 'react'
 
 export default class Focus {
   pageActiveElement = document.activeElement // to save element with focus before modal has opened
   modalOverlayRef: RefObject<HTMLElement> = { current: null }
-  modalId: string = ""
+  modalId: string = ''
 
   constructor(modalOverlayRef: RefObject<HTMLElement>, modalId: string) {
     this.modalOverlayRef = modalOverlayRef
@@ -12,20 +12,21 @@ export default class Focus {
 
   handleModalOpen(modalSheetEl: HTMLElement | null) {
     const modalEl = this.modalOverlayRef.current
-    if(!modalEl || !modalSheetEl) return
+    if (!modalEl || !modalSheetEl) return
 
     // if other modals are opened with higher z-inder, set this to inert
-    const zIndexCurrModal = parseInt(getComputedStyle(modalEl).zIndex)
-    const isUpperModalExisted = [...document.querySelectorAll('[data-modal-open]')]
+    const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex)
+    const isUpperModalExisted = [
+      ...document.querySelectorAll(`[data-modal-open]:not([data-omodal-id="${this.modalId}"])`)
+    ]
       .map(
         (e) =>
-          e === modalEl ||
-          zIndexCurrModal > parseInt(getComputedStyle(e).zIndex) ||
+          zIndexThisModal > parseInt(getComputedStyle(e).zIndex) ||
           modalEl.compareDocumentPosition(e) === Node.DOCUMENT_POSITION_PRECEDING
       )
-      .some(e => !e)
+      .some((e) => !e)
 
-    if (isUpperModalExisted) modalEl.setAttribute('inert', '') 
+    if (isUpperModalExisted) modalEl.setAttribute('inert', '')
     else {
       modalEl.removeAttribute('inert')
       this.pageActiveElement = document.activeElement

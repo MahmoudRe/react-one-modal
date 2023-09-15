@@ -50,7 +50,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
 
   const [id] = useState(Math.random().toString(16).slice(10))
-  const [isHidden, setHidden] = useState(false)
+  const [open, setOpen] = useState(false)
   const [focus] = useState(new Focus(modalOverlayRef, id))
 
   const _animationType = useRef<ModalAnimation['type']>(
@@ -104,11 +104,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const elementRef: HTMLDivElementRef = { current: null, activeElement: null } // like ref, since can't useRef() here
       let hasCalled = false // flag to run ref callback only once
 
-      if (!isHidden) focus.preventPageScroll() // prevent scroll before animation start
-
-      // make sure the ---out-transition has been removed
-      modalOverlayRef.current?.classList.remove(styles['--out-transition'])
-
       modalsArr.current.push([
         <div
           key={Math.random()} // since the key is set only on push, random value should be fine
@@ -131,14 +126,14 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
                 forceUpdate()
               }
 
-              if (modalsArr.current.length === 1 && !isHidden) focus.handleModalOpen(el)
+              if (open) Focus.setOnFirstDescendant(el)
               resolve([content, elementRef])
             })
 
             // keep track of active element
             el.addEventListener('focusin', () => (elementRef.activeElement = document.activeElement))
 
-            if (disableAnimation) resolveHandler()
+            if (disableAnimation || !open) resolveHandler()
             else {
               // transitionend/cancel event can be triggered by child element as well, hence ignore those
               el.addEventListener('transitionend', (e) => e.target === el && resolveHandler())
@@ -174,14 +169,21 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
         const res = modalsArr.current.pop()
+        const isEmpty = modalsArr.current.length === 0
+
+        if (isEmpty && open) {
+          setOpen(false)
+          focus.handleModalClose()
+        } else if (open) {
+          Focus.set(modalsArr.current[modalsArr.current.length - 1][1].activeElement)
+        }
+
         forceUpdate()
-        if (modalsArr.current.length === 0 && !isHidden) focus.handleModalClose()
-        else if (!isHidden) Focus.set(modalsArr.current[modalsArr.current.length - 1][1].activeElement)
         resolve(res as [ReactNode, HTMLDivElementRef])
       })
 
       const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation) return resolveHandler()
+      if (disableAnimation || !open) return resolveHandler()
 
       /* transition */
       modalEl.classList.add(styles['--back-transition'])
@@ -205,13 +207,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
-        forceUpdate()
-        if (!isHidden) focus.handleModalClose()
+        if (open) focus.handleModalClose()
+        setOpen(false)
         resolve(res)
       })
 
       const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation || !len || isHidden) return resolveHandler()
+      if (disableAnimation || !open) return resolveHandler()
 
       /* transition */
       modalEl.classList.add(styles['--back-transition'])
@@ -234,13 +236,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
-        if (!isHidden) focus.handleModalClose()
-        setHidden(true)
+        if (open) focus.handleModalClose()
+        setOpen(false)
         resolve()
       })
 
       const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation || !len || isHidden) return resolveHandler()
+      if (disableAnimation || !open) return resolveHandler()
 
       /* transition */
       modalEl.classList.add(styles['--back-transition'])
@@ -254,20 +256,35 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       modalOverlayRef.current?.classList.add(styles['--out-transition'])
     })
 
-  const show: Modal['show'] = (content, options = {}) =>
-    new Promise((resolve) => {
-      focus.preventPageScroll()
+  const show: Modal['show'] = async (content, options = {}) => {
+    if (!modalsArr.current.length && !content) return Promise.reject('Nothing to show!')
 
-      let res
-      if (content) res = push(content, options)
-      else if (isHidden) {
-        const activeModal = modalsArr.current[modalsArr.current.length - 1]?.[1].current
-        focus.handleModalOpen(activeModal)
-      }
+    modalOverlayRef.current?.classList.remove(styles['--out-transition'])
+    focus.preventPageScroll()
 
-      setHidden(false)
-      resolve(res ?? modalsArr.current[modalsArr.current.length - 1])
+    let res
+    if (content) res = await push(content, options)
+    if (open) return res ?? modalsArr.current[modalsArr.current.length - 1]
+    setOpen(true)
+
+    return new Promise((resolve) => {
+      const modalEl = modalsArr.current[modalsArr.current.length - 1]?.[1].current
+      if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while show!') // shouldn't happen, just in case!!
+
+      const resolveHandler = runOnce(() => {
+        focus.handleModalOpen(modalEl)
+        resolve(modalsArr.current[modalsArr.current.length - 1])
+      })
+
+      const disableAnimation = _handleAnimationOption(options)
+      if (disableAnimation) return resolveHandler()
+
+      // transitionend/cancel event can be triggered by child element as well, hence ignore those
+      modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
+      modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
+      // setTimeout(resolveHandler, 250) //fallback support legacy browser
     })
+  }
 
   const controlFunctions = {
     push,
@@ -291,7 +308,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       data-animation={animation.current.type}
       data-modal-type={type}
       data-modal-position={position}
-      data-modal-open={modalsArr.current.length && !isHidden ? '' : undefined}
+      data-modal-open={open ? '' : undefined}
       ref={modalOverlayRef}
       role='dialog'
       aria-modal='true'
