@@ -32,7 +32,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     stackSize = 999, // the number of pages to preserve in the stack before start dropping out old pages
     animation: animationProps = {},
     rootElement = document.body, // HTMLElement where this modal will be appended to
-    allowBodyScroll = false,
     className = '',
     classNameOverlay = '', // className for modal container/overlay
     colorBackgroundOverlay, // default #00000099, also it can be set by css variable --one-modal-color-overlay
@@ -52,7 +51,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const [id] = useState(Math.random().toString(16).slice(10))
   const [isHidden, setHidden] = useState(false)
-  const [pageActiveElement, setPageActiveElement] = useState(document.activeElement)
+  const [focus] = useState(new Focus(modalOverlayRef, id))
 
   const _animationType = useRef<ModalAnimation['type']>(
     (animationProps && animationProps.type) ?? props.type == 'full-page'
@@ -105,10 +104,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const elementRef: HTMLDivElementRef = { current: null, activeElement: null } // like ref, since can't useRef() here
       let hasCalled = false // flag to run ref callback only once
 
-      if (!allowBodyScroll && !isHidden) document.body.setAttribute('data-prevent-scroll', '')
-
-      // if this is the first push, save the focused element on the page to retain its focus after close
-      if (!modalsArr.current.length) setPageActiveElement(document.activeElement)
+      if (!isHidden) focus.preventPageScroll()  // prevent scroll before animation start
 
       // make sure the ---out-transition has been removed
       modalOverlayRef.current?.classList.remove(styles['--out-transition'])
@@ -135,7 +131,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
                 forceUpdate()
               }
 
-              Focus.handleModalOpen(modalOverlayRef.current, el)
+              focus.handleModalOpen(el)
               resolve([content, elementRef])
             })
 
@@ -179,12 +175,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalEl.classList.remove(styles['--back-transition'])
         const res = modalsArr.current.pop()
         forceUpdate()
-        if (modalsArr.current.length === 0 && !isHidden) {
-          if (document.querySelectorAll('data-modal-open').length === 1) // data-modal-open won't change till next render, hence check if this the only one opened
-            document.body.removeAttribute('data-prevent-scroll')
-          Focus.handleModalClose(id)
-          Focus.set(pageActiveElement)
-        }
+        if (modalsArr.current.length === 0 && !isHidden) focus.handleModalClose()
         resolve(res as [ReactNode, HTMLDivElementRef])
       })
 
@@ -214,12 +205,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalEl.classList.remove(styles['--back-transition'])
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         forceUpdate()
-        if (!isHidden) {
-          if (document.querySelectorAll('data-modal-open').length === 1)
-            document.body.removeAttribute('data-prevent-scroll')
-          Focus.handleModalClose(id)
-          Focus.set(pageActiveElement)
-        }
+        if (!isHidden) focus.handleModalClose()
         resolve(res)
       })
 
@@ -247,13 +233,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
-        if (!isHidden) {
-          Focus.handleModalClose(id)
-          Focus.set(pageActiveElement)
-        }
+        if (!isHidden) focus.handleModalClose()
         setHidden(true)
-        if (document.querySelectorAll('data-modal-open').length === 1)
-          document.body.removeAttribute('data-prevent-scroll')
         resolve()
       })
 
@@ -277,11 +258,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       let res
       if (content) res = push(content, options)
 
-      if (!allowBodyScroll) document.body.setAttribute('data-prevent-scroll', '')
-
       if (isHidden) {
-        Focus.handleModalOpen(modalOverlayRef.current, modalsArr.current[modalsArr.current.length - 1][1].current)
-        setPageActiveElement(document.activeElement)
+        focus.handleModalOpen(modalsArr.current[modalsArr.current.length - 1][1].current)
       } else {
         const modalActiveElement = modalsArr.current[modalsArr.current.length - 1]?.[1].activeElement
         modalActiveElement && Focus.setOnFirstDescendant(modalActiveElement)

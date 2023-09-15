@@ -1,7 +1,17 @@
-export default class Focus {
-  static pageActiveElement = document.activeElement // to save element with focus before modal has opened
+import { RefObject } from "react"
 
-  static handleModalOpen(modalEl: HTMLElement | null, modalSheetEl: HTMLElement | null) {
+export default class Focus {
+  pageActiveElement = document.activeElement // to save element with focus before modal has opened
+  modalOverlayRef: RefObject<HTMLElement> = { current: null }
+  modalId: string = ""
+
+  constructor(modalOverlayRef: RefObject<HTMLElement>, modalId: string) {
+    this.modalOverlayRef = modalOverlayRef
+    this.modalId = modalId
+  }
+
+  handleModalOpen(modalSheetEl: HTMLElement | null) {
+    const modalEl = this.modalOverlayRef.current
     if(!modalEl || !modalSheetEl) return
 
     // if other modals are opened with higher z-inder, set this to inert
@@ -18,6 +28,8 @@ export default class Focus {
     if (isUpperModalExisted) modalEl.setAttribute('inert', '') 
     else {
       modalEl.removeAttribute('inert')
+      this.pageActiveElement = document.activeElement
+      this.preventPageScroll()
       Focus.setOnFirstDescendant(modalSheetEl)
       setInertOnAll(modalEl)
     }
@@ -38,12 +50,19 @@ export default class Focus {
     }
   }
 
-  static handleModalClose(modalId: string) {
-    const elements = document.querySelectorAll(`[data-omodal-inert="${modalId}"]`)
+  handleModalClose() {
+    const elements = document.querySelectorAll(`[data-omodal-inert="${this.modalId}"]`)
     for (let e of elements) {
       e.removeAttribute('inert')
       e.removeAttribute('data-omodal-inert')
     }
+    if (!document.querySelectorAll(`[data-modal-open]:not([data-omodal-id="${this.modalId}"])`).length)
+      document.body.removeAttribute('data-prevent-scroll')
+    Focus.set(this.pageActiveElement)
+  }
+
+  preventPageScroll() {
+    document.body.setAttribute('data-prevent-scroll', '')
   }
 
   // Bellow class includes material derived from: Modal Dialog Example
