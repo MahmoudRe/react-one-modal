@@ -100,7 +100,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const push: Modal['push'] = (content, options = {}) =>
     new Promise((resolve) => {
-      const { popLast = false, role = 'dialog', attributes: oneTimeAttrs } = options
+      const { popLast = false, attributes: oneTimeAttrs } = options
       const disableAnimation = _handleAnimationOption(options)
       const elementRef: HTMLDivElementRef = { current: null, activeElement: null } // like ref, since can't useRef() here
       let hasCalled = false // flag to run ref callback only once
@@ -117,8 +117,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         <div
           key={Math.random()} // since the key is set only on push, random value should be fine
           className={className}
-          role={role}
-          aria-modal='true'
           ref={(el) => {
             if (!el || hasCalled) return // run only once
             hasCalled = true
@@ -314,6 +312,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       data-modal-position={position}
       data-modal-open={modalsArr.current.length && !isHidden ? '' : undefined}
       ref={modalOverlayRef}
+      role='dialog'
+      aria-modal='true'
       onClick={(ev) => {
         if (!onClickOverlay || ev.currentTarget != ev.target) return
         if (typeof onClickOverlay === 'string') controlFunctions[onClickOverlay]()
