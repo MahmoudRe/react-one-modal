@@ -295,11 +295,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       ref={modalOverlayRef}
       role='dialog'
       aria-modal='true'
-      onClick={(ev) => {
-        if (!onClickOverlay || ev.currentTarget != ev.target) return
-        if (typeof onClickOverlay === 'string') controlFunctions[onClickOverlay]()
-        if (typeof onClickOverlay === 'function') onClickOverlay(ev) //nativeEvent, just in case of using addEventListener() later
-      }}
       onKeyDown={(ev) => {
         if (!onESC || ev.key !== 'Escape') return
         if (typeof onESC === 'string') controlFunctions[onESC]()
@@ -311,7 +306,16 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       }}
       {...attributesOverlay}
     >
-      <div className={styles['modals-container']}>{modalsArr.current.map((e) => e[0])}</div>
+      <div
+        className={styles['modals-container']}
+        onClick={(ev) => {
+          if (!onClickOverlay || ev.currentTarget != ev.target) return
+          if (typeof onClickOverlay === 'string') controlFunctions[onClickOverlay]()
+          if (typeof onClickOverlay === 'function') onClickOverlay(ev) //nativeEvent, just in case of using addEventListener() later
+        }}
+      >
+        {modalsArr.current.map((e) => e[0])}
+      </div>
     </div>,
     rootElement
   )
