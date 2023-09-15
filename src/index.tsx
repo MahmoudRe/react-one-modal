@@ -180,7 +180,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         const res = modalsArr.current.pop()
         forceUpdate()
         if (modalsArr.current.length === 0 && !isHidden) {
-          document.body.removeAttribute('data-prevent-scroll')
+          if (document.querySelectorAll('data-modal-open').length === 1) // data-modal-open won't change till next render, hence check if this the only one opened
+            document.body.removeAttribute('data-prevent-scroll')
           Focus.handleModalClose(id)
           Focus.set(pageActiveElement)
         }
@@ -213,8 +214,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalEl.classList.remove(styles['--back-transition'])
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         forceUpdate()
-        document.body.removeAttribute('data-prevent-scroll')
         if (!isHidden) {
+          if (document.querySelectorAll('data-modal-open').length === 1)
+            document.body.removeAttribute('data-prevent-scroll')
           Focus.handleModalClose(id)
           Focus.set(pageActiveElement)
         }
@@ -250,7 +252,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           Focus.set(pageActiveElement)
         }
         setHidden(true)
-        document.body.removeAttribute('data-prevent-scroll')
+        if (document.querySelectorAll('data-modal-open').length === 1)
+          document.body.removeAttribute('data-prevent-scroll')
         resolve()
       })
 
