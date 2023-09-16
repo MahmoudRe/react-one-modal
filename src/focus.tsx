@@ -99,7 +99,13 @@ export default class Focus {
    * Before the modal is opened, we can't focus on the first element directly, since it will be hidden.
    */
   stopFocus() {
-    document.body.focus()
+    if (!document.body.hasAttribute('tabindex')) {
+      document.body.tabIndex = -1
+      document.body.focus()
+      document.body.removeAttribute('tabindex')
+    } else {
+      document.body.focus()
+    }
   }
 
   // Bellow class includes material derived from: Modal Dialog Example
