@@ -104,6 +104,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const elementRef: HTMLDivElementRef = { current: null, activeElement: null } // like ref, since can't useRef() here
       let hasCalled = false // flag to run ref callback only once
 
+      if (open) focus.stopFocus()
+
       modalsArr.current.push([
         <div
           key={Math.random()} // since the key is set only on push, random value should be fine
@@ -166,14 +168,16 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const modalEl = modalsArr.current[len > 1 ? len - 2 : 0]?.[1].current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
 
+      const isLast = modalsArr.current.length === 1
+      if (isLast && open) focus.handleModalWillClose()
+
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
         const res = modalsArr.current.pop()
-        const isEmpty = modalsArr.current.length === 0
 
-        if (isEmpty && open) {
+        if (isLast && open) {
           setOpen(false)
-          focus.handleModalClose()
+          focus.handleModalHasClosed()
         } else if (open) {
           Focus.set(modalsArr.current[modalsArr.current.length - 1][1].activeElement)
         }
@@ -204,10 +208,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const modalEl = modalsArr.current[len - 1]?.[1].current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
 
+      if (open) focus.handleModalWillClose()
+
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
-        if (open) focus.handleModalClose()
+        if (open) focus.handleModalHasClosed()
         setOpen(false)
         resolve(res)
       })
@@ -234,9 +240,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const modalEl = modalsArr.current[len - 1]?.[1].current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
 
+      if (open) focus.handleModalWillClose()
+
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
-        if (open) focus.handleModalClose()
+        if (open) focus.handleModalHasClosed()
         setOpen(false)
         resolve()
       })
@@ -271,8 +279,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const modalEl = modalsArr.current[modalsArr.current.length - 1]?.[1].current
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while show!') // shouldn't happen, just in case!!
 
+      focus.handleModalWillOpen()
+
       const resolveHandler = runOnce(() => {
-        focus.handleModalOpen(modalEl)
+        focus.handleModalHasOpened(modalEl)
         resolve(modalsArr.current[modalsArr.current.length - 1])
       })
 

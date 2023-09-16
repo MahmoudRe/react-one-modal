@@ -1,7 +1,7 @@
 import { RefObject } from 'react'
 
 export default class Focus {
-  pageActiveElement = document.activeElement // to save element with focus before modal has opened
+  previousActiveElement = document.activeElement // to save element with focus before modal has opened
   modalOverlayRef: RefObject<HTMLElement> = { current: null }
   modalId: string = ''
 
@@ -10,11 +10,13 @@ export default class Focus {
     this.modalId = modalId
   }
 
-  handleModalOpen(modalSheetEl: HTMLElement | null) {
+  /**
+   * This function should be called to prepare for modal opening, ie. before opening-animation
+   */
+  handleModalWillOpen() {
     const modalEl = this.modalOverlayRef.current
-    if (!modalEl || !modalSheetEl) return
+    if (!modalEl) return
 
-    // if other modals are opened with higher z-inder, set this to inert
     const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex)
     const isUpperModalExisted = [
       ...document.querySelectorAll(`[data-modal-open]:not([data-omodal-id="${this.modalId}"])`)
@@ -29,8 +31,20 @@ export default class Focus {
     if (isUpperModalExisted) modalEl.setAttribute('inert', '')
     else {
       modalEl.removeAttribute('inert')
-      this.pageActiveElement = document.activeElement
+      this.previousActiveElement = document.activeElement
+      this.stopFocus()
       this.preventPageScroll()
+    }
+  }
+
+  /**
+   * This function should be called after modal has been opened, ie. after opening-animation
+   */
+  handleModalHasOpened(modalSheetEl: HTMLElement | null) {
+    const modalEl = this.modalOverlayRef.current
+    if (!modalEl || !modalSheetEl) return
+
+    if (!modalEl.hasAttribute('inert')) {
       Focus.setOnFirstDescendant(modalSheetEl)
       setInertOnAll(modalEl)
     }
@@ -51,19 +65,41 @@ export default class Focus {
     }
   }
 
-  handleModalClose() {
+  /**
+   * This function should be called before modal closing, ie. before close-animation
+   */
+  handleModalWillClose() {
+    this.stopFocus()
+  }
+
+  /**
+   * This function should be called after modal has closed, ie. after close-animation
+   */
+  handleModalHasClosed() {
     const elements = document.querySelectorAll(`[data-omodal-inert="${this.modalId}"]`)
     for (let e of elements) {
       e.removeAttribute('inert')
       e.removeAttribute('data-omodal-inert')
     }
+
+    // if opened modal, show scroll
     if (!document.querySelectorAll(`[data-modal-open]:not([data-omodal-id="${this.modalId}"])`).length)
       document.body.removeAttribute('data-prevent-scroll')
-    Focus.set(this.pageActiveElement)
+
+    Focus.set(this.previousActiveElement)
   }
 
   preventPageScroll() {
     document.body.setAttribute('data-prevent-scroll', '')
+  }
+
+  /**
+   * To prevent effect of spamming keypress on open/close modal btn while animation is running,
+   *  move focus to body till `handleModalHasOpened` or `handleModalHasClosed` is called (till animation end).
+   * Before the modal is opened, we can't focus on the first element directly, since it will be hidden.
+   */
+  stopFocus() {
+    document.body.focus()
   }
 
   // Bellow class includes material derived from: Modal Dialog Example
