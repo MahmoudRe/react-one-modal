@@ -16,6 +16,7 @@ import {
   ModalAnimation,
   BottomSheetOptions,
   Modal,
+  ModalPushOneTimeOptions,
   ModalOneTimeOptions,
   ModalProps,
   HTMLDivElementRef
@@ -356,29 +357,26 @@ class ModalState {
   /**
    * Promisify modalRef retrieval from modalRefs object, and reject promise on fail.
    *
-   * @param {string} key
-   * @returns {Promise<Modal>} promise resolve to modalRef if existed, otherwise reject
+   * @param {string} keyOrRef
+   * @returns {Modal} modalRef if existed, otherwise throw error
    */
-  static _getModalRef = (key: string): Promise<Modal> => {
-    const modalRef = ModalState.modalRefs[key]?.current
-    if (!modalRef)
-      // prefers `throw` over `Promise.reject` for using this function as check in get/set animation properties
-      throw Error(`Using control function on undefined Modal with key: ${key}`)
-
-    return Promise.resolve(modalRef)
+  static _getModal = (keyOrRef: string | RefObject<Modal>): Modal => {
+    const modalRef = typeof keyOrRef === 'string' ? ModalState.modalRefs[keyOrRef]?.current : keyOrRef.current
+    if (!modalRef) throw Error(`Using control function on undefined Modal: ${keyOrRef}`)
+    return modalRef
   }
 
   /**
    * Get the Modal control functions of an already bound modal component, given its key.
    *
-   * @param {string} [key]  If a key isn't passed, its value would be 'default'.
+   * @param {string} [keyOrRef="default"]  A string key or Ref. If a key isn't passed, its value would be 'default'.
    * @returns {Modal} modal object with { push, pop, empty, hide, show, animation } functionalities
    */
-  static getModal = (key: string = 'default'): Modal => {
-    if (!ModalState.modalRefs[key])
+  static getModal = (keyOrRef: string | RefObject<Modal> = 'default'): Modal => {
+    if (typeof keyOrRef === 'string' && !ModalState.modalRefs[keyOrRef])
       console.warn(
-        `No modal is rendered yet with this key: "${key}". Please double check the key name and make sure` +
-          ' you bind a Modal component with this key via useModal(key: string) inside an already rendered component. ' +
+        `No modal is rendered yet with this key: "${keyOrRef}". Please double check the key name and make sure` +
+          ' you bind a Modal component with this key via bindModal(key: string) inside an already rendered component. ' +
           'Only ignore this warning if you are sure that the binding happen before calling any of the functions of this object'
       )
 
@@ -389,46 +387,58 @@ class ModalState {
     // by using _getModalRef(), the returned promise is rejected if the this.modalRefs[key] is undefined yet.
 
     return {
-      push: (...args) => ModalState._getModalRef(key).then((ref) => ref.push(...args)),
-      pop: (...args) => ModalState._getModalRef(key).then((ref) => ref.pop(...args)),
-      empty: (...args) => ModalState._getModalRef(key).then((ref) => ref.empty(...args)),
-      transit: (...args) => ModalState._getModalRef(key).then((ref) => ref.transit(...args)),
-      hide: (...args) => ModalState._getModalRef(key).then((ref) => ref.hide(...args)),
-      show: (...args) => ModalState._getModalRef(key).then((ref) => ref.show(...args)),
+      push: (...args) => ModalState._getModal(keyOrRef).push(...args),
+      pop: (...args) => ModalState._getModal(keyOrRef).pop(...args),
+      empty: (...args) => ModalState._getModal(keyOrRef).empty(...args),
+      transit: (...args) => ModalState._getModal(keyOrRef).transit(...args),
+      hide: (...args) => ModalState._getModal(keyOrRef).hide(...args),
+      show: (...args) => ModalState._getModal(keyOrRef).show(...args),
       animation: {
         get disable() {
-          ModalState._getModalRef(key) // throw warning Error if `modalRefs[key]?.current` is undefined
-          return !!ModalState.modalRefs[key]?.current?.animation.disable
+          return  ModalState._getModal(keyOrRef).animation.disable
         },
         set disable(bool: ModalAnimation['disable']) {
-          ModalState._getModalRef(key).then((ref) => (ref.animation.disable = bool))
+          ModalState._getModal(keyOrRef).animation.disable = bool
         },
         get type() {
-          ModalState._getModalRef(key) // throw warning Error if `modalRefs[key]?.current` is undefined
-          return ModalState.modalRefs[key]?.current?.animation.type ?? 'slide'
+          return ModalState._getModal(keyOrRef).animation.type ?? 'slide'
         },
         set type(type: ModalAnimation['type']) {
-          ModalState._getModalRef(key).then((ref) => (ref.animation.type = type))
+          ModalState._getModal(keyOrRef).animation.type = type
         },
-        pause: (...args) => ModalState._getModalRef(key).then((ref) => ref.animation.pause(...args)),
-        resume: (...args) => ModalState._getModalRef(key).then((ref) => ref.animation.resume(...args))
+        pause: (...args) => ModalState._getModal(keyOrRef).animation.pause(...args),
+        resume: (...args) => ModalState._getModal(keyOrRef).animation.resume(...args)
       }
     }
   }
 
   /**
-   * Bind a modal instance to a modal component through `ref`.
+   * Create a modal instance with the given key and bind it to a modal component through `ref`.
+   * You can retrieve this modal instance anywhere using the `getModal(key)`.
    *
    * @param {string} [key = "default"] If a key isn't passed, its value would be 'default'.
    * @returns {[Modal, RefObject<Modal>]} Tuple array with first element is Modal control functions, and second element ref object.
    */
-  static useModal = (key: string = 'default'): [Modal, RefObject<Modal>] => {
+  static bindModal = (key: string = 'default'): [Modal, RefObject<Modal>] => {
     const newModalRef = useRef<Modal>(null) // react-hook should be outside any conditions
     if (!ModalState.modalRefs[key]) ModalState.modalRefs[key] = newModalRef
 
     return [ModalState.getModal(key), ModalState.modalRefs[key]]
   }
+
+  /**
+   * Use a keyless modal, by binding a newly created modal instance to a modal component through `ref` and returning its control function.
+   * 
+   * This should be used for one-time quick-use of Modal, as it won't be bound to a key for later retrieval.
+   * Nevertheless, if access to this instance on other component is needed, call `getModal(ref)` passing `ref` of this modal as an argument.
+   *
+   * @returns {[Modal, RefObject<Modal>]} Tuple array with first element is Modal control functions, and second element ref object.
+   */
+  static useModal = (): [Modal, RefObject<Modal>] => {
+    const newModalRef = useRef<Modal>(null)
+    return [ModalState.getModal(newModalRef), newModalRef]
+  }
 }
 
-export const { useModal, getModal } = ModalState
-export { Modal, ModalOneTimeOptions, ModalProps, ModalAnimation, BottomSheetOptions }
+export const { bindModal, getModal, useModal } = ModalState
+export { Modal, ModalPushOneTimeOptions, ModalOneTimeOptions, ModalProps, ModalAnimation, BottomSheetOptions }

@@ -63,7 +63,6 @@ export interface ModalOneTimeOptions {
 
 export interface ModalPushOneTimeOptions extends ModalOneTimeOptions {
   popLast?: boolean
-  role?: 'dialog' | 'alertdialog'
   attributes?: HTMLAttributes<HTMLDivElement>
 }
 
