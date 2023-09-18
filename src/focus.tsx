@@ -32,21 +32,9 @@ export default class Focus {
     else {
       modalEl.removeAttribute('inert')
       this.previousActiveElement = document.activeElement
-      this.stopFocus()
-      this.preventPageScroll()
-    }
-  }
-
-  /**
-   * This function should be called after modal has been opened, ie. after opening-animation
-   */
-  handleModalHasOpened(modalSheetEl: HTMLElement | null) {
-    const modalEl = this.modalOverlayRef.current
-    if (!modalEl || !modalSheetEl) return
-
-    if (!modalEl.hasAttribute('inert')) {
-      Focus.setOnFirstDescendant(modalSheetEl)
       setInertOnAll(modalEl)
+      this.stop()
+      this.preventPageScroll()
     }
 
     function setInertOnAll(el: HTMLElement | null) {
@@ -66,10 +54,23 @@ export default class Focus {
   }
 
   /**
+   * This function should be called after modal has been opened, ie. after opening-animation
+   */
+  handleModalHasOpened(modalSheetEl: HTMLElement | null) {
+    const modalEl = this.modalOverlayRef.current
+    if (!modalEl || !modalSheetEl) return
+
+    if (!modalEl.hasAttribute('inert')) {
+      this.resume()
+      Focus.setOnFirstDescendant(modalSheetEl)
+    }
+  }
+
+  /**
    * This function should be called before modal closing, ie. before close-animation
    */
   handleModalWillClose() {
-    this.stopFocus()
+    this.stop()
   }
 
   /**
@@ -86,6 +87,7 @@ export default class Focus {
     if (!document.querySelectorAll(`[data-modal-open]:not([data-omodal-id="${this.modalId}"])`).length)
       document.body.removeAttribute('data-prevent-scroll')
 
+    this.resume()
     Focus.set(this.previousActiveElement)
   }
 
@@ -98,7 +100,16 @@ export default class Focus {
    *  move focus to body till `handleModalHasOpened` or `handleModalHasClosed` is called (till animation end).
    * Before the modal is opened, we can't focus on the first element directly, since it will be hidden.
    */
-  stopFocus() {
+  stop() {
+    this.setOnRootElement()
+    document.body.addEventListener('focusin', this.setOnRootElement, true)
+  }
+
+  resume() {
+    document.body.removeEventListener('focusin', this.setOnRootElement, true)
+  }
+
+  setOnRootElement() {
     if (!document.body.hasAttribute('tabindex')) {
       document.body.tabIndex = -1
       document.body.focus()

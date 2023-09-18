@@ -129,7 +129,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
                 forceUpdate()
               }
 
-              if (open) Focus.setOnFirstDescendant(el)
+              if (open) {
+                focus.resumeFocus()
+                Focus.setOnFirstDescendant(el)
+              }
               resolve([content, elementRef])
             })
 
@@ -180,6 +183,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         if (isLast && open) {
           setOpen(false)
         } else if (open) {
+          focus.resumeFocus()
           const prevModal = modalsArr.current[modalsArr.current.length - 1][1]
           if (prevModal.activeElement) Focus.set(prevModal.activeElement)
           else if (prevModal.current) Focus.setOnFirstDescendant(prevModal.current)
