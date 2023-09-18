@@ -1,4 +1,4 @@
-import Modal, { ModalProps, useModal } from 'react-advance-modal'
+import Modal, { ModalProps, bindModal } from 'react-advance-modal'
 
 import FloatingModalContent from './components/FloatingModalContent'
 import { useState } from 'react'
@@ -10,10 +10,10 @@ function App() {
   const [animation, setAnimation] = useState<ModalProps['animation']>()
   const [stackSize, setStackSize] = useState<ModalProps['stackSize']>()
   const [allowBodyScroll, setAllowBodyScroll] = useState<ModalProps['allowBodyScroll']>()
-  const [onESC, setOnESC] = useState<ModalProps['onESC']>()
+  const [onESC, setOnESC] = useState<ModalProps['onESC']>('hide')
   const [onClickOverlay, setOnClickOverlay] = useState<ModalProps['onClickOverlay']>()
 
-  const [modal, modalRef] = useModal()
+  const [modal, modalRef] = bindModal()
 
   return (
     <article className='w-full'>
@@ -89,8 +89,8 @@ function App() {
           </form>
           <h4>On ESC button: </h4>
           <form className='join'>
-            <Radio name='onESC' value='null' onChange={() => setOnESC(null)} defaultChecked />
-            <Radio name='onESC' value='hide' onChange={() => setOnESC('hide')} />
+            <Radio name='onESC' value='null' onChange={() => setOnESC(null)} />
+            <Radio name='onESC' value='hide' onChange={() => setOnESC('hide')} defaultChecked />
             <Radio name='onESC' value='empty' onChange={() => setOnESC('empty')} />
             <Radio name='onESC' value='pop' onChange={() => setOnESC('pop')} />
             <Radio
@@ -101,12 +101,12 @@ function App() {
           </form>
           <h4>On click overlay: </h4>
           <form className='join'>
-            <Radio name='onESC' value='null' onChange={() => setOnClickOverlay(null)} defaultChecked />
-            <Radio name='onESC' value='hide' onChange={() => setOnClickOverlay('hide')} />
-            <Radio name='onESC' value='empty' onChange={() => setOnClickOverlay('empty')} />
-            <Radio name='onESC' value='pop' onChange={() => setOnClickOverlay('pop')} />
+            <Radio name='onClickOverlay' value='null' onChange={() => setOnClickOverlay(null)} defaultChecked />
+            <Radio name='onClickOverlay' value='hide' onChange={() => setOnClickOverlay('hide')} />
+            <Radio name='onClickOverlay' value='empty' onChange={() => setOnClickOverlay('empty')} />
+            <Radio name='onClickOverlay' value='pop' onChange={() => setOnClickOverlay('pop')} />
             <Radio
-              name='onESC'
+              name='onClickOverlay'
               value='[Custom callback]'
               onChange={() =>
                 setOnClickOverlay(() => () => alert('A click on overlay is detected! Your custom callback!'))
@@ -132,9 +132,20 @@ function App() {
               />
             </label>
           </div>
-          <button className='btn btn-primary block mt-10 mb-10' onClick={() => modal.show(<FloatingModalContent />)}>
-            Open Modal
-          </button>
+          <div className='flex gap-3'>
+            <button className='btn btn-primary block mt-10 mb-10' onClick={() => modal.show(<FloatingModalContent />)}>
+              Show Modal
+            </button>
+            <button className='btn btn-primary block mt-10 mb-10' onClick={() => modal.push(<FloatingModalContent />)}>
+              Push Modal
+            </button>
+            <button className='btn btn-primary block mt-10 mb-10' onClick={() => modal.pop()}>
+              Pop Modal
+            </button>
+            <button className='btn btn-primary block mt-10 mb-10' onClick={() => modal.empty()}>
+              Empty Modal
+            </button>
+          </div>
         </div>
       </main>
 
