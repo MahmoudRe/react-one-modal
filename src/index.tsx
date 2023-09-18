@@ -179,7 +179,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
         if (isLast && open) {
           setOpen(false)
-          focus.handleModalHasClosed()
         } else if (open) {
           const prevModal = modalsArr.current[modalsArr.current.length - 1][1]
           if (prevModal.activeElement) Focus.set(prevModal.activeElement)
@@ -217,7 +216,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
-        if (open) focus.handleModalHasClosed()
         setOpen(false)
         resolve(res)
       })
@@ -248,7 +246,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
-        if (open) focus.handleModalHasClosed()
         setOpen(false)
         resolve()
       })
@@ -314,6 +311,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   useEffect(() => {
     if (children) push(children)
   }, [])
+
+  useEffect(() => {
+    if (open === false) focus.handleModalHasClosed()
+  }, [open])
 
   return createPortal(
     <div
