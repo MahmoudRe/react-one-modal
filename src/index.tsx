@@ -170,7 +170,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
 
       const isLast = modalsArr.current.length === 1
-      if (isLast && open) focus.handleModalWillClose()
+      // if (isLast && open) focus.handleModalWillClose() // currently handleModalWillClose only stopFocus
+      if (open) focus.stopFocus()
 
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
@@ -180,7 +181,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           setOpen(false)
           focus.handleModalHasClosed()
         } else if (open) {
-          Focus.set(modalsArr.current[modalsArr.current.length - 1][1].activeElement)
+          const prevModal = modalsArr.current[modalsArr.current.length - 1][1]
+          if (prevModal.activeElement) Focus.set(prevModal.activeElement)
+          else if (prevModal.current) Focus.setOnFirstDescendant(prevModal.current)
         }
 
         forceUpdate()
@@ -395,7 +398,7 @@ class ModalState {
       show: (...args) => ModalState._getModal(keyOrRef).show(...args),
       animation: {
         get disable() {
-          return  ModalState._getModal(keyOrRef).animation.disable
+          return ModalState._getModal(keyOrRef).animation.disable
         },
         set disable(bool: ModalAnimation['disable']) {
           ModalState._getModal(keyOrRef).animation.disable = bool
@@ -428,7 +431,7 @@ class ModalState {
 
   /**
    * Use a keyless modal, by binding a newly created modal instance to a modal component through `ref` and returning its control function.
-   * 
+   *
    * This should be used for one-time quick-use of Modal, as it won't be bound to a key for later retrieval.
    * Nevertheless, if access to this instance on other component is needed, call `getModal(ref)` passing `ref` of this modal as an argument.
    *
