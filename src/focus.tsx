@@ -4,10 +4,12 @@ export default class Focus {
   previousActiveElement = document.activeElement // to save element with focus before modal has opened
   modalOverlayRef: RefObject<HTMLElement> = { current: null }
   modalId: string = ''
+  rootElement: HTMLElement = document.body
 
-  constructor(modalOverlayRef: RefObject<HTMLElement>, modalId: string) {
+  constructor(modalOverlayRef: RefObject<HTMLElement>, modalId: string, rootElement: HTMLElement) {
     this.modalOverlayRef = modalOverlayRef
     this.modalId = modalId
+    this.rootElement = rootElement
   }
 
   /**
@@ -48,8 +50,6 @@ export default class Focus {
           sibling.setAttribute('inert', '')
         }
       }
-
-      setInertOnAll(el.parentElement)
     }
   }
 
@@ -85,14 +85,14 @@ export default class Focus {
 
     // if opened modal, show scroll
     if (!document.querySelectorAll(`[data-modal-open]:not([data-omodal-id="${this.modalId}"])`).length)
-      document.body.removeAttribute('data-prevent-scroll')
+      this.rootElement.removeAttribute('data-prevent-scroll')
 
     this.resume()
     Focus.set(this.previousActiveElement)
   }
 
   preventPageScroll() {
-    document.body.setAttribute('data-prevent-scroll', '')
+    this.rootElement.setAttribute('data-prevent-scroll', '')
   }
 
   /**
@@ -102,20 +102,20 @@ export default class Focus {
    */
   stop() {
     this.setOnRootElement()
-    document.body.addEventListener('focusin', this.setOnRootElement, true)
+    this.rootElement.addEventListener('focusin', this.setOnRootElement, true)
   }
 
   resume() {
-    document.body.removeEventListener('focusin', this.setOnRootElement, true)
+    this.rootElement.removeEventListener('focusin', this.setOnRootElement, true)
   }
 
   setOnRootElement() {
-    if (!document.body.hasAttribute('tabindex')) {
-      document.body.tabIndex = -1
-      document.body.focus()
-      document.body.removeAttribute('tabindex')
+    if (!this.rootElement.hasAttribute('tabindex')) {
+      this.rootElement.tabIndex = -1
+      this.rootElement.focus()
+      this.rootElement.removeAttribute('tabindex')
     } else {
-      document.body.focus()
+      this.rootElement.focus()
     }
   }
 

@@ -52,7 +52,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const [id] = useState(Math.random().toString(16).slice(10))
   const [open, setOpen] = useState(false)
-  const [focus] = useState(new Focus(modalOverlayRef, id))
+  const [focus] = useState(new Focus(modalOverlayRef, id, rootElement))
 
   const _animationType = useRef<ModalAnimation['type']>(
     (animationProps && animationProps.type) ?? props.type == 'full-page'
@@ -105,7 +105,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const elementRef: HTMLDivElementRef = { current: null, activeElement: null } // like ref, since can't useRef() here
       let hasCalled = false // flag to run ref callback only once
 
-      if (open) focus.stopFocus()
+      if (open) focus.stop()
 
       modalsArr.current.push([
         <div
@@ -130,7 +130,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
               }
 
               if (open) {
-                focus.resumeFocus()
+                focus.resume()
                 Focus.setOnFirstDescendant(el)
               }
               resolve([content, elementRef])
@@ -174,7 +174,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       const isLast = modalsArr.current.length === 1
       // if (isLast && open) focus.handleModalWillClose() // currently handleModalWillClose only stopFocus
-      if (open) focus.stopFocus()
+      if (open) focus.stop()
 
       const resolveHandler = runOnce(() => {
         modalEl.classList.remove(styles['--back-transition'])
@@ -183,7 +183,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         if (isLast && open) {
           setOpen(false)
         } else if (open) {
-          focus.resumeFocus()
+          focus.resume()
           const prevModal = modalsArr.current[modalsArr.current.length - 1][1]
           if (prevModal.activeElement) Focus.set(prevModal.activeElement)
           else if (prevModal.current) Focus.setOnFirstDescendant(prevModal.current)
