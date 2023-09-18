@@ -15,7 +15,7 @@ export default class Focus {
   /**
    * This function should be called to prepare for modal opening, ie. before opening-animation
    */
-  handleModalWillOpen() {
+  handleModalWillOpen = () => {
     const modalEl = this.modalOverlayRef.current
     if (!modalEl) return
 
@@ -56,7 +56,7 @@ export default class Focus {
   /**
    * This function should be called after modal has been opened, ie. after opening-animation
    */
-  handleModalHasOpened(modalSheetEl: HTMLElement | null) {
+  handleModalHasOpened = (modalSheetEl: HTMLElement | null) => {
     const modalEl = this.modalOverlayRef.current
     if (!modalEl || !modalSheetEl) return
 
@@ -69,14 +69,14 @@ export default class Focus {
   /**
    * This function should be called before modal closing, ie. before close-animation
    */
-  handleModalWillClose() {
+  handleModalWillClose = () => {
     this.stop()
   }
 
   /**
    * This function should be called after modal has closed, ie. after close-animation
    */
-  handleModalHasClosed() {
+  handleModalHasClosed = () => {
     const elements = document.querySelectorAll(`[data-omodal-inert="${this.modalId}"]`)
     for (let e of elements) {
       e.removeAttribute('inert')
@@ -91,7 +91,7 @@ export default class Focus {
     Focus.set(this.previousActiveElement)
   }
 
-  preventPageScroll() {
+  preventPageScroll = () => {
     this.rootElement.setAttribute('data-prevent-scroll', '')
   }
 
@@ -100,16 +100,16 @@ export default class Focus {
    *  move focus to body till `handleModalHasOpened` or `handleModalHasClosed` is called (till animation end).
    * Before the modal is opened, we can't focus on the first element directly, since it will be hidden.
    */
-  stop() {
+  stop = () => {
     this.setOnRootElement()
     this.rootElement.addEventListener('focusin', this.setOnRootElement, true)
   }
 
-  resume() {
+  resume = () => {
     this.rootElement.removeEventListener('focusin', this.setOnRootElement, true)
   }
 
-  setOnRootElement() {
+  setOnRootElement = () => {
     if (!this.rootElement.hasAttribute('tabindex')) {
       this.rootElement.tabIndex = -1
       this.rootElement.focus()
@@ -128,7 +128,7 @@ export default class Focus {
    * @param element DOM node for which to find the first focusable descendant.
    * @returns {boolean} true if a focusable element is found and focus is set.
    */
-  static setOnFirstDescendant(element: Element): boolean {
+  static setOnFirstDescendant = (element: Element): boolean => {
     for (let i = 0; i < element.children.length; i++) {
       let child = element.children[i]
       if (Focus.attempt(child) || Focus.setOnFirstDescendant(child)) return true
@@ -143,7 +143,7 @@ export default class Focus {
    * @returns {boolean}
    *  true if a focusable element is found and focus is set.
    */
-  static setOnLastDescendant(element: Element): boolean {
+  static setOnLastDescendant = (element: Element): boolean => {
     for (let i = element.children.length - 1; i >= 0; i--) {
       let child = element.children[i]
       if (Focus.attempt(child) || Focus.setOnLastDescendant(child)) return true
@@ -151,13 +151,13 @@ export default class Focus {
     return false
   }
 
-  static attempt(element: any): boolean {
+  static attempt = (element: any): boolean => {
     if (element.tabIndex < 0) return false
     Focus.set(element)
     return document.activeElement === element
   }
 
-  static set(element: any) {
+  static set = (element: any) => {
     try {
       element.focus()
     } catch (e) {
