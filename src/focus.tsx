@@ -74,9 +74,15 @@ export default class Focus {
   }
 
   /**
-   * This function should be called after modal has closed, ie. after close-animation
+   * This function should be called after modal has closed, ie. after close-animation or unmount.
+   * 
+   * Note this function should be expected to run even when modal is already closed (eg. on mount and umount) 
+   *  or twice in case of unmount directly after close-animation.
+   * This behavior of running twice to insure proper cleanup for modal opening and handleModalWillClose 
+   *  in case the modal was forcefully unmounted just after closing (ie. `close` state is false) 
+   *  but before close handler is called.
    */
-  handleModalHasClosed = () => {
+  handleModalHasClosed = (unmount?: boolean) => {
     const elements = document.querySelectorAll(`[data-omodal-inert="${this.modalId}"]`)
     for (let e of elements) {
       e.removeAttribute('inert')
@@ -88,7 +94,7 @@ export default class Focus {
       this.rootElement.removeAttribute('data-prevent-scroll')
 
     this.resume()
-    Focus.set(this.previousActiveElement)
+    if (!unmount) Focus.set(this.previousActiveElement)
   }
 
   preventPageScroll = () => {

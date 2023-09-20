@@ -314,10 +314,14 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   useEffect(() => {
     if (children) push(children)
+    
+    return () => {
+      focus.handleModalHasClosed(true)
+    }
   }, [])
 
   useEffect(() => {
-    if (open === false) focus.handleModalHasClosed()
+    if (!open) focus.handleModalHasClosed()
   }, [open])
 
   return createPortal(
