@@ -69,16 +69,16 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     set type(type: ModalAnimation['type']) {
       if (!type || !modalOverlayRef.current) return
       _animationType.current = type
-      modalOverlayRef.current.dataset.animation = type // Update DOM
+      modalOverlayRef.current.setAttribute('data-omodal-animation', type) // Update DOM
     },
     pause: (timeout?: number) => {
       // if timeout is not passed, pause indefinitely
-      modalOverlayRef.current?.setAttribute('data-animation-pause', '')
+      modalOverlayRef.current?.setAttribute('data-omodal-animation-pause', '')
       timeout && setTimeout(animation.current.resume, timeout)
     },
     resume: (timeout?: number) => {
       // if timeout is not passed, resume indefinitely
-      modalOverlayRef.current?.removeAttribute('data-animation-pause')
+      modalOverlayRef.current?.removeAttribute('data-omodal-animation-pause')
       timeout && setTimeout(animation.current.pause, timeout)
     }
   })
@@ -314,7 +314,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   useEffect(() => {
     if (children) push(children)
-    
+    // rootElement.style.position = 'relative'
+
     return () => {
       focus.handleModalHasClosed(true)
     }
@@ -328,10 +329,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     <div
       className={styles.overlay + ' ' + classNameOverlay}
       data-omodal-id={id}
-      data-animation={animation.current.type}
-      data-modal-type={type}
-      data-modal-position={position}
-      data-modal-open={open ? '' : undefined}
+      data-omodal-animation={animation.current.type}
+      data-omodal-type={type}
+      data-omodal-position={position}
+      data-omodal-open={open ? '' : undefined}
       ref={modalOverlayRef}
       role='dialog'
       aria-modal='true'

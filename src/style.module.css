@@ -25,30 +25,30 @@
   align-items: center;
 }
 
-.overlay:not([data-modal-open]) {
+.overlay:not([data-omodal-open]) {
   display: none;
 }
 
-.overlay[data-animation-pause],
-.overlay[data-animation-pause] .modals-container > * {
+.overlay[data-omodal-animation-pause],
+.overlay[data-omodal-animation-pause] .modals-container > * {
   animation-iteration-count: 0 !important;
   transition: none !important;
 }
 
-.overlay[data-modal-type='full-page'] {
+.overlay[data-omodal-type='full-page'] {
   filter: drop-shadow(0 0 15px var(--one-modal-color-overlay, #00000099));
 }
-.overlay[data-modal-type='full-page'].--out-transition {
+.overlay[data-omodal-type='full-page'].--out-transition {
   background: transparent !important;
 }
 
-.overlay[data-modal-type='bottom-sheet'],
-.overlay[data-modal-type='floating'] {
+.overlay[data-omodal-type='bottom-sheet'],
+.overlay[data-omodal-type='floating'] {
   background: var(--one-modal-color-overlay, #00000099);
   animation: overlayFadeIn 0.25s ease;
 }
-.overlay[data-modal-type='bottom-sheet'].--out-transition,
-.overlay[data-modal-type='floating'].--out-transition {
+.overlay[data-omodal-type='bottom-sheet'].--out-transition,
+.overlay[data-omodal-type='floating'].--out-transition {
   animation: overlayFadeOut 0.25s ease both;
 }
 @keyframes overlayFadeIn {
@@ -68,12 +68,12 @@
   }
 }
 
-.overlay[data-modal-position='top'] {
+.overlay[data-omodal-position='top'] {
   align-items: start;
   padding-top: 2rem;
 }
 
-.overlay[data-modal-position='bottom'] {
+.overlay[data-omodal-position='bottom'] {
   align-items: end;
   padding-bottom: 3rem;
 }
@@ -81,22 +81,22 @@
 /* ------- modal styling --------- */
 .modal {
   position: absolute;
-  background: var(--one-modal-color-bg, white);
+  background: var(--one-modal-color-bg);
   max-height: 100%;
   white-space: initial;
   overflow: auto;
 }
-.overlay[data-modal-type='full-page'] .modal {
+.overlay[data-omodal-type='full-page'] .modal {
   width: 100%;
   height: 100%;
 }
-.overlay[data-modal-type='floating'] .modal {
+.overlay[data-omodal-type='floating'] .modal {
   border-radius: 1rem;
   margin: 1rem;
   max-height: 95%;
   max-width: 60rem;
 }
-.overlay[data-modal-type='bottom-sheet'] .modal {
+.overlay[data-omodal-type='bottom-sheet'] .modal {
   background: var(--one-modal-color-bg, transparent);
   width: 100%;
   height: 100%;
@@ -104,46 +104,46 @@
 
 /* In/Out zoom-in animation -------- */
 
-.overlay[data-animation='zoom-in'] .modals-container > * {
-  transition: transform 0.15s, opacity 0.15s;
+.overlay[data-omodal-animation='zoom-in'] .modals-container > * {
+  transition: transform 0.15s, opacity 0.15s, visibility 0.15s;
   transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.2);
   transform: scale(0.5);
   opacity: 0;
   visibility: hidden;
 }
-.overlay[data-animation='zoom-in'] .modal {
+.overlay[data-omodal-animation='zoom-in'] .modal {
   transform: scale(1);
   opacity: 1;
   visibility: visible;
 }
-.overlay[data-animation='zoom-in'] .modal.--back-transition + div,
-.overlay[data-animation='zoom-in'] .modal.--back-transition:last-child,
-.overlay[data-animation='zoom-in'] .modal:not(:last-child):not(.--back-transition) {
+.overlay[data-omodal-animation='zoom-in'] .modal.--back-transition + div,
+.overlay[data-omodal-animation='zoom-in'] .modal.--back-transition:last-child,
+.overlay[data-omodal-animation='zoom-in'] .modal:not(:last-child):not(.--back-transition) {
   transition-timing-function: ease-in-out;
   transform: scale(0.6);
   opacity: 0;
   pointer-events: none;
-  visibility: visible;
+  visibility: hidden;
 }
 
 /* In/Out slide animation -------- */
 
-.overlay[data-animation='slide'] .modals-container > * {
+.overlay[data-omodal-animation='slide'] .modals-container > * {
   transition: transform 0.25s ease-in-out;
   transform: translate(100vw, 0);
   visibility: hidden;
 }
-.overlay[data-animation='slide'] .modal {
+.overlay[data-omodal-animation='slide'] .modal {
   transform: translate(0, 0);
   visibility: visible;
 }
-.overlay[data-animation='slide'] .modal.--back-transition + div,
-.overlay[data-animation='slide'] .modal.--back-transition:last-child {
+.overlay[data-omodal-animation='slide'] .modal.--back-transition + div,
+.overlay[data-omodal-animation='slide'] .modal.--back-transition:last-child {
   transform: translate(100vw, 0);
   pointer-events: none;
   visibility: visible;
 }
-.overlay[data-animation='slide'] .modal:not(:last-child):not(.--back-transition) {
+.overlay[data-omodal-animation='slide'] .modal:not(:last-child):not(.--back-transition) {
   transform: translate(-100vw, 0);
   transition-delay: 15ms;
   pointer-events: none;
@@ -152,18 +152,18 @@
 
 /* In/Out slide bottom animation -------- */
 
-.overlay[data-animation='slide-bottom'] .modals-container > * {
+.overlay[data-omodal-animation='slide-bottom'] .modals-container > * {
   transition: transform 0.25s cubic-bezier(0, 0.3, 0.15, 1.1);
   transform: translate(0, 100vh);
   visibility: hidden;
 }
-.overlay[data-animation='slide-bottom'] .modal {
+.overlay[data-omodal-animation='slide-bottom'] .modal {
   transform: translate(0, 0);
   visibility: visible;
 }
-.overlay[data-animation='slide-bottom'] .modal.--back-transition + div,
-.overlay[data-animation='slide-bottom'] .modal.--back-transition:last-child,
-.overlay[data-animation='slide-bottom'] .modal:not(:last-child):not(.--back-transition) {
+.overlay[data-omodal-animation='slide-bottom'] .modal.--back-transition + div,
+.overlay[data-omodal-animation='slide-bottom'] .modal.--back-transition:last-child,
+.overlay[data-omodal-animation='slide-bottom'] .modal:not(:last-child):not(.--back-transition) {
   transition-timing-function: ease-in-out;
   transform: translate(0, 100vh);
   pointer-events: none;
@@ -172,32 +172,32 @@
 
 /* In/Out slide bottom-sheet animation -------- */
 
-.overlay[data-modal-type='bottom-sheet'][data-animation='slide-bottom'] .modals-container > * {
+.overlay[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .modals-container > * {
   transition: top 0.25s cubic-bezier(0, 0.3, 0.15, 1), height 0.25s cubic-bezier(0, 0.3, 0.15, 1) -0.25s;
   top: 100%;
   height: 100%;
   visibility: hidden;
 }
 
-.overlay[data-modal-type='bottom-sheet'] [data-delay-height] {
+.overlay[data-omodal-type='bottom-sheet'] [data-omodal-delay-height] {
   transition: top 0.25s cubic-bezier(0, 0.3, 0.15, 1), height 0.25s cubic-bezier(0, 0.3, 0.15, 1) 0.25s;
 }
 
-.overlay[data-modal-type='bottom-sheet'] [data-prevent-scroll],
-.overlay[data-modal-type='bottom-sheet'] [data-prevent-scroll] * {
+.overlay[data-omodal-type='bottom-sheet'] [data-omodal-prevent-scroll],
+.overlay[data-omodal-type='bottom-sheet'] [data-omodal-prevent-scroll] * {
   overflow-y: hidden !important; /* fallback, TODO FIX: cause page refresh on drag-down */
   overflow-y: clip !important; /* This fix the above issue, but only on supported browsers */
 }
 
-.overlay[data-modal-type='bottom-sheet'][data-animation='slide-bottom'] .modal {
+.overlay[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .modal {
   top: var(--bottom-sheet-top, 100%);
   height: var(--bottom-sheet-height, 100%);
   visibility: visible;
 }
 
-.overlay[data-modal-type='bottom-sheet'][data-animation='slide-bottom'] .modal.--back-transition + div,
-.overlay[data-modal-type='bottom-sheet'][data-animation='slide-bottom'] .modal.--back-transition:last-child,
-.overlay[data-modal-type='bottom-sheet'][data-animation='slide-bottom']
+.overlay[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .modal.--back-transition + div,
+.overlay[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .modal.--back-transition:last-child,
+.overlay[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom']
   .modal:not(:last-child):not(.--back-transition) {
   top: 100%;
   visibility: visible;
@@ -205,6 +205,6 @@
 
 /* ------------------- */
 
-[data-prevent-scroll] {
+[data-omodal-prevent-scroll] {
   overflow: hidden !important;
 }

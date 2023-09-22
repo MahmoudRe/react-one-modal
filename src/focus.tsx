@@ -21,7 +21,7 @@ export default class Focus {
 
     const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex)
     const isUpperModalExisted = [
-      ...document.querySelectorAll(`[data-modal-open]:not([data-omodal-id="${this.modalId}"])`)
+      ...document.querySelectorAll(`[data-omodal-open]:not([data-omodal-id="${this.modalId}"])`)
     ]
       .map(
         (e) =>
@@ -90,15 +90,15 @@ export default class Focus {
     }
 
     // if opened modal, show scroll
-    if (!document.querySelectorAll(`[data-modal-open]:not([data-omodal-id="${this.modalId}"])`).length)
-      this.rootElement.removeAttribute('data-prevent-scroll')
+    if (!document.querySelectorAll(`[data-omodal-open]:not([data-omodal-id="${this.modalId}"])`).length)
+      this.rootElement.removeAttribute('data-omodal-prevent-scroll')
 
     this.resume()
     if (!unmount) Focus.set(this.previousActiveElement)
   }
 
   preventPageScroll = () => {
-    this.rootElement.setAttribute('data-prevent-scroll', '')
+    this.rootElement.setAttribute('data-omodal-prevent-scroll', '')
   }
 
   /**

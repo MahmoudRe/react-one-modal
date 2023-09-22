@@ -52,7 +52,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     document.addEventListener('touchmove', dragMoveTouch)
 
     el.style.transition = 'none'
-    el.removeAttribute('data-delay-height')
+    el.removeAttribute('data-omodal-delay-height')
   }
 
   function dragMoveTouch(ev: TouchEvent) {
@@ -72,7 +72,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
       return
 
     // prevent scrolling if we didn't react the top nor nested elements is scrolled
-    el.setAttribute('data-prevent-scroll', '')
+    el.setAttribute('data-omodal-prevent-scroll', '')
     document.addEventListener('touchmove', dragMove)
     document.addEventListener('touchend', dragEnd)
   }
@@ -103,7 +103,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     document.removeEventListener('mousemove', dragMove)
     document.removeEventListener('touchmove', dragMove)
 
-    el.removeAttribute('data-prevent-scroll')
+    el.removeAttribute('data-omodal-prevent-scroll')
     el.style.transition = ''
 
     let nextPosition = currPosition
@@ -136,7 +136,7 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
 
     currPosition = nextPosition
 
-    if (nextPosition < currFloatingPos) el.setAttribute('data-delay-height', '')
+    if (nextPosition < currFloatingPos) el.setAttribute('data-omodal-delay-height', '')
     el.style.setProperty('--bottom-sheet-top', 'calc(100% - ' + nextPosition + '%)')
     el.style.setProperty('--bottom-sheet-height', (dynamicHeight ? nextPosition : highestPosition) + '%')
   }
