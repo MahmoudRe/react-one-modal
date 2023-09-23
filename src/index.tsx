@@ -115,8 +115,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
             if (!el || hasCalled) return // run only once
             hasCalled = true
 
-            //set class after the element is loaded into the DOM, so the transition takes affect
-            setTimeout(() => el.classList.add(styles.modal), 5)
+            if (animation.current.disable) el.classList.add(styles.modal)
+            else setTimeout(() => el.classList.add(styles.modal), 5) // till element is loaded, so the transition takes affect
 
             if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
 
@@ -184,9 +184,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           setOpen(false)
         } else if (open) {
           focus.resume()
-          const prevModal = modalsArr.current[modalsArr.current.length - 1][1]
-          if (prevModal.activeElement) Focus.set(prevModal.activeElement)
-          else if (prevModal.current) Focus.setOnFirstDescendant(prevModal.current)
+          setTimeout(() => {
+            const prevModal = modalsArr.current[modalsArr.current.length - 1][1]
+            if (prevModal.activeElement) Focus.set(prevModal.activeElement)
+            else if (prevModal.current) Focus.setOnFirstDescendant(prevModal.current)
+          }, 0) // till next render where `forceUpdate` takes effect
         }
 
         forceUpdate()
@@ -292,7 +294,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       })
 
       const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation) return resolveHandler()
+      if (disableAnimation) return setTimeout(resolveHandler, 0) // till next render where `open` state takes effect, and we can't resolve the promise in useEffect
 
       // transitionend/cancel event can be triggered by child element as well, hence ignore those
       modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
@@ -333,6 +335,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       data-omodal-type={type}
       data-omodal-position={position}
       data-omodal-open={open ? '' : undefined}
+      data-omodal-animation-pause={animation.current.disable ? '' : undefined}
       ref={modalOverlayRef}
       role='dialog'
       aria-modal='true'

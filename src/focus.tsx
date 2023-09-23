@@ -75,11 +75,11 @@ export default class Focus {
 
   /**
    * This function should be called after modal has closed, ie. after close-animation or unmount.
-   * 
-   * Note this function should be expected to run even when modal is already closed (eg. on mount and umount) 
+   *
+   * Note this function should be expected to run even when modal is already closed (eg. on mount and umount)
    *  or twice in case of unmount directly after close-animation.
-   * This behavior of running twice to insure proper cleanup for modal opening and handleModalWillClose 
-   *  in case the modal was forcefully unmounted just after closing (ie. `close` state is false) 
+   * This behavior of running twice to insure proper cleanup for modal opening and handleModalWillClose
+   *  in case the modal was forcefully unmounted just after closing (ie. `close` state is false)
    *  but before close handler is called.
    */
   handleModalHasClosed = (unmount?: boolean) => {
