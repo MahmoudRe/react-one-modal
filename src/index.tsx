@@ -296,6 +296,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const disableAnimation = _handleAnimationOption(options)
       if (disableAnimation) return setTimeout(resolveHandler, 0) // till next render where `open` state takes effect, and we can't resolve the promise in useEffect
 
+      // remove class to hide element and return it to trigger transition
+      modalEl.classList.remove(styles.modal) 
+      setTimeout(() => modalEl.classList.add(styles.modal), 5)
+      
       // transitionend/cancel event can be triggered by child element as well, hence ignore those
       modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
       modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
