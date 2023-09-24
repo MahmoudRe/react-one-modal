@@ -19,7 +19,7 @@ import {
   ModalPushOneTimeOptions,
   ModalOneTimeOptions,
   ModalProps,
-  HTMLDivElementRef
+  ModalSheet
 } from './typings'
 import { runOnce } from './utils'
 import Focus from './focus'
@@ -47,7 +47,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const modalOverlayRef = useRef<HTMLDivElement>(null)
 
   // `useRef` with `forceUpdate` instead of useState to have up-to-date value for pages array, and push to the existed array directly
-  const modalsArr = useRef<[ReactNode, HTMLDivElementRef][]>([])
+  const modalsArr = useRef<ModalSheet[]>([])
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
 
   const [id] = useState(Math.random().toString(16).slice(10))
@@ -102,12 +102,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     new Promise((resolve) => {
       const { popLast = false, attributes: oneTimeAttrs } = options
       const disableAnimation = _handleAnimationOption(options)
-      const elementRef: HTMLDivElementRef = { current: null, activeElement: null } // like ref, since can't useRef() here
+      const modalSheet: ModalSheet = { reactNode: null, htmlElement: null, activeElement: null }
       let hasCalled = false // flag to run ref callback only once
 
       if (open) focus.stop()
 
-      modalsArr.current.push([
+      modalSheet.reactNode = (
         <div
           key={Math.random()} // since the key is set only on push, random value should be fine
           className={className}
@@ -133,11 +133,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
                 focus.resume()
                 Focus.setOnFirstDescendant(el)
               }
-              resolve([content, elementRef])
+              resolve(modalSheet)
             })
 
             // keep track of active element
-            el.addEventListener('focusin', () => (elementRef.activeElement = document.activeElement))
+            el.addEventListener('focusin', () => (modalSheet.activeElement = document.activeElement))
 
             if (disableAnimation || !open) resolveHandler()
             else {
@@ -147,15 +147,16 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
               // setTimeout(resolveHandler, 250) //fallback support legacy browser
             }
 
-            elementRef.current = el
+            modalSheet.htmlElement = el
           }}
           {...attributes}
           {...oneTimeAttrs}
         >
           {content}
-        </div>,
-        elementRef
-      ])
+        </div>
+      )
+
+      modalsArr.current.push(modalSheet)
       forceUpdate()
     })
 
@@ -169,7 +170,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (!len) throw Error('No modal in the stack to pop') //no pages existed, skip this action
 
       // select before-last if existed or last (ie. first one)
-      const modalEl = modalsArr.current[len > 1 ? len - 2 : 0]?.[1].current
+      const modalEl = modalsArr.current[len > 1 ? len - 2 : 0]?.htmlElement
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
 
       const isLast = modalsArr.current.length === 1
@@ -185,14 +186,14 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         } else if (open) {
           focus.resume()
           setTimeout(() => {
-            const prevModal = modalsArr.current[modalsArr.current.length - 1][1]
+            const prevModal = modalsArr.current[modalsArr.current.length - 1]
             if (prevModal.activeElement) Focus.set(prevModal.activeElement)
-            else if (prevModal.current) Focus.setOnFirstDescendant(prevModal.current)
+            else if (prevModal.htmlElement) Focus.setOnFirstDescendant(prevModal.htmlElement)
           }, 0) // till next render where `forceUpdate` takes effect
         }
 
         forceUpdate()
-        resolve(res as [ReactNode, HTMLDivElementRef])
+        resolve(res as ModalSheet)
       })
 
       const disableAnimation = _handleAnimationOption(options)
@@ -214,7 +215,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     new Promise((resolve) => {
       const len = modalsArr.current.length
       const res = [...modalsArr.current] // hard copy before empty
-      const modalEl = modalsArr.current[len - 1]?.[1].current
+      const modalEl = modalsArr.current[len - 1]?.htmlElement
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
 
       if (open) focus.handleModalWillClose()
@@ -245,7 +246,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     new Promise((resolve) => {
       const len = modalsArr.current.length
 
-      const modalEl = modalsArr.current[len - 1]?.[1].current
+      const modalEl = modalsArr.current[len - 1]?.htmlElement
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
 
       if (open) focus.handleModalWillClose()
@@ -283,7 +284,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     setOpen(true)
 
     return new Promise((resolve) => {
-      const modalEl = modalsArr.current[modalsArr.current.length - 1]?.[1].current
+      const modalEl = modalsArr.current[modalsArr.current.length - 1]?.htmlElement
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while show!') // shouldn't happen, just in case!!
 
       focus.handleModalWillOpen()
@@ -297,9 +298,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (disableAnimation) return setTimeout(resolveHandler, 0) // till next render where `open` state takes effect, and we can't resolve the promise in useEffect
 
       // remove class to hide element and return it to trigger transition
-      modalEl.classList.remove(styles.modal) 
+      modalEl.classList.remove(styles.modal)
       setTimeout(() => modalEl.classList.add(styles.modal), 5)
-      
+
       // transitionend/cancel event can be triggered by child element as well, hence ignore those
       modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
       modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
@@ -362,7 +363,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           if (typeof onClickOverlay === 'function') onClickOverlay(ev) //nativeEvent, just in case of using addEventListener() later
         }}
       >
-        {modalsArr.current.map((e) => e[0])}
+        {modalsArr.current.map((e) => e.reactNode)}
       </div>
     </div>,
     rootElement

@@ -1,17 +1,18 @@
 import { KeyboardEvent, MouseEvent, ReactNode, HTMLAttributes } from 'react'
 
 export interface Modal {
-  push: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
-  pop: (options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
-  transit: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
-  empty: (options?: ModalOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef][]>
+  push: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<ModalSheet>
+  pop: (options?: ModalOneTimeOptions) => Promise<ModalSheet>
+  transit: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<ModalSheet>
+  empty: (options?: ModalOneTimeOptions) => Promise<ModalSheet[]>
   hide: (options?: ModalOneTimeOptions) => Promise<void>
-  show: (content?: ReactNode, options?: ModalPushOneTimeOptions) => Promise<[ReactNode, HTMLDivElementRef]>
+  show: (content?: ReactNode, options?: ModalPushOneTimeOptions) => Promise<ModalSheet>
   animation: ModalAnimation
 }
 
-export interface HTMLDivElementRef {
-  current: HTMLDivElement | null
+export interface ModalSheet {
+  reactNode: ReactNode
+  htmlElement: HTMLDivElement | null
   activeElement: Element | null
 }
 export interface BottomSheetOptions {
