@@ -224,6 +224,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalEl.classList.remove(styles['--back-transition'])
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         setOpen(false)
+        forceUpdate()
         resolve(res)
       })
 
