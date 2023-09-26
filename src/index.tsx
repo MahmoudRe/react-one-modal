@@ -84,25 +84,41 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     }
   })
 
-  const _handleAnimationOption = useCallback((options: ModalOneTimeOptions) => {
-    const { animation: animationOptions } = options
+  const resolveTransition = useCallback(
+    (modalEl: HTMLElement, options: ModalOneTimeOptions, triggerTransitionFn = () => {}, close = !open) =>
+      new Promise((resolve) => {
+        const { animation: animationOptions } = options
+        const eventHandler = (e: Event) => e.target === modalEl && resolveHandler()
 
-    const disableAnimation =
-      animationOptions === false ||
-      (animationOptions !== true && animationOptions?.disable) ||
-      // defining `animationOptions` is sufficient to do animation on this function call, no need to set disable = false
-      (animationOptions === undefined && animation.current.disable)
+        const resolveHandler = runOnce(() => {
+          modalEl.removeEventListener('transitionend', eventHandler)
+          modalEl.removeEventListener('transitioncancel', eventHandler)
+          resolve(null)
+        })
 
-    if (disableAnimation && !animation.current.disable) animation.current.pause(250)
-    if (!disableAnimation && animation.current.disable) animation.current.resume(250)
+        if (close) return resolveHandler()
 
-    return disableAnimation
-  }, [])
+        const disableAnimation =
+          animationOptions === false ||
+          (animationOptions !== true && animationOptions?.disable) ||
+          (animationOptions === undefined && animation.current.disable) // defining `animation` is sufficient to enable animation on this function call
+
+        if (disableAnimation && !animation.current.disable) animation.current.pause(250)
+        if (!disableAnimation && animation.current.disable) animation.current.resume(250)
+        if (disableAnimation) return resolveHandler()
+
+        // transitionend/cancel event can be triggered by child element as well, hence ignore those
+        modalEl.addEventListener('transitionend', eventHandler)
+        modalEl.addEventListener('transitioncancel', eventHandler)
+
+        triggerTransitionFn()
+      }),
+    [open]
+  )
 
   const push: Modal['push'] = (content, options = {}) =>
     new Promise((resolve) => {
       const { popLast = false, attributes: oneTimeAttrs } = options
-      const disableAnimation = _handleAnimationOption(options)
       const modalSheet: ModalSheet = {
         id: Math.random().toString(16).slice(10),
         reactNode: null,
@@ -123,7 +139,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
             if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
 
-            const resolveHandler = runOnce(() => {
+            resolveTransition(el, options).then(() => {
               if (popLast && modalsArr.current.length > 1) {
                 modalsArr.current.splice(modalsArr.current.length - 2, 1) // remove before last
                 forceUpdate()
@@ -141,15 +157,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
             // keep track of active element
             el.addEventListener('focusin', () => (modalSheet.activeElement = document.activeElement))
-
-            if (disableAnimation || !open) resolveHandler()
-            else {
-              // transitionend/cancel event can be triggered by child element as well, hence ignore those
-              el.addEventListener('transitionend', (e) => e.target === el && resolveHandler())
-              el.addEventListener('transitioncancel', (e) => e.target === el && resolveHandler())
-              // setTimeout(resolveHandler, 250) //fallback support legacy browser
-            }
-
             modalSheet.htmlElement = el
           }}
           {...attributes}
@@ -186,7 +193,14 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (isLast) setActiveSheetId('')
       else setActiveSheetId(modalSheet.id)
 
-      const resolveHandler = runOnce(() => {
+      const triggerTransitionFn = () => {
+        if (isLast) {
+          modalEl.classList.add(styles['--out-transition'])
+          modalOverlayRef.current?.classList.add(styles['--out-transition'])
+        }
+      }
+
+      resolveTransition(modalEl, options, triggerTransitionFn).then(() => {
         const res = modalsArr.current.pop()
 
         if (isLast && open) {
@@ -203,20 +217,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         forceUpdate()
         resolve(res as ModalSheet)
       })
-
-      const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation || !open) return resolveHandler()
-
-      /* transition */
-      if (isLast) modalEl.classList.add(styles['--out-transition'])
-
-      // transitionend/cancel event can be triggered by child element as well, hence ignore those
-      modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
-      modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
-      // setTimeout(resolveHandler, 250) //fallback support legacy browser
-
-      // if last modal, animate overlay hiding
-      if (len <= 1) modalOverlayRef.current?.classList.add(styles['--out-transition'])
     })
 
   const empty: Modal['empty'] = (options = {}) =>
@@ -228,27 +228,18 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       if (open) focus.handleModalWillClose()
 
-      const resolveHandler = runOnce(() => {
+      const triggerTransitionFn = () => {
+        modalEl.classList.add(styles['--out-transition'])
+        modalOverlayRef.current?.classList.add(styles['--out-transition'])
+      }
+
+      resolveTransition(modalEl, options, triggerTransitionFn).then(() => {
         modalEl.classList.remove(styles['--out-transition'])
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         setOpen(false)
         setActiveSheetId('')
         resolve(res)
       })
-
-      const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation || !open) return resolveHandler()
-
-      /* transition */
-      modalEl.classList.add(styles['--out-transition'])
-
-      // transitionend/cancel event can be triggered by child element as well, hence ignore those
-      modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
-      modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
-      // setTimeout(resolveHandler, 250) //fallback support legacy browser
-
-      // animate overlay hiding
-      modalOverlayRef.current?.classList.add(styles['--out-transition'])
     })
 
   const hide: Modal['hide'] = (options = {}) =>
@@ -260,25 +251,16 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       if (open) focus.handleModalWillClose()
 
-      const resolveHandler = runOnce(() => {
+      const triggerTransitionFn = () => {
+        modalEl.classList.add(styles['--out-transition'])
+        modalOverlayRef.current?.classList.add(styles['--out-transition'])
+      }
+
+      resolveTransition(modalEl, options, triggerTransitionFn).then(() => {
         modalEl.classList.remove(styles['--out-transition'])
         setOpen(false)
         resolve()
       })
-
-      const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation || !open) return resolveHandler()
-
-      /* transition */
-      modalEl.classList.add(styles['--out-transition'])
-
-      // transitionend/cancel event can be triggered by child element as well, hence ignore those
-      modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
-      modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
-      // setTimeout(resolveHandler, 250) //fallback support legacy browser
-
-      // animate overlay hiding
-      modalOverlayRef.current?.classList.add(styles['--out-transition'])
     })
 
   const show: Modal['show'] = async (content, options = {}) => {
@@ -298,24 +280,20 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       focus.handleModalWillOpen()
 
-      const resolveHandler = runOnce(() => {
-        modalEl.classList.remove(styles['--in-transition'])
-        focus.handleModalHasOpened(modalEl)
-        resolve(modalsArr.current[modalsArr.current.length - 1])
+      const triggerTransitionFn = () => {
+        // remove class to hide element and return it to trigger transition
+        modalEl.classList.add(styles['--in-transition'])
+        modalEl.classList.remove(styles.active)
+        setTimeout(() => modalEl.classList.add(styles.active), 0)
+      }
+
+      resolveTransition(modalEl, options, triggerTransitionFn, false).then(() => {
+        setTimeout(() => {
+          modalEl.classList.remove(styles['--in-transition'])
+          focus.handleModalHasOpened(modalEl)
+          resolve(modalsArr.current[modalsArr.current.length - 1])
+        }, 0) // till next render where `open` state takes effect, and we can't resolve the promise in useEffect
       })
-
-      const disableAnimation = _handleAnimationOption(options)
-      if (disableAnimation) return setTimeout(resolveHandler, 0) // till next render where `open` state takes effect, and we can't resolve the promise in useEffect
-
-      // remove class to hide element and return it to trigger transition
-      modalEl.classList.add(styles['--in-transition'])
-      modalEl.classList.remove(styles.active)
-      setTimeout(() => modalEl.classList.add(styles.active), 0)
-
-      // transitionend/cancel event can be triggered by child element as well, hence ignore those
-      modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
-      modalEl.addEventListener('transitioncancel', (e) => e.target === modalEl && resolveHandler())
-      // setTimeout(resolveHandler, 250) //fallback support legacy browser
     })
   }
 
