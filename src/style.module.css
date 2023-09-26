@@ -134,7 +134,7 @@
   pointer-events: inherit;
 }
 .overlay[data-omodal-animation='slide'] .modal.--in-transition,
-.overlay[data-omodal-animation='slide'] .modal.active.--out-transition,
+.overlay[data-omodal-animation='slide'] .modal.--out-transition,
 .overlay[data-omodal-animation='slide'] .modal.active ~ .modal {
   transform: translate(100vw, 0);
   transition-delay: 15ms;
