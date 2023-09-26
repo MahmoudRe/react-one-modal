@@ -5,10 +5,10 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
-  ReactNode,
   RefObject,
   ForwardedRef,
-  useCallback
+  useCallback,
+  useLayoutEffect
 } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './style.module.css'
@@ -53,7 +53,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const [id] = useState(Math.random().toString(16).slice(10))
   const [open, setOpen] = useState(false)
   const [focus] = useState(new Focus(modalOverlayRef, id, rootElement))
-  const [activeSheetId, setActiveSheetId] = useState('')
+  const [activeSheet, setActiveSheet] = useState<ModalSheet | null>()
 
   const _animationType = useRef<ModalAnimation['type']>(
     (animationProps && animationProps.type) ?? props.type == 'full-page'
@@ -169,8 +169,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       modalsArr.current.push(modalSheet)
       forceUpdate()
 
-      const isActiveSheet = activeSheetId === '' || activeSheetId === modalsArr.current[modalsArr.current.length - 2].id
-      if (isActiveSheet) setActiveSheetId(modalSheet.id)
+      const isActiveSheet = !activeSheet || activeSheet.id === modalsArr.current[modalsArr.current.length - 2].id
+      if (isActiveSheet)
+        setTimeout(() => setActiveSheet(modalSheet), 5) // till element is loaded, so transition takes effect
     })
 
   const transit: Modal['transit'] = (content, options) => {
@@ -190,8 +191,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const isLast = modalsArr.current.length === 1
       // if (isLast && open) focus.handleModalWillClose() // currently handleModalWillClose only stopFocus
       if (open) focus.stop()
-      if (isLast) setActiveSheetId('')
-      else setActiveSheetId(modalSheet.id)
+      if (isLast) setActiveSheet(null)
+      else setActiveSheet(modalSheet)
 
       const triggerTransitionFn = () => {
         if (isLast) {
@@ -237,7 +238,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         modalEl.classList.remove(styles['--out-transition'])
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         setOpen(false)
-        setActiveSheetId('')
+        setActiveSheet(null)
         resolve(res)
       })
     })
@@ -308,14 +309,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   }
   useImperativeHandle(ref, () => controlFunctions)
 
-  useEffect(() => {
-    setTimeout(() => {
-      modalsArr.current.forEach((e) => {
-        if (e.id === activeSheetId) e.htmlElement?.classList.add(styles.active)
-        else e.htmlElement?.classList.remove(styles.active)
-      })
-    }, 5) // slight delay for transition in case element is not loaded yet
-  }, [activeSheetId])
+  useLayoutEffect(() => {
+    modalsArr.current.forEach((e) => {
+      if (activeSheet && activeSheet.id === e.id) e.htmlElement?.classList.add(styles.active)
+      else e.htmlElement?.classList.remove(styles.active)
+    })
+  }, [activeSheet])
 
   useEffect(() => {
     if (children) push(children)
