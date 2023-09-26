@@ -105,7 +105,7 @@
 /* In/Out zoom-in animation -------- */
 
 .overlay[data-omodal-animation='zoom-in'] .modal.active.--out-transition,
-.overlay[data-omodal-animation='zoom-in'] .modals-container > * {
+.overlay[data-omodal-animation='zoom-in'] .modal {
   transition: transform 0.15s, opacity 0.15s, visibility 0.15s;
   transition-timing-function: ease-in-out;
   transform: scale(0.5);
@@ -123,16 +123,17 @@
 
 /* In/Out slide animation -------- */
 
-.overlay[data-omodal-animation='slide'] .modals-container > .modal {
+.overlay[data-omodal-animation='slide'] .modal {
   transition: transform 0.25s ease-in-out;
   transform: translate(-100vw, 0);
   pointer-events: none;
 }
+.overlay[data-omodal-animation='slide'] .modal.active.--in-transition,
 .overlay[data-omodal-animation='slide'] .modal.active {
   transform: translate(0, 0);
   pointer-events: inherit;
 }
-.overlay[data-omodal-animation='slide'] .modals-container > *,
+.overlay[data-omodal-animation='slide'] .modal.--in-transition,
 .overlay[data-omodal-animation='slide'] .modal.active.--out-transition,
 .overlay[data-omodal-animation='slide'] .modal.active ~ .modal {
   transform: translate(100vw, 0);
@@ -143,7 +144,7 @@
 /* In/Out slide bottom animation -------- */
 
 .overlay[data-omodal-animation='slide-bottom'] .modal.active.--out-transition,
-.overlay[data-omodal-animation='slide-bottom'] .modals-container > * {
+.overlay[data-omodal-animation='slide-bottom'] .modal {
   transition: transform 0.25s ease-in-out;
   transform: translate(0, 100vh);
   pointer-events: none;

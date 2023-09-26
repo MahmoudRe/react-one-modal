@@ -299,6 +299,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       focus.handleModalWillOpen()
 
       const resolveHandler = runOnce(() => {
+        modalEl.classList.remove(styles['--in-transition'])
         focus.handleModalHasOpened(modalEl)
         resolve(modalsArr.current[modalsArr.current.length - 1])
       })
@@ -307,8 +308,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (disableAnimation) return setTimeout(resolveHandler, 0) // till next render where `open` state takes effect, and we can't resolve the promise in useEffect
 
       // remove class to hide element and return it to trigger transition
-      modalEl.classList.remove(styles.modal)
-      setTimeout(() => modalEl.classList.add(styles.modal), 5)
+      modalEl.classList.add(styles['--in-transition'])
+      modalEl.classList.remove(styles.active)
+      setTimeout(() => modalEl.classList.add(styles.active), 0)
 
       // transitionend/cancel event can be triggered by child element as well, hence ignore those
       modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
