@@ -170,8 +170,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       forceUpdate()
 
       const isActiveSheet = !activeSheet || activeSheet.id === modalsArr.current[modalsArr.current.length - 2].id
-      if (isActiveSheet)
-        setTimeout(() => setActiveSheet(modalSheet), 5) // till element is loaded, so transition takes effect
+      if (isActiveSheet) setTimeout(() => setActiveSheet(modalSheet), 5) // till element is loaded, so transition takes effect
     })
 
   const transit: Modal['transit'] = (content, options) => {
@@ -260,6 +259,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       resolveTransition(modalEl, options, triggerTransitionFn).then(() => {
         modalEl.classList.remove(styles['--out-transition'])
         setOpen(false)
+        console.log('done hide inertnal', open)
         resolve()
       })
     })
@@ -285,7 +285,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         // remove class to hide element and return it to trigger transition
         modalEl.classList.add(styles['--in-transition'])
         modalEl.classList.remove(styles.active)
-        setTimeout(() => modalEl.classList.add(styles.active), 0)
+        setTimeout(() => modalEl.classList.add(styles.active), 10)
       }
 
       resolveTransition(modalEl, options, triggerTransitionFn, false).then(() => {
@@ -293,7 +293,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           modalEl.classList.remove(styles['--in-transition'])
           focus.handleModalHasOpened(modalEl)
           resolve(modalsArr.current[modalsArr.current.length - 1])
-        }, 0) // till next render where `open` state takes effect, and we can't resolve the promise in useEffect
+        }, 10) // till next render where `open` state takes effect, and we can't resolve the promise in useEffect
       })
     })
   }
@@ -372,6 +372,17 @@ class ModalState {
     [key: string]: RefObject<Modal>
   } = {}
 
+  static promise: Promise<any> = Promise.resolve() // chain concurrent call of control function
+
+  // TO DO: handle errors as one error in the chain will stop rest of the chain
+  static _putInQueue = (taskFn: () => Promise<any>) => {
+    this.promise = this.promise.then(async () => {
+      await new Promise((resolve) => setTimeout(() => resolve(null), 10)) // keep 10ms gap between tasks to allow useEffect to run on next render and properly finalis transition
+      return taskFn()
+    })
+    return this.promise
+  }
+
   /**
    * Promisify modalRef retrieval from modalRefs object, and reject promise on fail.
    *
@@ -405,12 +416,12 @@ class ModalState {
     // by using _getModalRef(), the returned promise is rejected if the this.modalRefs[key] is undefined yet.
 
     return {
-      push: (...args) => ModalState._getModal(keyOrRef).push(...args),
-      pop: (...args) => ModalState._getModal(keyOrRef).pop(...args),
-      empty: (...args) => ModalState._getModal(keyOrRef).empty(...args),
-      transit: (...args) => ModalState._getModal(keyOrRef).transit(...args),
-      hide: (...args) => ModalState._getModal(keyOrRef).hide(...args),
-      show: (...args) => ModalState._getModal(keyOrRef).show(...args),
+      push: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).push(...args)),
+      pop: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).pop(...args)),
+      empty: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).empty(...args)),
+      transit: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).transit(...args)),
+      hide: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).hide(...args)),
+      show: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).show(...args)),
       animation: {
         get disable() {
           return ModalState._getModal(keyOrRef).animation.disable
