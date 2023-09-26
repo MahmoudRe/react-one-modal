@@ -53,6 +53,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const [id] = useState(Math.random().toString(16).slice(10))
   const [open, setOpen] = useState(false)
   const [focus] = useState(new Focus(modalOverlayRef, id, rootElement))
+  const [activeSheetId, setActiveSheetId] = useState('')
 
   const _animationType = useRef<ModalAnimation['type']>(
     (animationProps && animationProps.type) ?? props.type == 'full-page'
@@ -102,21 +103,23 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     new Promise((resolve) => {
       const { popLast = false, attributes: oneTimeAttrs } = options
       const disableAnimation = _handleAnimationOption(options)
-      const modalSheet: ModalSheet = { reactNode: null, htmlElement: null, activeElement: null }
+      const modalSheet: ModalSheet = {
+        id: Math.random().toString(16).slice(10),
+        reactNode: null,
+        htmlElement: null,
+        activeElement: null
+      }
       let hasCalled = false // flag to run ref callback only once
 
       if (open) focus.stop()
 
       modalSheet.reactNode = (
         <div
-          key={Math.random()} // since the key is set only on push, random value should be fine
-          className={className}
+          key={modalSheet.id}
+          className={styles.modal + ' ' + className}
           ref={(el) => {
             if (!el || hasCalled) return // run only once
             hasCalled = true
-
-            if (animation.current.disable) el.classList.add(styles.modal)
-            else setTimeout(() => el.classList.add(styles.modal), 5) // till element is loaded, so the transition takes affect
 
             if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
 
@@ -158,6 +161,9 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       modalsArr.current.push(modalSheet)
       forceUpdate()
+
+      const isActiveSheet = activeSheetId === '' || activeSheetId === modalsArr.current[modalsArr.current.length - 2].id
+      if (isActiveSheet) setActiveSheetId(modalSheet.id)
     })
 
   const transit: Modal['transit'] = (content, options) => {
@@ -170,15 +176,17 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (!len) throw Error('No modal in the stack to pop') //no pages existed, skip this action
 
       // select before-last if existed or last (ie. first one)
-      const modalEl = modalsArr.current[len > 1 ? len - 2 : 0]?.htmlElement
+      const modalSheet = modalsArr.current[len > 1 ? len - 2 : 0]
+      const modalEl = modalSheet?.htmlElement
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
 
       const isLast = modalsArr.current.length === 1
       // if (isLast && open) focus.handleModalWillClose() // currently handleModalWillClose only stopFocus
       if (open) focus.stop()
+      if (isLast) setActiveSheetId('')
+      else setActiveSheetId(modalSheet.id)
 
       const resolveHandler = runOnce(() => {
-        modalEl.classList.remove(styles['--back-transition'])
         const res = modalsArr.current.pop()
 
         if (isLast && open) {
@@ -200,7 +208,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (disableAnimation || !open) return resolveHandler()
 
       /* transition */
-      modalEl.classList.add(styles['--back-transition'])
+      if (isLast) modalEl.classList.add(styles['--out-transition'])
 
       // transitionend/cancel event can be triggered by child element as well, hence ignore those
       modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
@@ -221,10 +229,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (open) focus.handleModalWillClose()
 
       const resolveHandler = runOnce(() => {
-        modalEl.classList.remove(styles['--back-transition'])
+        modalEl.classList.remove(styles['--out-transition'])
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         setOpen(false)
-        forceUpdate()
+        setActiveSheetId('')
         resolve(res)
       })
 
@@ -232,7 +240,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (disableAnimation || !open) return resolveHandler()
 
       /* transition */
-      modalEl.classList.add(styles['--back-transition'])
+      modalEl.classList.add(styles['--out-transition'])
 
       // transitionend/cancel event can be triggered by child element as well, hence ignore those
       modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
@@ -253,7 +261,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (open) focus.handleModalWillClose()
 
       const resolveHandler = runOnce(() => {
-        modalEl.classList.remove(styles['--back-transition'])
+        modalEl.classList.remove(styles['--out-transition'])
         setOpen(false)
         resolve()
       })
@@ -262,7 +270,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (disableAnimation || !open) return resolveHandler()
 
       /* transition */
-      modalEl.classList.add(styles['--back-transition'])
+      modalEl.classList.add(styles['--out-transition'])
 
       // transitionend/cancel event can be triggered by child element as well, hence ignore those
       modalEl.addEventListener('transitionend', (e) => e.target === modalEl && resolveHandler())
@@ -319,6 +327,15 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     animation: animation.current
   }
   useImperativeHandle(ref, () => controlFunctions)
+
+  useEffect(() => {
+    setTimeout(() => {
+      modalsArr.current.forEach((e) => {
+        if (e.id === activeSheetId) e.htmlElement?.classList.add(styles.active)
+        else e.htmlElement?.classList.remove(styles.active)
+      })
+    }, 5) // slight delay for transition in case element is not loaded yet
+  }, [activeSheetId])
 
   useEffect(() => {
     if (children) push(children)

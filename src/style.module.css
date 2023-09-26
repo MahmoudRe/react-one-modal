@@ -104,70 +104,54 @@
 
 /* In/Out zoom-in animation -------- */
 
+.overlay[data-omodal-animation='zoom-in'] .modal.active.--out-transition,
 .overlay[data-omodal-animation='zoom-in'] .modals-container > * {
   transition: transform 0.15s, opacity 0.15s, visibility 0.15s;
-  transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.2);
-  transform: scale(0.5);
-  opacity: 0;
-  visibility: hidden;
-}
-.overlay[data-omodal-animation='zoom-in'] .modal {
-  transform: scale(1);
-  opacity: 1;
-  visibility: visible;
-}
-.overlay[data-omodal-animation='zoom-in'] .modal.--back-transition + div,
-.overlay[data-omodal-animation='zoom-in'] .modal.--back-transition:last-child,
-.overlay[data-omodal-animation='zoom-in'] .modal:not(:last-child):not(.--back-transition) {
   transition-timing-function: ease-in-out;
-  transform: scale(0.6);
+  transform: scale(0.5);
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
+}
+.overlay[data-omodal-animation='zoom-in'] .modal.active {
+  transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.2);
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: inherit;
+  visibility: visible;
 }
 
 /* In/Out slide animation -------- */
 
-.overlay[data-omodal-animation='slide'] .modals-container > * {
+.overlay[data-omodal-animation='slide'] .modals-container > .modal {
   transition: transform 0.25s ease-in-out;
-  transform: translate(100vw, 0);
-  visibility: hidden;
-}
-.overlay[data-omodal-animation='slide'] .modal {
-  transform: translate(0, 0);
-  visibility: visible;
-}
-.overlay[data-omodal-animation='slide'] .modal.--back-transition + div,
-.overlay[data-omodal-animation='slide'] .modal.--back-transition:last-child {
-  transform: translate(100vw, 0);
-  pointer-events: none;
-  visibility: visible;
-}
-.overlay[data-omodal-animation='slide'] .modal:not(:last-child):not(.--back-transition) {
   transform: translate(-100vw, 0);
+  pointer-events: none;
+}
+.overlay[data-omodal-animation='slide'] .modal.active {
+  transform: translate(0, 0);
+  pointer-events: inherit;
+}
+.overlay[data-omodal-animation='slide'] .modals-container > *,
+.overlay[data-omodal-animation='slide'] .modal.active.--out-transition,
+.overlay[data-omodal-animation='slide'] .modal.active ~ .modal {
+  transform: translate(100vw, 0);
   transition-delay: 15ms;
   pointer-events: none;
-  visibility: visible;
 }
 
 /* In/Out slide bottom animation -------- */
 
+.overlay[data-omodal-animation='slide-bottom'] .modal.active.--out-transition,
 .overlay[data-omodal-animation='slide-bottom'] .modals-container > * {
-  transition: transform 0.25s cubic-bezier(0, 0.3, 0.15, 1.1);
-  transform: translate(0, 100vh);
-  visibility: hidden;
-}
-.overlay[data-omodal-animation='slide-bottom'] .modal {
-  transform: translate(0, 0);
-  visibility: visible;
-}
-.overlay[data-omodal-animation='slide-bottom'] .modal.--back-transition + div,
-.overlay[data-omodal-animation='slide-bottom'] .modal.--back-transition:last-child,
-.overlay[data-omodal-animation='slide-bottom'] .modal:not(:last-child):not(.--back-transition) {
-  transition-timing-function: ease-in-out;
+  transition: transform 0.25s ease-in-out;
   transform: translate(0, 100vh);
   pointer-events: none;
-  visibility: visible;
+}
+.overlay[data-omodal-animation='slide-bottom'] .modal.active {
+  transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.1);
+  transform: translate(0, 0);
+  pointer-events: inherit;
 }
 
 /* In/Out slide bottom-sheet animation -------- */

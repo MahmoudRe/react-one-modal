@@ -11,6 +11,7 @@ export interface Modal {
 }
 
 export interface ModalSheet {
+  id: string
   reactNode: ReactNode
   htmlElement: HTMLDivElement | null
   activeElement: Element | null
