@@ -2,7 +2,7 @@ import { KeyboardEvent, MouseEvent, ReactNode, HTMLAttributes } from 'react'
 
 export interface Modal {
   push: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<ModalSheet>
-  pop: (options?: ModalOneTimeOptions) => Promise<ModalSheet>
+  pop: (options?: ModalPopOneTimeOptions) => Promise<ModalSheet>
   transit: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<ModalSheet>
   empty: (options?: ModalOneTimeOptions) => Promise<ModalSheet[]>
   next: (options?: ModalOneTimeOptions) => Promise<ModalSheet>
@@ -70,6 +70,10 @@ export interface ModalPushOneTimeOptions extends ModalOneTimeOptions {
   silent?: boolean
   popLast?: boolean
   attributes?: HTMLAttributes<HTMLDivElement>
+}
+
+export interface ModalPopOneTimeOptions extends ModalOneTimeOptions {
+  last?: boolean
 }
 
 export type ScrollPosition = 'top' | 'middle' | 'bottom' | 'no-scroll'

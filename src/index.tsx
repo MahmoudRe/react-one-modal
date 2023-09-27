@@ -181,31 +181,42 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const pop: Modal['pop'] = (options = {}) =>
     new Promise((resolve) => {
-      const len = modalsArr.current.length
-      if (!len) throw Error('No modal in the stack to pop') //no pages existed, skip this action
+      const { last = false } = options
 
-      // select before-last if existed or last (ie. first one)
-      const modalSheet = modalsArr.current[len > 1 ? len - 2 : 0]
+      const len = modalsArr.current.length
+      if (!len) throw Error('No modal in the stack to pop')
+
+      if (!activeSheet) throw Error('No active modal-sheet!')
+      const activeIdx = modalsArr.current.indexOf(activeSheet)
+
+      // if called with `last` option, select before-last (if before not existed, select the first one)
+      // otherwise select active (if it is not the first one (ie. 0), select before-active)
+      const i = last ? (len > 1 ? len - 2 : 0) : activeIdx && activeIdx - 1
+      const modalSheet = modalsArr.current[i]
       const modalEl = modalSheet?.htmlElement
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
 
-      const isLast = modalsArr.current.length === 1
-      // if (isLast && open) focus.handleModalWillClose() // currently handleModalWillClose only stopFocus
+      const shouldClose = last ? len === 1 : activeIdx === 0
+      // if (shouldClose && open) focus.handleModalWillClose() // currently handleModalWillClose only stopFocus
+
       if (open) focus.stop()
-      if (isLast) setActiveSheet(null)
-      else setActiveSheet(modalSheet)
+      if (shouldClose) setActiveSheet(null)
+      else if (!last || activeIdx === len - 1) setActiveSheet(modalSheet)
 
       const triggerTransitionFn = () => {
-        if (isLast) {
+        if (shouldClose) {
           modalEl.classList.add(styles['--out-transition'])
           modalOverlayRef.current?.classList.add(styles['--out-transition'])
         }
       }
 
-      resolveTransition(modalEl, options, triggerTransitionFn).then(() => {
-        const res = modalsArr.current.pop()
+      const skipTransition = (last && activeIdx !== len - 1) || !open
+      resolveTransition(modalEl, options, triggerTransitionFn, skipTransition).then(() => {
+        const res = modalsArr.current[i]
+        modalsArr.current.splice(shouldClose ? 0 : i + 1, 1) // 2nd parameter means remove one item only
 
-        if (isLast && open) {
+        if (shouldClose) setActiveSheet(len > 1 ? modalsArr.current[0] : null)
+        if (shouldClose && open) {
           setOpen(false)
         } else if (open) {
           focus.resume()
