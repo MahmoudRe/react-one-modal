@@ -5,6 +5,8 @@ export interface Modal {
   pop: (options?: ModalOneTimeOptions) => Promise<ModalSheet>
   transit: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<ModalSheet>
   empty: (options?: ModalOneTimeOptions) => Promise<ModalSheet[]>
+  next: (options?: ModalOneTimeOptions) => Promise<ModalSheet>
+  back: (options?: ModalOneTimeOptions) => Promise<ModalSheet>
   hide: (options?: ModalOneTimeOptions) => Promise<void>
   show: (content?: ReactNode, options?: ModalPushOneTimeOptions) => Promise<ModalSheet>
   animation: ModalAnimation

@@ -221,9 +221,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const empty: Modal['empty'] = (options = {}) =>
     new Promise((resolve) => {
-      const len = modalsArr.current.length
       const res = [...modalsArr.current] // hard copy before empty
-      const modalEl = modalsArr.current[len - 1]?.htmlElement
+      const modalEl = activeSheet?.htmlElement
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
 
       if (open) focus.handleModalWillClose()
@@ -242,11 +241,45 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       })
     })
 
-  const hide: Modal['hide'] = (options = {}) =>
+  const next: Modal['next'] = (options = {}) =>
     new Promise((resolve) => {
       const len = modalsArr.current.length
 
-      const modalEl = modalsArr.current[len - 1]?.htmlElement
+      if (len <= 1) throw Error('Cannot go to next sheet, modal has 0 or 1 sheet!')
+      if (!activeSheet) throw Error('No active modal-sheet!')
+
+      const i = modalsArr.current.indexOf(activeSheet)
+      if (i === len - 1) throw Error('Cannot go to next sheet, current active sheet is the last one!')
+
+      const nextSheet = modalsArr.current[i + 1]
+      const modalEl = nextSheet?.htmlElement
+      if (!modalEl) throw Error('Unexpected behavior: No HTML element for next sheet is found!') // shouldn't happen, just in case!!
+
+      setActiveSheet(nextSheet)
+      resolveTransition(modalEl, options).then(() => resolve(nextSheet))
+    })
+
+  const back: Modal['back'] = (options = {}) =>
+    new Promise((resolve) => {
+      const len = modalsArr.current.length
+
+      if (len <= 1) throw Error('Cannot go to previous sheet, modal has 0 or 1 sheet!')
+      if (!activeSheet) throw Error('No active modal-sheet!')
+
+      const i = modalsArr.current.indexOf(activeSheet)
+      if (i === 0) throw Error('Cannot go to previous sheet, current active sheet is the first one!')
+
+      const prevSheet = modalsArr.current[i - 1]
+      const modalEl = prevSheet?.htmlElement
+      if (!modalEl) throw Error('Unexpected behavior: No HTML element for previous sheet is found!') // shouldn't happen, just in case!!
+
+      setActiveSheet(prevSheet)
+      resolveTransition(modalEl, options).then(() => resolve(prevSheet))
+    })
+
+  const hide: Modal['hide'] = (options = {}) =>
+    new Promise((resolve) => {
+      const modalEl = activeSheet?.htmlElement
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
 
       if (open) focus.handleModalWillClose()
@@ -259,7 +292,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       resolveTransition(modalEl, options, triggerTransitionFn).then(() => {
         modalEl.classList.remove(styles['--out-transition'])
         setOpen(false)
-        console.log('done hide inertnal', open)
         resolve()
       })
     })
@@ -276,7 +308,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     setOpen(true)
 
     return new Promise((resolve) => {
-      const modalEl = modalsArr.current[modalsArr.current.length - 1]?.htmlElement
+      const modalEl = activeSheet?.htmlElement
       if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while show!') // shouldn't happen, just in case!!
 
       focus.handleModalWillOpen()
@@ -303,6 +335,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     pop,
     transit,
     empty,
+    next,
+    back,
     hide,
     show,
     animation: animation.current
@@ -420,6 +454,8 @@ class ModalState {
       pop: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).pop(...args)),
       empty: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).empty(...args)),
       transit: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).transit(...args)),
+      next: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).next(...args)),
+      back: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).back(...args)),
       hide: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).hide(...args)),
       show: (...args) => ModalState._putInQueue(() => ModalState._getModal(keyOrRef).show(...args)),
       animation: {
