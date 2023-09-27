@@ -11,7 +11,7 @@ import React, {
   useLayoutEffect
 } from 'react'
 import { createPortal } from 'react-dom'
-import styles from './style.module.css'
+import './style.css'
 import {
   ModalAnimation,
   BottomSheetOptions,
@@ -133,7 +133,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       modalSheet.reactNode = (
         <div
           key={modalSheet.id}
-          className={styles.modal + ' ' + className}
+          className={'omodal__sheet ' + className}
           ref={(el) => {
             if (!el || hasCalled) return // run only once
             hasCalled = true
@@ -205,8 +205,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       const triggerTransitionFn = () => {
         if (shouldClose) {
-          modalEl.classList.add(styles['--out-transition'])
-          modalOverlayRef.current?.classList.add(styles['--out-transition'])
+          modalEl.classList.add('omodal__sheet--out-transition')
+          modalOverlayRef.current?.classList.add('omodal__sheet--out-transition')
         }
       }
 
@@ -241,12 +241,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (open) focus.handleModalWillClose()
 
       const triggerTransitionFn = () => {
-        modalEl.classList.add(styles['--out-transition'])
-        modalOverlayRef.current?.classList.add(styles['--out-transition'])
+        modalEl.classList.add('omodal__sheet--out-transition')
+        modalOverlayRef.current?.classList.add('omodal__sheet--out-transition')
       }
 
       resolveTransition(modalEl, options, triggerTransitionFn).then(() => {
-        modalEl.classList.remove(styles['--out-transition'])
+        modalEl.classList.remove('omodal__sheet--out-transition')
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         setOpen(false)
         setActiveSheet(null)
@@ -298,12 +298,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (open) focus.handleModalWillClose()
 
       const triggerTransitionFn = () => {
-        modalEl.classList.add(styles['--out-transition'])
-        modalOverlayRef.current?.classList.add(styles['--out-transition'])
+        modalEl.classList.add('omodal__sheet--out-transition')
+        modalOverlayRef.current?.classList.add('omodal__sheet--out-transition')
       }
 
       resolveTransition(modalEl, options, triggerTransitionFn).then(() => {
-        modalEl.classList.remove(styles['--out-transition'])
+        modalEl.classList.remove('omodal__sheet--out-transition')
         setOpen(false)
         resolve()
       })
@@ -312,7 +312,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const show: Modal['show'] = async (content, options = {}) => {
     if (!modalsArr.current.length && !content) return Promise.reject('Nothing to show!')
 
-    modalOverlayRef.current?.classList.remove(styles['--out-transition'])
+    modalOverlayRef.current?.classList.remove('omodal__sheet--out-transition')
     focus.preventPageScroll()
 
     let res
@@ -328,14 +328,14 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       const triggerTransitionFn = () => {
         // remove class to hide element and return it to trigger transition
-        modalEl.classList.add(styles['--in-transition'])
-        modalEl.classList.remove(styles.active)
-        setTimeout(() => modalEl.classList.add(styles.active), 10)
+        modalEl.classList.add('omodal__sheet--in-transition')
+        modalEl.classList.remove('omodal__sheet--active')
+        setTimeout(() => modalEl.classList.add('omodal__sheet--active'), 10)
       }
 
       resolveTransition(modalEl, options, triggerTransitionFn, false).then(() => {
         setTimeout(() => {
-          modalEl.classList.remove(styles['--in-transition'])
+          modalEl.classList.remove('omodal__sheet--in-transition')
           focus.handleModalHasOpened(modalEl)
           resolve(modalsArr.current[modalsArr.current.length - 1])
         }, 10) // till next render where `open` state takes effect, and we can't resolve the promise in useEffect
@@ -358,8 +358,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   useLayoutEffect(() => {
     modalsArr.current.forEach((e) => {
-      if (activeSheet && activeSheet.id === e.id) e.htmlElement?.classList.add(styles.active)
-      else e.htmlElement?.classList.remove(styles.active)
+      if (activeSheet && activeSheet.id === e.id) e.htmlElement?.classList.add('omodal__sheet--active')
+      else e.htmlElement?.classList.remove('omodal__sheet--active')
     })
   }, [activeSheet])
 
@@ -378,7 +378,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   return createPortal(
     <div
-      className={styles.overlay + ' ' + classNameOverlay}
+      className={'omodal ' + classNameOverlay}
       data-omodal-id={id}
       data-omodal-animation={animation.current.type}
       data-omodal-type={type}
@@ -400,7 +400,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       {...attributesOverlay}
     >
       <div
-        className={styles['modals-container']}
+        className={'omodal__sheets'}
         onClick={(ev) => {
           if (!onClickOverlay || ev.currentTarget != ev.target) return
           if (typeof onClickOverlay === 'string') controlFunctions[onClickOverlay]()

@@ -1,4 +1,4 @@
-.overlay {
+.omodal {
   /* variable and default value */
   /* 
     --one-modal-color-overlay: #00000099;
@@ -17,7 +17,7 @@
   -ms-scroll-chaining: none;
 }
 
-.modals-container {
+.omodal__sheets {
   width: 100%;
   height: 100%;
   display: flex;
@@ -25,30 +25,30 @@
   align-items: center;
 }
 
-.overlay:not([data-omodal-open]) {
+.omodal:not([data-omodal-open]) {
   display: none;
 }
 
-.overlay[data-omodal-animation-pause],
-.overlay[data-omodal-animation-pause] .modals-container > * {
+.omodal[data-omodal-animation-pause],
+.omodal[data-omodal-animation-pause] .omodal__sheets > * {
   animation-iteration-count: 0 !important;
   transition: none !important;
 }
 
-.overlay[data-omodal-type='full-page'] {
+.omodal[data-omodal-type='full-page'] {
   filter: drop-shadow(0 0 15px var(--one-modal-color-overlay, #00000099));
 }
-.overlay[data-omodal-type='full-page'].--out-transition {
+.omodal[data-omodal-type='full-page'].omodal--out-transition {
   background: transparent !important;
 }
 
-.overlay[data-omodal-type='bottom-sheet'],
-.overlay[data-omodal-type='floating'] {
+.omodal[data-omodal-type='bottom-sheet'],
+.omodal[data-omodal-type='floating'] {
   background: var(--one-modal-color-overlay, #00000099);
   animation: overlayFadeIn 0.25s ease;
 }
-.overlay[data-omodal-type='bottom-sheet'].--out-transition,
-.overlay[data-omodal-type='floating'].--out-transition {
+.omodal[data-omodal-type='bottom-sheet'].omodal--out-transition,
+.omodal[data-omodal-type='floating'].omodal--out-transition {
   animation: overlayFadeOut 0.25s ease both;
 }
 @keyframes overlayFadeIn {
@@ -68,35 +68,35 @@
   }
 }
 
-.overlay[data-omodal-position='top'] {
+.omodal[data-omodal-position='top'] {
   align-items: start;
   padding-top: 2rem;
 }
 
-.overlay[data-omodal-position='bottom'] {
+.omodal[data-omodal-position='bottom'] {
   align-items: end;
   padding-bottom: 3rem;
 }
 
 /* ------- modal styling --------- */
-.modal {
+.omodal__sheet {
   position: absolute;
   background: var(--one-modal-color-bg);
   max-height: 100%;
   white-space: initial;
   overflow: auto;
 }
-.overlay[data-omodal-type='full-page'] .modal {
+.omodal[data-omodal-type='full-page'] .omodal__sheet {
   width: 100%;
   height: 100%;
 }
-.overlay[data-omodal-type='floating'] .modal {
+.omodal[data-omodal-type='floating'] .omodal__sheet {
   border-radius: 1rem;
   margin: 1rem;
   max-height: 95%;
   max-width: 60rem;
 }
-.overlay[data-omodal-type='bottom-sheet'] .modal {
+.omodal[data-omodal-type='bottom-sheet'] .omodal__sheet {
   background: var(--one-modal-color-bg, transparent);
   width: 100%;
   height: 100%;
@@ -104,8 +104,8 @@
 
 /* In/Out zoom-in animation -------- */
 
-.overlay[data-omodal-animation='zoom-in'] .modal.active.--out-transition,
-.overlay[data-omodal-animation='zoom-in'] .modal {
+.omodal[data-omodal-animation='zoom-in'] .omodal__sheet.omodal__sheet--active.omodal__sheet--out-transition,
+.omodal[data-omodal-animation='zoom-in'] .omodal__sheet {
   transition: transform 0.15s, opacity 0.15s, visibility 0.15s;
   transition-timing-function: ease-in-out;
   transform: scale(0.5);
@@ -113,7 +113,7 @@
   pointer-events: none;
   visibility: hidden;
 }
-.overlay[data-omodal-animation='zoom-in'] .modal.active {
+.omodal[data-omodal-animation='zoom-in'] .omodal__sheet.omodal__sheet--active {
   transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.2);
   transform: scale(1);
   opacity: 1;
@@ -123,19 +123,19 @@
 
 /* In/Out slide animation -------- */
 
-.overlay[data-omodal-animation='slide'] .modal {
+.omodal[data-omodal-animation='slide'] .omodal__sheet {
   transition: transform 0.25s ease-in-out;
   transform: translate(-100vw, 0);
   pointer-events: none;
 }
-.overlay[data-omodal-animation='slide'] .modal.active.--in-transition,
-.overlay[data-omodal-animation='slide'] .modal.active {
+.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--active.omodal__sheet--in-transition,
+.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--active {
   transform: translate(0, 0);
   pointer-events: inherit;
 }
-.overlay[data-omodal-animation='slide'] .modal.--in-transition,
-.overlay[data-omodal-animation='slide'] .modal.--out-transition,
-.overlay[data-omodal-animation='slide'] .modal.active ~ .modal {
+.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--in-transition,
+.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--out-transition,
+.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--active ~ .omodal__sheet {
   transform: translate(100vw, 0);
   transition-delay: 15ms;
   pointer-events: none;
@@ -143,13 +143,13 @@
 
 /* In/Out slide bottom animation -------- */
 
-.overlay[data-omodal-animation='slide-bottom'] .modal.active.--out-transition,
-.overlay[data-omodal-animation='slide-bottom'] .modal {
+.omodal[data-omodal-animation='slide-bottom'] .omodal__sheet.omodal__sheet--active.omodal__sheet--out-transition,
+.omodal[data-omodal-animation='slide-bottom'] .omodal__sheet {
   transition: transform 0.25s ease-in-out;
   transform: translate(0, 100vh);
   pointer-events: none;
 }
-.overlay[data-omodal-animation='slide-bottom'] .modal.active {
+.omodal[data-omodal-animation='slide-bottom'] .omodal__sheet.omodal__sheet--active {
   transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.1);
   transform: translate(0, 0);
   pointer-events: inherit;
@@ -157,33 +157,34 @@
 
 /* In/Out slide bottom-sheet animation -------- */
 
-.overlay[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .modals-container > * {
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheets > * {
   transition: top 0.25s cubic-bezier(0, 0.3, 0.15, 1), height 0.25s cubic-bezier(0, 0.3, 0.15, 1) -0.25s;
   top: 100%;
   height: 100%;
   visibility: hidden;
 }
 
-.overlay[data-omodal-type='bottom-sheet'] [data-omodal-delay-height] {
+.omodal[data-omodal-type='bottom-sheet'] [data-omodal-delay-height] {
   transition: top 0.25s cubic-bezier(0, 0.3, 0.15, 1), height 0.25s cubic-bezier(0, 0.3, 0.15, 1) 0.25s;
 }
 
-.overlay[data-omodal-type='bottom-sheet'] [data-omodal-prevent-scroll],
-.overlay[data-omodal-type='bottom-sheet'] [data-omodal-prevent-scroll] * {
+.omodal[data-omodal-type='bottom-sheet'] [data-omodal-prevent-scroll],
+.omodal[data-omodal-type='bottom-sheet'] [data-omodal-prevent-scroll] * {
   overflow-y: hidden !important; /* fallback, TODO FIX: cause page refresh on drag-down */
   overflow-y: clip !important; /* This fix the above issue, but only on supported browsers */
 }
 
-.overlay[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .modal {
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheet {
   top: var(--bottom-sheet-top, 100%);
   height: var(--bottom-sheet-height, 100%);
   visibility: visible;
 }
 
-.overlay[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .modal.--back-transition + div,
-.overlay[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .modal.--back-transition:last-child,
-.overlay[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom']
-  .modal:not(:last-child):not(.--back-transition) {
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheet.--back-transition + div,
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom']
+  .omodal__sheet.--back-transition:last-child,
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom']
+  .omodal__sheet:not(:last-child):not(.--back-transition) {
   top: 100%;
   visibility: visible;
 }
