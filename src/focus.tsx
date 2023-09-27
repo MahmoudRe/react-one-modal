@@ -1,7 +1,8 @@
 import { RefObject } from 'react'
 
 export default class Focus {
-  previousActiveElement = document.activeElement // to save element with focus before modal has opened
+  static pageActiveElement = document.activeElement // to save element with focus before any modal has opened
+  previousActiveElement = document.activeElement // to save element with focus before this modal has opened
   modalRef: RefObject<HTMLElement> = { current: null }
   modalId: string = ''
   rootElement: HTMLElement = document.body
@@ -19,16 +20,14 @@ export default class Focus {
     const modalEl = this.modalRef.current
     if (!modalEl) return
 
-    const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex)
-    const isUpperModalExisted = [
-      ...document.querySelectorAll(`[data-omodal-open]:not([data-omodal-id="${this.modalId}"])`)
+    // if no other opened modal, store pageActive element (in case second modals close after first one is closed in bg)
+    const allOtherOpenedModals = [
+      ...this.rootElement.querySelectorAll(`[data-omodal-open]:not([data-omodal-id="${this.modalId}"])`)
     ]
-      .map(
-        (e) =>
-          zIndexThisModal > parseInt(getComputedStyle(e).zIndex) ||
-          modalEl.compareDocumentPosition(e) === Node.DOCUMENT_POSITION_PRECEDING
-      )
-      .some((e) => !e)
+    if (!allOtherOpenedModals.length) Focus.pageActiveElement = document.activeElement
+
+    const highestOpenedModal = this.getHighestOpenedModal(this.modalRef.current)
+    const isUpperModalExisted = highestOpenedModal && highestOpenedModal !== modalEl
 
     if (isUpperModalExisted) modalEl.setAttribute('inert', '')
     else {
@@ -86,7 +85,7 @@ export default class Focus {
    *  but before close handler is called.
    */
   handleModalHasClosed = (unmount?: boolean) => {
-    const elements = document.querySelectorAll(`[data-omodal-set-inert-by~="${this.modalId}"]`)
+    const elements = this.rootElement.querySelectorAll(`[data-omodal-set-inert-by~="${this.modalId}"]`)
     for (let e of elements) {
       const dataSetInertBy = e.getAttribute('data-omodal-set-inert-by')?.replace(this.modalId, '').trim() || ''
 
@@ -97,16 +96,41 @@ export default class Focus {
       }
     }
 
-    // if opened modal, show scroll
-    if (!document.querySelectorAll(`[data-omodal-open]:not([data-omodal-id="${this.modalId}"])`).length)
-      this.rootElement.removeAttribute('data-omodal-prevent-scroll')
+    const allOtherOpenedModals = this.rootElement.querySelectorAll(
+      `[data-omodal-open]:not([data-omodal-id="${this.modalId}"])`
+    )
+    const highestOpenedModal = this.getHighestOpenedModal()
+
+    if (!allOtherOpenedModals.length) this.rootElement.removeAttribute('data-omodal-prevent-scroll')
 
     this.resume()
-    if (!unmount) Focus.set(this.previousActiveElement)
+    if (highestOpenedModal?.contains(document.activeElement)) return
+    if (!unmount && !Focus.attempt(this.previousActiveElement)) {
+      if (highestOpenedModal) Focus.setOnFirstDescendant(highestOpenedModal)
+      else Focus.set(Focus.pageActiveElement)
+    }
   }
 
   preventPageScroll = () => {
     this.rootElement.setAttribute('data-omodal-prevent-scroll', '')
+  }
+
+  getHighestOpenedModal = (thisModal?: HTMLElement | null) => {
+    let allOpenedModals = [...this.rootElement.querySelectorAll(`[data-omodal-open]`)]
+    if (thisModal) allOpenedModals = [thisModal, ...allOpenedModals]
+
+    if (!allOpenedModals.length) return null
+
+    let highestOpenedModal = allOpenedModals[0]
+    for (const modal of allOpenedModals) {
+      if (
+        parseInt(getComputedStyle(modal).zIndex) > parseInt(getComputedStyle(highestOpenedModal).zIndex) ||
+        modal.compareDocumentPosition(highestOpenedModal) === Node.DOCUMENT_POSITION_PRECEDING
+      )
+        highestOpenedModal = modal
+    }
+
+    return highestOpenedModal
   }
 
   /**
