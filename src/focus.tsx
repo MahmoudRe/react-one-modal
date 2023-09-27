@@ -2,12 +2,12 @@ import { RefObject } from 'react'
 
 export default class Focus {
   previousActiveElement = document.activeElement // to save element with focus before modal has opened
-  modalOverlayRef: RefObject<HTMLElement> = { current: null }
+  modalRef: RefObject<HTMLElement> = { current: null }
   modalId: string = ''
   rootElement: HTMLElement = document.body
 
-  constructor(modalOverlayRef: RefObject<HTMLElement>, modalId: string, rootElement: HTMLElement) {
-    this.modalOverlayRef = modalOverlayRef
+  constructor(modalRef: RefObject<HTMLElement>, modalId: string, rootElement: HTMLElement) {
+    this.modalRef = modalRef
     this.modalId = modalId
     this.rootElement = rootElement
   }
@@ -16,7 +16,7 @@ export default class Focus {
    * This function should be called to prepare for modal opening, ie. before opening-animation
    */
   handleModalWillOpen = () => {
-    const modalEl = this.modalOverlayRef.current
+    const modalEl = this.modalRef.current
     if (!modalEl) return
 
     const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex)
@@ -57,7 +57,7 @@ export default class Focus {
    * This function should be called after modal has been opened, ie. after opening-animation
    */
   handleModalHasOpened = (modalSheetEl: HTMLElement | null) => {
-    const modalEl = this.modalOverlayRef.current
+    const modalEl = this.modalRef.current
     if (!modalEl || !modalSheetEl) return
 
     if (!modalEl.hasAttribute('inert')) {

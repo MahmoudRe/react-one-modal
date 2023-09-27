@@ -44,7 +44,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     onClickOverlay
   } = props
 
-  const modalOverlayRef = useRef<HTMLDivElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
 
   // `useRef` with `forceUpdate` instead of useState to have up-to-date value for pages array, and push to the existed array directly
   const modalsArr = useRef<ModalSheet[]>([])
@@ -52,7 +52,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const [id] = useState(Math.random().toString(16).slice(10))
   const [open, setOpen] = useState(false)
-  const [focus] = useState(new Focus(modalOverlayRef, id, rootElement))
+  const [focus] = useState(new Focus(modalRef, id, rootElement))
   const [activeSheet, setActiveSheet] = useState<ModalSheet | null>()
 
   const _animationType = useRef<ModalAnimation['type']>(
@@ -68,31 +68,31 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       return _animationType.current
     },
     set type(type: ModalAnimation['type']) {
-      if (!type || !modalOverlayRef.current) return
+      if (!type || !modalRef.current) return
       _animationType.current = type
-      modalOverlayRef.current.setAttribute('data-omodal-animation', type) // Update DOM
+      modalRef.current.setAttribute('data-omodal-animation', type) // Update DOM
     },
     pause: (timeout?: number) => {
       // if timeout is not passed, pause indefinitely
-      modalOverlayRef.current?.setAttribute('data-omodal-animation-pause', '')
+      modalRef.current?.setAttribute('data-omodal-animation-pause', '')
       timeout && setTimeout(animation.current.resume, timeout)
     },
     resume: (timeout?: number) => {
       // if timeout is not passed, resume indefinitely
-      modalOverlayRef.current?.removeAttribute('data-omodal-animation-pause')
+      modalRef.current?.removeAttribute('data-omodal-animation-pause')
       timeout && setTimeout(animation.current.pause, timeout)
     }
   })
 
   const resolveTransition = useCallback(
-    (modalEl: HTMLElement, options: ModalOneTimeOptions, triggerTransitionFn = () => {}, skipTransition = !open) =>
+    (modalSheetEL: HTMLElement, options: ModalOneTimeOptions, triggerTransitionFn = () => {}, skipTransition = !open) =>
       new Promise((resolve) => {
         const { animation: animationOptions } = options
-        const eventHandler = (e: Event) => e.target === modalEl && resolveHandler()
+        const eventHandler = (e: Event) => e.target === modalSheetEL && resolveHandler()
 
         const resolveHandler = runOnce(() => {
-          modalEl.removeEventListener('transitionend', eventHandler)
-          modalEl.removeEventListener('transitioncancel', eventHandler)
+          modalSheetEL.removeEventListener('transitionend', eventHandler)
+          modalSheetEL.removeEventListener('transitioncancel', eventHandler)
           resolve(null)
         })
 
@@ -108,8 +108,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         if (disableAnimation) return resolveHandler()
 
         // transitionend/cancel event can be triggered by child element as well, hence ignore those
-        modalEl.addEventListener('transitionend', eventHandler)
-        modalEl.addEventListener('transitioncancel', eventHandler)
+        modalSheetEL.addEventListener('transitionend', eventHandler)
+        modalSheetEL.addEventListener('transitioncancel', eventHandler)
 
         triggerTransitionFn()
       }),
@@ -193,8 +193,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       // otherwise select active (if it is not the first one (ie. 0), select before-active)
       const i = last ? (len > 1 ? len - 2 : 0) : activeIdx && activeIdx - 1
       const modalSheet = modalsArr.current[i]
-      const modalEl = modalSheet?.htmlElement
-      if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
+      const modalSheetEL = modalSheet?.htmlElement
+      if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
 
       const shouldClose = last ? len === 1 : activeIdx === 0
       // if (shouldClose && open) focus.handleModalWillClose() // currently handleModalWillClose only stopFocus
@@ -205,13 +205,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       const triggerTransitionFn = () => {
         if (shouldClose) {
-          modalEl.classList.add('omodal__sheet--out-transition')
-          modalOverlayRef.current?.classList.add('omodal__sheet--out-transition')
+          modalSheetEL.classList.add('omodal__sheet--out-transition')
+          modalRef.current?.classList.add('omodal__sheet--out-transition')
         }
       }
 
       const skipTransition = (last && activeIdx !== len - 1) || !open
-      resolveTransition(modalEl, options, triggerTransitionFn, skipTransition).then(() => {
+      resolveTransition(modalSheetEL, options, triggerTransitionFn, skipTransition).then(() => {
         const res = modalsArr.current[i]
         modalsArr.current.splice(shouldClose ? 0 : i + 1, 1) // 2nd parameter means remove one item only
 
@@ -235,18 +235,18 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const empty: Modal['empty'] = (options = {}) =>
     new Promise((resolve) => {
       const res = [...modalsArr.current] // hard copy before empty
-      const modalEl = activeSheet?.htmlElement
-      if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
+      const modalSheetEL = activeSheet?.htmlElement
+      if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
 
       if (open) focus.handleModalWillClose()
 
       const triggerTransitionFn = () => {
-        modalEl.classList.add('omodal__sheet--out-transition')
-        modalOverlayRef.current?.classList.add('omodal__sheet--out-transition')
+        modalSheetEL.classList.add('omodal__sheet--out-transition')
+        modalRef.current?.classList.add('omodal__sheet--out-transition')
       }
 
-      resolveTransition(modalEl, options, triggerTransitionFn).then(() => {
-        modalEl.classList.remove('omodal__sheet--out-transition')
+      resolveTransition(modalSheetEL, options, triggerTransitionFn).then(() => {
+        modalSheetEL.classList.remove('omodal__sheet--out-transition')
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         setOpen(false)
         setActiveSheet(null)
@@ -265,11 +265,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (i === len - 1) throw Error('Cannot go to next sheet, current active sheet is the last one!')
 
       const nextSheet = modalsArr.current[i + 1]
-      const modalEl = nextSheet?.htmlElement
-      if (!modalEl) throw Error('Unexpected behavior: No HTML element for next sheet is found!') // shouldn't happen, just in case!!
+      const modalSheetEL = nextSheet?.htmlElement
+      if (!modalSheetEL) throw Error('Unexpected behavior: No HTML element for next sheet is found!') // shouldn't happen, just in case!!
 
       setActiveSheet(nextSheet)
-      resolveTransition(modalEl, options).then(() => resolve(nextSheet))
+      resolveTransition(modalSheetEL, options).then(() => resolve(nextSheet))
     })
 
   const back: Modal['back'] = (options = {}) =>
@@ -283,27 +283,27 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       if (i === 0) throw Error('Cannot go to previous sheet, current active sheet is the first one!')
 
       const prevSheet = modalsArr.current[i - 1]
-      const modalEl = prevSheet?.htmlElement
-      if (!modalEl) throw Error('Unexpected behavior: No HTML element for previous sheet is found!') // shouldn't happen, just in case!!
+      const modalSheetEL = prevSheet?.htmlElement
+      if (!modalSheetEL) throw Error('Unexpected behavior: No HTML element for previous sheet is found!') // shouldn't happen, just in case!!
 
       setActiveSheet(prevSheet)
-      resolveTransition(modalEl, options).then(() => resolve(prevSheet))
+      resolveTransition(modalSheetEL, options).then(() => resolve(prevSheet))
     })
 
   const hide: Modal['hide'] = (options = {}) =>
     new Promise((resolve) => {
-      const modalEl = activeSheet?.htmlElement
-      if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
+      const modalSheetEL = activeSheet?.htmlElement
+      if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
 
       if (open) focus.handleModalWillClose()
 
       const triggerTransitionFn = () => {
-        modalEl.classList.add('omodal__sheet--out-transition')
-        modalOverlayRef.current?.classList.add('omodal__sheet--out-transition')
+        modalSheetEL.classList.add('omodal__sheet--out-transition')
+        modalRef.current?.classList.add('omodal__sheet--out-transition')
       }
 
-      resolveTransition(modalEl, options, triggerTransitionFn).then(() => {
-        modalEl.classList.remove('omodal__sheet--out-transition')
+      resolveTransition(modalSheetEL, options, triggerTransitionFn).then(() => {
+        modalSheetEL.classList.remove('omodal__sheet--out-transition')
         setOpen(false)
         resolve()
       })
@@ -312,7 +312,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const show: Modal['show'] = async (content, options = {}) => {
     if (!modalsArr.current.length && !content) return Promise.reject('Nothing to show!')
 
-    modalOverlayRef.current?.classList.remove('omodal__sheet--out-transition')
+    modalRef.current?.classList.remove('omodal__sheet--out-transition')
     focus.preventPageScroll()
 
     let res
@@ -321,22 +321,22 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     setOpen(true)
 
     return new Promise((resolve) => {
-      const modalEl = activeSheet?.htmlElement
-      if (!modalEl) throw Error('Unexpected behavior: No HTML eLement is found while show!') // shouldn't happen, just in case!!
+      const modalSheetEL = activeSheet?.htmlElement
+      if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while show!') // shouldn't happen, just in case!!
 
       focus.handleModalWillOpen()
 
       const triggerTransitionFn = () => {
         // remove class to hide element and return it to trigger transition
-        modalEl.classList.add('omodal__sheet--in-transition')
-        modalEl.classList.remove('omodal__sheet--active')
-        setTimeout(() => modalEl.classList.add('omodal__sheet--active'), 10)
+        modalSheetEL.classList.add('omodal__sheet--in-transition')
+        modalSheetEL.classList.remove('omodal__sheet--active')
+        setTimeout(() => modalSheetEL.classList.add('omodal__sheet--active'), 10)
       }
 
-      resolveTransition(modalEl, options, triggerTransitionFn, false).then(() => {
+      resolveTransition(modalSheetEL, options, triggerTransitionFn, false).then(() => {
         setTimeout(() => {
-          modalEl.classList.remove('omodal__sheet--in-transition')
-          focus.handleModalHasOpened(modalEl)
+          modalSheetEL.classList.remove('omodal__sheet--in-transition')
+          focus.handleModalHasOpened(modalSheetEL)
           resolve(modalsArr.current[modalsArr.current.length - 1])
         }, 10) // till next render where `open` state takes effect, and we can't resolve the promise in useEffect
       })
@@ -385,11 +385,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       data-omodal-position={position}
       data-omodal-open={open ? '' : undefined}
       data-omodal-animation-pause={animation.current.disable ? '' : undefined}
-      ref={modalOverlayRef}
+      ref={modalRef}
       role='dialog'
       aria-modal='true'
       onKeyDown={(ev) => {
-        if (!onESC || ev.key !== 'Escape' || modalOverlayRef.current?.hasAttribute('inert')) return
+        if (!onESC || ev.key !== 'Escape' || modalRef.current?.hasAttribute('inert')) return
         if (typeof onESC === 'string') controlFunctions[onESC]()
         if (typeof onESC === 'function') onESC(ev)
       }}
