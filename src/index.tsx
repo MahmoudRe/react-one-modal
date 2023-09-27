@@ -85,7 +85,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   })
 
   const resolveTransition = useCallback(
-    (modalEl: HTMLElement, options: ModalOneTimeOptions, triggerTransitionFn = () => {}, close = !open) =>
+    (modalEl: HTMLElement, options: ModalOneTimeOptions, triggerTransitionFn = () => {}, skipTransition = !open) =>
       new Promise((resolve) => {
         const { animation: animationOptions } = options
         const eventHandler = (e: Event) => e.target === modalEl && resolveHandler()
@@ -96,7 +96,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           resolve(null)
         })
 
-        if (close) return resolveHandler()
+        if (skipTransition) return resolveHandler()
 
         const disableAnimation =
           animationOptions === false ||
@@ -118,13 +118,14 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const push: Modal['push'] = (content, options = {}) =>
     new Promise((resolve) => {
-      const { popLast = false, attributes: oneTimeAttrs } = options
+      const { silent = false, last = false, popLast = false, attributes: oneTimeAttrs } = options
       const modalSheet: ModalSheet = {
         id: Math.random().toString(16).slice(10),
         reactNode: null,
         htmlElement: null,
         activeElement: null
       }
+      const shouldActiveChange = modalsArr.current.length === 0 || !(silent || last)
       let hasCalled = false // flag to run ref callback only once
 
       if (open) focus.stop()
@@ -139,7 +140,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
             if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
 
-            resolveTransition(el, options).then(() => {
+            const skipTransition = !shouldActiveChange || !open
+            resolveTransition(el, options, () => {}, skipTransition).then(() => {
               if (popLast && modalsArr.current.length > 1) {
                 modalsArr.current.splice(modalsArr.current.length - 2, 1) // remove before last
                 forceUpdate()
@@ -166,11 +168,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         </div>
       )
 
-      modalsArr.current.push(modalSheet)
+      const i = !last && activeSheet ? modalsArr.current.indexOf(activeSheet) : modalsArr.current.length - 1
+      modalsArr.current.splice(i + 1, 0, modalSheet)
       forceUpdate()
 
-      const isActiveSheet = !activeSheet || activeSheet.id === modalsArr.current[modalsArr.current.length - 2].id
-      if (isActiveSheet) setTimeout(() => setActiveSheet(modalSheet), 5) // till element is loaded, so transition takes effect
+      if (shouldActiveChange) setTimeout(() => setActiveSheet(modalSheet), 5) // till element is loaded, so transition takes effect
     })
 
   const transit: Modal['transit'] = (content, options) => {

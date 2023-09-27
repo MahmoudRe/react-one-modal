@@ -66,6 +66,8 @@ export interface ModalOneTimeOptions {
 }
 
 export interface ModalPushOneTimeOptions extends ModalOneTimeOptions {
+  last?: boolean
+  silent?: boolean
   popLast?: boolean
   attributes?: HTMLAttributes<HTMLDivElement>
 }
