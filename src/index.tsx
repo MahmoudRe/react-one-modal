@@ -192,7 +192,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const { last = false } = options
 
       const len = modalsArr.current.length
-      if (!len) throw Error('No modal in the stack to pop')
+      if (!len) throw Error('Modal is empty! No modal-sheet to pop')
 
       if (!activeSheet) throw Error('No active modal-sheet!')
       const activeIdx = modalsArr.current.indexOf(activeSheet)
@@ -238,6 +238,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const empty: Modal['empty'] = (options = {}) =>
     new Promise((resolve) => {
+      if (!modalsArr.current.length) throw Error('Modal is already empty! No modal-sheets to empty!')
+
       const res = [...modalsArr.current] // hard copy before empty
       const modalSheetEL = activeSheet?.htmlElement
       if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
@@ -296,6 +298,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const hide: Modal['hide'] = (options = {}) =>
     new Promise((resolve) => {
+      if (!open) throw Error('Modal is already hidden!')
+
       const modalSheetEL = activeSheet?.htmlElement
       if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
 
@@ -314,7 +318,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     })
 
   const show: Modal['show'] = async (content, options = {}) => {
-    if (!modalsArr.current.length && !content) return Promise.reject('Nothing to show!')
+    if (!modalsArr.current.length && !content) throw Error('Nothing to show!')
+    if (open && !content) throw Error('Modal is already shown!')
 
     modalRef.current?.classList.remove('omodal__sheet--out-transition')
     focus.preventPageScroll()
@@ -423,15 +428,33 @@ class ModalState {
     [key: string]: RefObject<Modal>
   } = {}
 
-  static promise: Promise<any> = Promise.resolve() // chain concurrent call of control function
+  static errorHandler: ((e: Error) => any) | null = null // to suppress all errors in production
+  static _promiseChain: Promise<any> = Promise.resolve() // chain concurrent call of control function
 
   // TO DO: handle errors as one error in the chain will stop rest of the chain
   static _putInQueue = (taskFn: () => Promise<any>) => {
-    this.promise = this.promise.then(async () => {
-      await new Promise((resolve) => setTimeout(() => resolve(null), 10)) // keep 10ms gap between tasks to allow useEffect to run on next render and properly finalis transition
-      return taskFn()
+    ModalState._promiseChain = ModalState._promiseChain
+      .then(async () => {
+        await new Promise((resolve) => setTimeout(() => resolve(null), 10)) // keep 10ms gap between tasks to allow useEffect to run on next render and properly finalis transition
+        return taskFn()
+      })
+      .catch((err: Error) => {
+        return err // this.promiseChain shouldn't stop, error will be re-thrown only in the returned instance
+      })
+
+    return ModalState._promiseChain.then((e) => {
+      if (e instanceof Error) {
+        if (typeof ModalState.errorHandler === 'function') ModalState.errorHandler(e)
+        else {
+          console.warn('One Modal Error: ' + e.message)
+          throw e
+        }
+      } else return e
     })
-    return this.promise
+  }
+
+  static setModalErrorHandler = (errorHandler: ((e: Error) => any) | null) => {
+    ModalState.errorHandler = errorHandler
   }
 
   /**
@@ -522,5 +545,5 @@ class ModalState {
   }
 }
 
-export const { bindModal, getModal, useModal } = ModalState
+export const { bindModal, getModal, useModal, setModalErrorHandler } = ModalState
 export { Modal, ModalPushOneTimeOptions, ModalOneTimeOptions, ModalProps, ModalAnimation, BottomSheetOptions }
