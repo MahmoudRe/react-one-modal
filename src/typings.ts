@@ -41,13 +41,12 @@ export interface ModalProps {
         type?: ModalAnimation['type']
       }
   rootElement?: HTMLElement
-  allowBodyScroll?: boolean
+  classNameSheet?: string
   className?: string
-  classNameOverlay?: string
-  colorBackground?: string // default 'white', also it can be set by css variable --one-modal-color-bg
-  colorBackgroundOverlay?: string // default #00000099, also it can be set by css variable --one-modal-color-overlay
+  colorBackgroundSheet?: string // default 'white', also it can be set by css variable --one-modal-color-bg
+  colorBackground?: string // default #00000099, also it can be set by css variable --one-modal-color-overlay
+  attributesSheet?: HTMLAttributes<HTMLDivElement>
   attributes?: HTMLAttributes<HTMLDivElement>
-  attributesOverlay?: HTMLAttributes<HTMLDivElement>
   children?: ReactNode
   onESC?: 'hide' | 'empty' | 'pop' | null | { (event: KeyboardEvent<HTMLDivElement>): void }
   onClickOverlay?: 'hide' | 'empty' | 'pop' | null | { (event: MouseEvent<HTMLDivElement>): void }

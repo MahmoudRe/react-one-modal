@@ -33,12 +33,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     stackSize = 999, // the number of pages to preserve in the stack before start dropping out old pages
     animation: animationProps = {},
     rootElement = document.body, // HTMLElement where this modal will be appended to
-    className = '',
-    classNameOverlay = '', // className for modal container/overlay
-    colorBackgroundOverlay, // default #00000099, also it can be set by css variable --one-modal-color-overlay
-    colorBackground, // default 'white', also it can be set by css variable --one-modal-color-bg
-    attributes = {},
-    attributesOverlay, // pass the reset to modal container/overlay
+    classNameSheet = '',
+    className = '', // className for modal (ie. container/overlay)
+    colorBackgroundSheet, // default 'white', also it can be set by css variable --one-modal-color-bg
+    colorBackground, // default #00000099, also it can be set by css variable --one-modal-color-overlay
+    attributesSheet = {},
+    attributes, // pass the reset to modal container/overlay
     children, // if existed, add them as the first
     onESC,
     onClickOverlay
@@ -146,7 +146,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       modalSheet.reactNode = (
         <div
           key={modalSheet.id}
-          className={'omodal__sheet ' + className}
+          className={'omodal__sheet ' + classNameSheet}
           ref={(el) => {
             if (!el || hasCalled) return // run only once
             hasCalled = true
@@ -169,7 +169,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
             el.addEventListener('focusin', () => (modalSheet.activeElement = document.activeElement))
             modalSheet.htmlElement = el
           }}
-          {...attributes}
+          {...attributesSheet}
           {...oneTimeAttrs}
         >
           {content}
@@ -387,7 +387,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   return createPortal(
     <div
-      className={'omodal ' + classNameOverlay}
+      className={'omodal ' + className}
       data-omodal-id={id}
       data-omodal-animation={animation.current.type}
       data-omodal-type={type}
@@ -403,10 +403,10 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         if (typeof onESC === 'function') onESC(ev)
       }}
       style={{
-        ['--one-modal-color-overlay' as any]: colorBackgroundOverlay || undefined,
-        ['--one-modal-color-bg' as any]: colorBackground || undefined
+        ['--omodal-color-bg' as any]: colorBackground || undefined,
+        ['--omodal-sheet-color-bg' as any]: colorBackgroundSheet || undefined
       }}
-      {...attributesOverlay}
+      {...attributes}
     >
       <div
         className={'omodal__sheets'}

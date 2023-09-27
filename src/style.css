@@ -1,8 +1,8 @@
 .omodal {
   /* variable and default value */
   /* 
-    --one-modal-color-overlay: #00000099;
-    --one-modal-color-bg: white;
+    --omodal-color-bg: #00000099;
+    --omodal-sheet-color-bg: white;
   */
 
   position: fixed;
@@ -36,7 +36,7 @@
 }
 
 .omodal[data-omodal-type='full-page'] {
-  filter: drop-shadow(0 0 15px var(--one-modal-color-overlay, #00000099));
+  filter: drop-shadow(0 0 15px var(--omodal-color-bg, #00000099));
 }
 .omodal[data-omodal-type='full-page'].omodal--out-transition {
   background: transparent !important;
@@ -44,7 +44,7 @@
 
 .omodal[data-omodal-type='bottom-sheet'],
 .omodal[data-omodal-type='floating'] {
-  background: var(--one-modal-color-overlay, #00000099);
+  background: var(--omodal-color-bg, #00000099);
   animation: overlayFadeIn 0.25s ease;
 }
 .omodal[data-omodal-type='bottom-sheet'].omodal--out-transition,
@@ -56,12 +56,12 @@
     background: #00000000;
   }
   to {
-    background: var(--one-modal-color-overlay, #00000099);
+    background: var(--omodal-color-bg, #00000099);
   }
 }
 @keyframes overlayFadeOut {
   from {
-    background: var(--one-modal-color-overlay, #00000099);
+    background: var(--omodal-color-bg, #00000099);
   }
   to {
     background: #00000000;
@@ -81,7 +81,7 @@
 /* ------- modal styling --------- */
 .omodal__sheet {
   position: absolute;
-  background: var(--one-modal-color-bg);
+  background: var(--omodal-sheet-color-bg);
   max-height: 100%;
   white-space: initial;
   overflow: auto;
@@ -97,7 +97,7 @@
   max-width: 60rem;
 }
 .omodal[data-omodal-type='bottom-sheet'] .omodal__sheet {
-  background: var(--one-modal-color-bg, transparent);
+  background: var(--omodal-sheet-color-bg, transparent);
   width: 100%;
   height: 100%;
 }
