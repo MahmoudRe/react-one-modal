@@ -32,24 +32,10 @@ export default class Focus {
 
     if (isUpperModalExisted) modalEl.setAttribute('inert', '')
     else {
-      modalEl.removeAttribute('inert')
       this.previousActiveElement = document.activeElement
-      setInertOnAll(modalEl)
+      Focus.setInertOnSiblings(modalEl, this.modalId)
       this.stop()
       this.preventPageScroll()
-    }
-
-    function setInertOnAll(el: HTMLElement | null) {
-      if (!el || el === document.body || !el.parentElement) return
-
-      for (let sibling of el.parentElement.children) {
-        if (sibling == el || !(sibling instanceof HTMLElement)) continue
-
-        if (!sibling.hasAttribute('inert')) {
-          sibling.dataset.omodalInert = modalEl?.dataset.omodalId
-          sibling.setAttribute('inert', '')
-        }
-      }
     }
   }
 
@@ -62,7 +48,22 @@ export default class Focus {
 
     if (!modalEl.hasAttribute('inert')) {
       this.resume()
+      Focus.setInertOnSiblings(modalSheetEl)
       Focus.setOnFirstDescendant(modalSheetEl)
+    }
+  }
+
+  static setInertOnSiblings = (el: HTMLElement | null, id?: string) => {
+    if (!el || el === document.body || !el.parentElement) return
+
+    el.removeAttribute('inert')
+    for (let sibling of el.parentElement.children) {
+      if (sibling == el || !(sibling instanceof HTMLElement)) continue
+
+      if (!sibling.hasAttribute('inert')) {
+        if (id) sibling.dataset.omodalInert = id
+        sibling.setAttribute('inert', '')
+      }
     }
   }
 
