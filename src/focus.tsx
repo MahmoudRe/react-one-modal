@@ -60,10 +60,12 @@ export default class Focus {
     for (let sibling of el.parentElement.children) {
       if (sibling == el || !(sibling instanceof HTMLElement)) continue
 
-      if (!sibling.hasAttribute('inert')) {
-        if (id) sibling.dataset.omodalInert = id
-        sibling.setAttribute('inert', '')
-      }
+      if (id)
+        sibling.dataset.omodalSetInertBy = sibling.dataset.omodalSetInertBy
+          ? sibling.dataset.omodalSetInertBy + ' ' + id
+          : id
+
+      if (!sibling.hasAttribute('inert')) sibling.setAttribute('inert', '')
     }
   }
 
@@ -84,10 +86,15 @@ export default class Focus {
    *  but before close handler is called.
    */
   handleModalHasClosed = (unmount?: boolean) => {
-    const elements = document.querySelectorAll(`[data-omodal-inert="${this.modalId}"]`)
+    const elements = document.querySelectorAll(`[data-omodal-set-inert-by~="${this.modalId}"]`)
     for (let e of elements) {
-      e.removeAttribute('inert')
-      e.removeAttribute('data-omodal-inert')
+      const dataSetInertBy = e.getAttribute('data-omodal-set-inert-by')?.replace(this.modalId, '').trim() || ''
+
+      if (dataSetInertBy) e.setAttribute('data-omodal-set-inert-by', dataSetInertBy)
+      else {
+        e.removeAttribute('inert')
+        e.removeAttribute('data-omodal-set-inert-by')
+      }
     }
 
     // if opened modal, show scroll
