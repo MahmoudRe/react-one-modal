@@ -1,4 +1,4 @@
-# react-advance-modal
+# React One Modal
 
 > Animated modal with advanced functionality for React framework
 
@@ -6,39 +6,21 @@
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![Size](https://img.shields.io/bundlephobia/minzip/react-advance-modal)](https://www.npmjs.com/package/react-advance-modal)
 
-## Install
+## Getting Started
 
 ```bash
-npm install --save react-advance-modal
+npm install --save react-one-modal
 ```
 
-## Usage
+Then..
 
-1. Create new instance of `Modal` anywhere in your view and bind it using `useModal` hook. This `Modal` instance will appear on the bottom of `body` element but preserve React Context of its contents.
-
-```jsx
-import Modal from 'react-advance-modal'
-
-const App = () => {
-  ...
-
-  return (
-    <>
-      ...
-
-      <Modal floating />
-    </>
-  )
-}
-``` 
-
-2. Now use `modal` to access the control functions of `Modal` and change the animation of the bound Modal.
+Create new instance of `Modal` on any component. This `Modal` instance will appear on the bottom of `body` element by default, and it preserves the React Context of its contents to where it has been defined.
 
 ```jsx
-import Modal, { bindModal } from 'react-advance-modal'
+import Modal, { bindModal } from 'react-one-modal'
 
 const App = () => {
-  const [modal, modalRef] = bindModal()
+  const [modal, modalRef] = bindModal('my-modal')
   ...
 
   return (
@@ -48,19 +30,21 @@ const App = () => {
       </button>
       ...
 
-      <Modal ref={modalRef} floating />
+      <Modal ref={modalRef} />
     </>
   )
 }
 ```
 
-3. Use `getModal` to access the control functions of `Modal` instance anywhere in your code.
+By using `bindModal`, you can bind this `Modal` instance to the given key in its argument (eg. `my-modal`) using the returned `ref` object. Then you can use `modal` to access the the functionality of the bounded `Modal` directly in this component.
+
+To facilitate accessing your defined modals, One Modal does manage its own state. Calling `getModal(key)` on any component, gives access the bounded of `Modal` instance with the given key.
 
 ```jsx
-import { useModal } from 'react-advance-modal'
+import { useModal } from 'react-one-modal'
 
 const MyComponent = () => {
-  const modal = useModal()
+  const modal = getModal('my-modal')
   ...
 
   return (
@@ -78,175 +62,89 @@ const MyComponent = () => {
 }
 ```
 
-## API
-
-### Modal props
+For use cases where a modal is needed for one-time use, an anonymous modal can be defined and used directly via `useModal` hook without binding it to any key.
 
 ```jsx
-<Modal 
-  ref={modalRef} 
-  floating  // if present then a floating modal will be used
-/>
-```
+import Modal, { useModal } from 'react-one-modal'
 
-### Control functions
-
-After binding the `Modal` to a `ref` in the parent component, you can access all functionalities to the bound `Modal` using `getModal` functions anywhere in your code as long the component containing `Modal` instance is live.
-
-```jsx
-const modal = getModal()
-```
-
-## Examples
-
-### Simple floating/bottom modal
-
-```jsx
-import React, { useRef } from 'react'
-import Modal, { bindModal, useModal } from 'react-advance-modal'
-
-const App = () => {
-  const modalRef = useRef(null)
-  const modal = bindModal(modalRef) //binding without key
-
-  const modalBottomRef = useRef(null)
-  const modalBottom = bindModal(modalBottomRef, 'floating-bottom')
+const MyComponent = () => {
+  const modal = getModal()
+  const [confirmModal, confirmModalRef] = useModal()
+  ...
 
   return (
     <>
-      <h1> Welcome to React Advance Modal </h1>
-      <button onClick={() => modal.show(<FloatingModalContent />)}>
-        Show floating modal
-      </button>
-      <button onClick={() => modalBottom.show(<FloatingModalContent />)}>
-        Show floating bottom modal
-      </button>
+      ...
 
-      <Modal ref={modalRef} floating />
-      <Modal ref={modalBottomRef} floating bottom />
+      <Modal ref={confirmModalRef} >
+        <p> Are you sure  </p>
+        <button onClick={() => {
+          // do some action!
+          confirmModal.hide()
+        }}>
+          Confirm
+        </button>
+        <button onClick={() => { confirmModal.empty() }}>
+          Close
+        </button>
+      </Modal>
     </>
   )
 }
-
-const FloatingModalContent = () => {
-  const modal = useModal()
-
-  return (
-    <div>
-      <h1> Floating Modal Content </h1>
-      
-      // Modal content ...
-
-      <button onClick={modal.empty}> Close </button>
-    </div>
-  )
-}
-
-const FloatingBottomModalContent = () => {
-  const modal = useModal('floating-bottom')
-
-  return (
-    <div>
-      <h1> Floating Modal Content </h1>
-      
-      // Modal content ...
-
-      <button onClick={modal.empty}> Close </button>
-    </div>
-  )
-}
-
 ```
 
-### Multi-step full-page modal
+## Why One Modal?
 
-```jsx
-import Modal, { useModal } from 'react-advance-modal'
-import 'react-advance-modal/dist/index.css'
+TL;DR:
+The only modal you will ever need, truly the one modal for all your user cases!
 
-const App = () => {
-  const [modal, modalRef] = bindModal()
+- Accessibility out-of-the-box, with progressive enhancement like no other modals!
+- Feature rich, while having small package size
+- Awesome animation with high reliability!
+- Bottom-Sheet mode!
+- Dialog mode
+- First modal with stacking context: add as many step (modal-sheets) to your modal with ease, and awesome transitions!
 
-  return (
-    <>
-      <h1> Welcome to React Advance Modal </h1>
-      <button onClick={() => modal.push(<FullPageModalStep1 />)}>
-        Start multi-step modal
-      </button>
+Nested modals!? but..
+> Nested modals aren’t supported as we believe them to be poor user experiences.
+>
+> *source: [Bootstrap modal](https://getbootstrap.com/docs/5.3/components/modal/)*
 
-      <Modal ref={modalRef} />
-    </>
-  )
-}
+One Modal takes different approach by making nested modal accessible and awesome user experience! While being in a stacked context by itself!
 
-const FullPageModalStep1 = () => {
-  const modal = getModal('full-page')
+## Accessibility (A11y)
 
-  return (
-    <div style={{ backgroundColor: '#6d9ce8', width: '100%', height: '100%' }}>
-      <h2> Full Page Modal Content Step 1 </h2>
-      
-      // Content ...
+One Modal follow the [guidelines](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) defined by Web Accessibility Initiative - WAI as part of ARIA - W3C specification for an accessible modal, and state-of-the-art practices that has been used by newly introduced `<dialog>` element.
 
-      <button onClick={() => modal.push(<FullPageModalStep2 />)}>
-        Got to step 2
-      </button>
-      <button onClick={modal.pop}> Close </button>
-    </div>
-  )
-}
+It uses it own [progressively enhanced focus management](/docs/focus.md) solution and helper attribute `aria-modal="true"` and `role="dialog"` to hide element from Accibillity DOM tree.
 
-const FullPageModalStep2 = () => {
-  const modal = getModal('full-page')
+On Dialog mode: `aria-modal="false` and interaction with page elements is allowed, following the semantic that has been used by `<dialog>` element through `dialog.showModal()` and `dialog.show()`
 
-  return (
-    <div style={{ backgroundColor: '#5dc294' }}>
-      <h2> Full Page Modal Content Step 2 </h2>
-      
-      // Content ...
+Ability to pass `aria-x` (eg. `aria-labelledby`, `aria-describedby`, `aria-label`) attributes for modal-sheet html on `push`/`transit`/`show`. This can be added for all modal-sheets within a `Modal` instance by defining them in `attributesSheet` prop, or for a specific modal-sheet through passing `attributes` option when calling `push`/`transit`/`show`.
 
-      <button onClick={() => modal.push(<FullPageModalLastStep />)} >
-        Go to last
-      </button>
-      <button onClick={modal.pop}> Back </button>
-      <button onClick={modal.empty}> Close </button>
-    </div>
-  )
-}
+For more detail, please read [One Modal - Focus Management](/docs/focus.md).
 
-const FullPageModalLastStep = () => {
-  const modal = getModal('full-page')
+## What is new?
 
-  return (
-    <div style={{ backgroundColor: '#5dc294' }}>
-      <h2> Full Page Modal Content Last Step </h2>
-      
-      // Content ...
-
-      <button onClick={modal.pop}> Back </button>
-      <button onClick={modal.empty}> Close </button>
-      <button onClick={() => {
-        yourCallback();
-        modal.empty();
-      }}> Done! </button>
-    </div>
-  )
-}
-
-```
-
-## To Do
-
-- [x] Promisify all control functions (push/pop/close/show/hide) to resolve when animation is done.
-- [ ] Notification style modal (auto hide with optional close button)
-- [ ] Confirm style modal (Two bottom with callback + auto close)
-- [ ] Disable page scroll when modal is open
+- [x] Auto load css when importing component, no need to import stylesheet separably
+- [x] All control functions (push/pop/close/show/hide) are using promises and resolve when animation is done
+- [x] handle all errors using `setModalErrorHandler`
+- [x] Enhanced accessibility!
+- [x] handle concurrent push/pop (Promise chaining)
 - [x] Move to TypeScript
+- [x] Disable page scroll when modal is open
+- [x] Add `back`, `next` control functions to traverse the stack while keeping all components live
+- [x] Add `silent` option to `push`, to not update the active sheet when appending the given sheet
+- [x] Add `last` option to `push`, to always append the given modal-sheet to last position in `silent` mode
+- [x] Add `last` option to `pop`, to always pop the last sheet in stack
 - [x] Close using ESC or clicking outside the modal (Optionally)
-- [x] Auto load css when importing component, such that no need to import stylesheet by end user (check styled-components?)
-- [ ] Write proper documentation
-- [ ] Add `back`, `next`, `pushLast` control functions to traverse the stack while keeping all components live
+- [ ] Local modal, for part of the DOM tree [WIP]
+- [ ] Dialog mode [WIP]
 
-## License
+## One Modal and `<dialog>` element
 
-MIT © [MahmoudRe](https://github.com/MahmoudRe) [Schuttelaar & Partners](https://github.com/schuttelaar)
+One Modal should be a replacement for `<dialog>` html element with regards to behavior and not API, it should mimic `<dialog>` even in edge cases or add statement otherwise. Please find the known differences in .behavior here.
+
+### Made with ❤️ at [Schuttelaar & Partners](https://github.com/schuttelaar)
+
+MIT License © [MahmoudRe](https://github.com/MahmoudRe) @ [Schuttelaar & Partners](https://github.com/schuttelaar)
