@@ -7,12 +7,12 @@ export function dragElement(el: HTMLElement, options: BottomSheetOptions, closeM
     scrollPosition: ScrollPosition = 'top'
 
   let {
-    positions = [50, 90],
+    positions = [50, 70],
     startPosition: currPosition = positions[0],
     closePosition = Math.max(positions[0] / 2, 20),
     swipeThreshold = 15,
-    dynamicHeight = true,
-    closeByDragDown = true,
+    dynamicHeight = false,
+    closeByDragDown = false,
     headerSelector = '.bottom-sheet-header'
   } = options
 

@@ -174,17 +174,14 @@
   overflow-y: clip !important; /* This fix the above issue, but only on supported browsers */
 }
 
-.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheet {
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheet.omodal__sheet--active {
   top: var(--bottom-sheet-top, 100%);
   height: var(--bottom-sheet-height, 100%);
   visibility: visible;
 }
 
-.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheet.--back-transition + div,
 .omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom']
-  .omodal__sheet.--back-transition:last-child,
-.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom']
-  .omodal__sheet:not(:last-child):not(.--back-transition) {
+  .omodal__sheet.omodal__sheet--out-transition {
   top: 100%;
   visibility: visible;
 }
