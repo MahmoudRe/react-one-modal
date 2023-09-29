@@ -1,4 +1,4 @@
-import { getModal, Modal } from 'react-advance-modal'
+import { getModal, Modal } from 'react-one-modal'
 
 export default function ModalContentStep1({ modal }: { modal: Modal; className: string }) {
   return (

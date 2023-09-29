@@ -1,4 +1,4 @@
-import { getModal } from 'react-advance-modal'
+import { getModal } from 'react-one-modal'
 
 const BottomModalContent = () => {
   const modal = getModal('bottom')

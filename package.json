@@ -1,10 +1,10 @@
 {
-  "name": "react-advance-modal",
-  "version": "3.0.0",
+  "name": "react-one-modal",
+  "version": "0.1.0",
   "description": "Animated modal with advanced functionality for React framework",
   "author": "MahmoudRe",
   "license": "MIT",
-  "repository": "MahmoudRe/react-advance-modal",
+  "repository": "MahmoudRe/react-one-modal",
   "main": "dist/cjs/bundle.js",
   "module": "dist/esm/bundle.js",
   "types": "dist/index.d.ts",

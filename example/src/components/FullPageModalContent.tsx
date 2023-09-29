@@ -1,4 +1,4 @@
-import { getModal, Modal } from 'react-advance-modal'
+import { getModal, Modal } from 'react-one-modal'
 
 const FullPageModalStep1 = ({ modal, className }: { modal: Modal; className: string }) => {
   return (

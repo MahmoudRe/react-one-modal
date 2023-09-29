@@ -1,4 +1,4 @@
-import Modal, { ModalProps, bindModal, setModalErrorHandler } from 'react-advance-modal'
+import Modal, { ModalProps, bindModal, setModalErrorHandler } from 'react-one-modal'
 
 import FloatingModalContent from './components/FloatingModalContent'
 import { useState } from 'react'

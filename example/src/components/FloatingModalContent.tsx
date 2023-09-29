@@ -1,4 +1,4 @@
-import Modal, { getModal, useModal } from 'react-advance-modal'
+import Modal, { getModal, useModal } from 'react-one-modal'
 import Radio from './Radio'
 import { useRef } from 'react'
 
