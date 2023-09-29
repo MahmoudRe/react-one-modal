@@ -116,7 +116,7 @@ One Modal takes different approach by making nested modal accessible and awesome
 
 One Modal follow the [guidelines](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) defined by Web Accessibility Initiative - WAI as part of ARIA - W3C specification for an accessible modal, and state-of-the-art practices that has been used by newly introduced `<dialog>` element.
 
-It uses it own [progressively enhanced focus management](/docs/focus.md) solution and helper attribute `aria-modal="true"` and `role="dialog"` to hide element from Accibillity DOM tree.
+It uses it own [progressively enhanced focus management](/docs/focus.md) solution and helper attribute `aria-modal="true"` and `role="dialog"` to hide element from Accessibility DOM tree.
 
 On Dialog mode: `aria-modal="false` and interaction with page elements is allowed, following the semantic that has been used by `<dialog>` element through `dialog.showModal()` and `dialog.show()`
 
@@ -155,7 +155,7 @@ See [One Modal - Roadmap](/docs/roadmap.md)
 
 ## One Modal and `<dialog>` element
 
-One Modal should be a replacement for `<dialog>` html element with regards to behavior and not API, it should mimic `<dialog>` even in edge cases or add statement otherwise. Please find the known differences in .behavior here.
+One Modal should be a replacement for `<dialog>` html element with regards to behavior and not API, it should mimic `<dialog>` even in edge cases or add statement otherwise. Please find the known differences in [behavior here](/docs/dialog-diff.md).
 
 ### Made with ❤️ at [Schuttelaar & Partners](https://github.com/schuttelaar)
 
