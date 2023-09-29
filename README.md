@@ -141,6 +141,10 @@ For more detail, please read [One Modal - Focus Management](/docs/focus.md).
 - [ ] Local modal, for part of the DOM tree [WIP]
 - [ ] Dialog mode [WIP]
 
+## API
+
+See [One Modal - API](/docs/api.md)
+
 ## One Modal and `<dialog>` element
 
 One Modal should be a replacement for `<dialog>` html element with regards to behavior and not API, it should mimic `<dialog>` even in edge cases or add statement otherwise. Please find the known differences in .behavior here.
