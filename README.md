@@ -6,6 +6,60 @@
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![Size](https://img.shields.io/bundlephobia/minzip/react-one-modal)](https://www.npmjs.com/package/react-one-modal)
 
+## Why One Modal?
+
+TL;DR:
+The only modal you will ever need, truly the one modal for all your user cases!
+
+- Easy to use API
+- Manages its own state, no more passing `open` state around to open or close your modal xD. Modal instace is available everywhere with `getModal(key)` and `useModal()` hook.
+- Accessibility out-of-the-box, with progressive enhancement like no other modals!
+- Feature rich, while having small package size
+- Awesome animation with high reliability!
+- Reliable, doesn't matter how many modal are opened or closed concurrently. Nothing will break! a task queue manager handle all complicated siltation in global scope for all Modal instances.
+- Bottom-Sheet mode, with drag enabled and snap to defined positions!
+- Dialog mode, which make visualizing a Notification system trivial task.
+- Window mode, make UI with floating windows all around with ease!
+- First modal with stacking context: add as many step (modal-sheets) to your modal as you like, all come with awesome transitions!
+- One Modals instance is aware of its stacking context (modal-sheets) and also aware of other Modal instance in the documents, such that it deliver accessible user interface even in complicated situation.
+
+Nested modals!? but..
+> Nested modals aren’t supported as we believe them to be poor user experiences.
+>
+> *source: [Bootstrap modal](https://getbootstrap.com/docs/5.3/components/modal/)*
+
+One Modal takes different approach by making nested modal accessible and awesome user experience! While being in a stacked context by itself!
+
+## Accessibility (A11y)
+
+One Modal follow the [guidelines](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) defined by Web Accessibility Initiative - WAI as part of ARIA - W3C specification for an accessible modal, and state-of-the-art practices that has been used by newly introduced `<dialog>` element.
+
+It uses it own [progressively enhanced focus management](/docs/focus.md) solution and helper attribute `aria-modal="true"` and `role="dialog"` to hide element from Accessibility DOM tree.
+
+On Dialog mode: `aria-modal="false` and interaction with page elements is allowed, following the semantic that has been used by `<dialog>` element through `dialog.showModal()` and `dialog.show()`
+
+Ability to pass `aria-x` (eg. `aria-labelledby`, `aria-describedby`, `aria-label`) attributes for modal-sheet html on `push`/`transit`/`show`. This can be added for all modal-sheets within a `Modal` instance by defining them in `attributesSheet` prop, or for a specific modal-sheet through passing `attributes` option when calling `push`/`transit`/`show`.
+
+For more detail, please read [One Modal - Focus Management](/docs/focus.md).
+
+## What is new?
+
+- [x] Auto load css when importing component, no need to import stylesheet separably
+- [x] All control functions (push/pop/close/show/hide) are using promises and resolve when animation is done
+- [x] handle all errors using `setModalErrorHandler`
+- [x] Enhanced accessibility!
+- [x] handle concurrent push/pop (Promise chaining)
+- [x] Move to TypeScript
+- [x] Disable page scroll when modal is open
+- [x] Add `back`, `next` control functions to traverse the stack while keeping all components live
+- [x] Add `silent` option to `push`, to not update the active sheet when appending the given sheet
+- [x] Add `last` option to `push`, to always append the given modal-sheet to last position in `silent` mode
+- [x] Add `last` option to `pop`, to always pop the last sheet in stack
+- [x] Close using ESC or clicking outside the modal (Optionally)
+- [ ] Local modal, for part of the DOM tree [WIP]
+- [ ] Dialog mode [WIP]
+- [ ] Window mode,  where modal-sheets should behave like window that can be interact with, change focus from one to another to make it on top of all other elements, and support dragging [WIP]
+
 ## Getting Started
 
 ```bash
@@ -92,54 +146,6 @@ const MyComponent = () => {
   )
 }
 ```
-
-## Why One Modal?
-
-TL;DR:
-The only modal you will ever need, truly the one modal for all your user cases!
-
-- Accessibility out-of-the-box, with progressive enhancement like no other modals!
-- Feature rich, while having small package size
-- Awesome animation with high reliability!
-- Bottom-Sheet mode!
-- Dialog mode
-- First modal with stacking context: add as many step (modal-sheets) to your modal with ease, and awesome transitions!
-
-Nested modals!? but..
-> Nested modals aren’t supported as we believe them to be poor user experiences.
->
-> *source: [Bootstrap modal](https://getbootstrap.com/docs/5.3/components/modal/)*
-
-One Modal takes different approach by making nested modal accessible and awesome user experience! While being in a stacked context by itself!
-
-## Accessibility (A11y)
-
-One Modal follow the [guidelines](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) defined by Web Accessibility Initiative - WAI as part of ARIA - W3C specification for an accessible modal, and state-of-the-art practices that has been used by newly introduced `<dialog>` element.
-
-It uses it own [progressively enhanced focus management](/docs/focus.md) solution and helper attribute `aria-modal="true"` and `role="dialog"` to hide element from Accessibility DOM tree.
-
-On Dialog mode: `aria-modal="false` and interaction with page elements is allowed, following the semantic that has been used by `<dialog>` element through `dialog.showModal()` and `dialog.show()`
-
-Ability to pass `aria-x` (eg. `aria-labelledby`, `aria-describedby`, `aria-label`) attributes for modal-sheet html on `push`/`transit`/`show`. This can be added for all modal-sheets within a `Modal` instance by defining them in `attributesSheet` prop, or for a specific modal-sheet through passing `attributes` option when calling `push`/`transit`/`show`.
-
-For more detail, please read [One Modal - Focus Management](/docs/focus.md).
-
-## What is new?
-
-- [x] Auto load css when importing component, no need to import stylesheet separably
-- [x] All control functions (push/pop/close/show/hide) are using promises and resolve when animation is done
-- [x] handle all errors using `setModalErrorHandler`
-- [x] Enhanced accessibility!
-- [x] handle concurrent push/pop (Promise chaining)
-- [x] Move to TypeScript
-- [x] Disable page scroll when modal is open
-- [x] Add `back`, `next` control functions to traverse the stack while keeping all components live
-- [x] Add `silent` option to `push`, to not update the active sheet when appending the given sheet
-- [x] Add `last` option to `push`, to always append the given modal-sheet to last position in `silent` mode
-- [x] Add `last` option to `pop`, to always pop the last sheet in stack
-- [x] Close using ESC or clicking outside the modal (Optionally)
-- [ ] Local modal, for part of the DOM tree [WIP]
-- [ ] Dialog mode [WIP]
 
 ## API
 
