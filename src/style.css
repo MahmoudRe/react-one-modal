@@ -1,0 +1,196 @@
+.omodal {
+  /* variable and default value */
+  /* 
+    --omodal-color-bg: #00000099;
+    --omodal-sheet-color-bg: white;
+  */
+
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  white-space: nowrap;
+  overflow: hidden;
+  overscroll-behavior: none; /* https://stackoverflow.com/questions/5802467/prevent-scrolling-of-parent-element-when-inner-element-scroll-position-reaches-t */
+  -ms-scroll-chaining: none;
+}
+
+.omodal__sheets {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.omodal:not([data-omodal-open]) {
+  display: none;
+}
+
+.omodal[data-omodal-animation-pause],
+.omodal[data-omodal-animation-pause] .omodal__sheets > * {
+  animation-iteration-count: 0 !important;
+  transition: none !important;
+}
+
+.omodal[data-omodal-type='full-page'] {
+  filter: drop-shadow(0 0 15px var(--omodal-color-bg, #00000099));
+}
+.omodal[data-omodal-type='full-page'].omodal--out-transition {
+  background: transparent !important;
+}
+
+.omodal[data-omodal-type='bottom-sheet'],
+.omodal[data-omodal-type='floating'] {
+  background: var(--omodal-color-bg, #00000099);
+  animation: overlayFadeIn 0.25s ease;
+}
+.omodal[data-omodal-type='bottom-sheet'].omodal--out-transition,
+.omodal[data-omodal-type='floating'].omodal--out-transition {
+  animation: overlayFadeOut 0.25s ease both;
+}
+@keyframes overlayFadeIn {
+  from {
+    background: #00000000;
+  }
+  to {
+    background: var(--omodal-color-bg, #00000099);
+  }
+}
+@keyframes overlayFadeOut {
+  from {
+    background: var(--omodal-color-bg, #00000099);
+  }
+  to {
+    background: #00000000;
+  }
+}
+
+.omodal[data-omodal-position='top'] {
+  align-items: start;
+  padding-top: 2rem;
+}
+
+.omodal[data-omodal-position='bottom'] {
+  align-items: end;
+  padding-bottom: 3rem;
+}
+
+/* ------- modal styling --------- */
+.omodal__sheet {
+  position: absolute;
+  background: var(--omodal-sheet-color-bg);
+  max-height: 100%;
+  white-space: initial;
+  overflow: auto;
+}
+.omodal[data-omodal-type='full-page'] .omodal__sheet {
+  width: 100%;
+  height: 100%;
+}
+.omodal[data-omodal-type='floating'] .omodal__sheet {
+  border-radius: 1rem;
+  margin: 1rem;
+  max-height: 95%;
+  max-width: 60rem;
+}
+.omodal[data-omodal-type='bottom-sheet'] .omodal__sheet {
+  background: var(--omodal-sheet-color-bg, transparent);
+  width: 100%;
+  height: 100%;
+}
+
+/* In/Out zoom-in animation -------- */
+
+.omodal[data-omodal-animation='zoom-in'] .omodal__sheet.omodal__sheet--active.omodal__sheet--out-transition,
+.omodal[data-omodal-animation='zoom-in'] .omodal__sheet {
+  transition: transform 0.15s, opacity 0.15s, visibility 0.15s;
+  transition-timing-function: ease-in-out;
+  transform: scale(0.5);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+.omodal[data-omodal-animation='zoom-in'] .omodal__sheet.omodal__sheet--active {
+  transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.2);
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: inherit;
+  visibility: visible;
+}
+
+/* In/Out slide animation -------- */
+
+.omodal[data-omodal-animation='slide'] .omodal__sheet {
+  transition: transform 0.25s ease-in-out;
+  transform: translate(-100vw, 0);
+  pointer-events: none;
+}
+.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--active.omodal__sheet--in-transition,
+.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--active {
+  transform: translate(0, 0);
+  pointer-events: inherit;
+}
+.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--in-transition,
+.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--out-transition,
+.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--active ~ .omodal__sheet {
+  transform: translate(100vw, 0);
+  transition-delay: 15ms;
+  pointer-events: none;
+}
+
+/* In/Out slide bottom animation -------- */
+
+.omodal[data-omodal-animation='slide-bottom'] .omodal__sheet.omodal__sheet--active.omodal__sheet--out-transition,
+.omodal[data-omodal-animation='slide-bottom'] .omodal__sheet {
+  transition: transform 0.25s ease-in-out;
+  transform: translate(0, 100vh);
+  pointer-events: none;
+}
+.omodal[data-omodal-animation='slide-bottom'] .omodal__sheet.omodal__sheet--active {
+  transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.1);
+  transform: translate(0, 0);
+  pointer-events: inherit;
+}
+
+/* In/Out slide bottom-sheet animation -------- */
+
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheets > * {
+  transition: top 0.25s cubic-bezier(0, 0.3, 0.15, 1), height 0.25s cubic-bezier(0, 0.3, 0.15, 1) -0.25s;
+  top: 100%;
+  height: 100%;
+  visibility: hidden;
+}
+
+.omodal[data-omodal-type='bottom-sheet'] [data-omodal-delay-height] {
+  transition: top 0.25s cubic-bezier(0, 0.3, 0.15, 1), height 0.25s cubic-bezier(0, 0.3, 0.15, 1) 0.25s;
+}
+
+.omodal[data-omodal-type='bottom-sheet'] [data-omodal-prevent-scroll],
+.omodal[data-omodal-type='bottom-sheet'] [data-omodal-prevent-scroll] * {
+  overflow-y: hidden !important; /* fallback, TODO FIX: cause page refresh on drag-down */
+  overflow-y: clip !important; /* This fix the above issue, but only on supported browsers */
+}
+
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheet {
+  top: var(--bottom-sheet-top, 100%);
+  height: var(--bottom-sheet-height, 100%);
+  visibility: visible;
+}
+
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheet.--back-transition + div,
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom']
+  .omodal__sheet.--back-transition:last-child,
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom']
+  .omodal__sheet:not(:last-child):not(.--back-transition) {
+  top: 100%;
+  visibility: visible;
+}
+
+/* ------------------- */
+
+[data-omodal-prevent-scroll] {
+  overflow: hidden !important;
+}
