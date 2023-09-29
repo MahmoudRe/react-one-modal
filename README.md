@@ -149,6 +149,10 @@ See [One Modal - API](/docs/api.md)
 
 See [One Modal - Examples](/docs/examples.md)
 
+## Roadmap
+
+See [One Modal - Roadmap](/docs/roadmap.md)
+
 ## One Modal and `<dialog>` element
 
 One Modal should be a replacement for `<dialog>` html element with regards to behavior and not API, it should mimic `<dialog>` even in edge cases or add statement otherwise. Please find the known differences in .behavior here.
