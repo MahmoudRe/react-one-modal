@@ -141,6 +141,23 @@
   pointer-events: none;
 }
 
+/* In/Out slide animation -------- */
+
+.omodal[data-omodal-animation='slide-ltr'] .omodal__sheet {
+  transition: transform 0.25s ease-in-out;
+  transform: translate(-100vw, 0);
+  pointer-events: none;
+}
+.omodal[data-omodal-animation='slide-ltr'] .omodal__sheet.omodal__sheet--active {
+  transform: translate(0, 0);
+  pointer-events: inherit;
+}
+.omodal[data-omodal-animation='slide-ltr'] .omodal__sheet.omodal__sheet--out-transition {
+  transform: translate(100vw, 0);
+  transition-delay: 15ms;
+  pointer-events: none;
+}
+
 /* In/Out slide bottom animation -------- */
 
 .omodal[data-omodal-animation='slide-bottom'] .omodal__sheet.omodal__sheet--active.omodal__sheet--out-transition,

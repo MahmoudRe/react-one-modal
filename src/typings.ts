@@ -54,7 +54,7 @@ export interface ModalProps {
 
 export interface ModalAnimation {
   disable: boolean
-  type: 'slide' | 'slide-bottom' | 'zoom-in'
+  type: 'slide' | 'slide-bottom' | 'zoom-in' | string
   pause: (timeout?: number) => void
   resume: (timeout?: number) => void
 }

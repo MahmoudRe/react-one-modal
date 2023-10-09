@@ -17,9 +17,14 @@ const FloatingModalContent = () => {
       </p>
       <div className='flex flex-col gap-4'>
         <input type='text' name='test' className='input input-bordered' />
-        <input type='text' name='test' className='input input-bordered' />
-        <input type='radio' name='test' className='radio' />
-        <input type='checkbox' name='test' className='checkbox' />
+        <div className='flex items-center'>
+          <input type='radio' name='test-radio' className='radio mr-2' />
+          <label htmlFor='test-radio'> Test radio</label>
+        </div>
+        <div className='flex items-center'>
+          <input type='checkbox' name='test' className='checkbox mr-2' />
+          <label htmlFor='test-radio'> Test checkbox</label>
+        </div>
         <form className='join'>
           <Radio name='animation' value='false' onChange={() => (modal.animation.disable = true)} />
           <Radio name='animation' value='zoom-in' onChange={() => (modal.animation.type = 'zoom-in')} />
@@ -108,12 +113,14 @@ const FloatingModalContent = () => {
       <button className='btn btn-sm btn-secondary mt-3' onClick={() => confirmModal.show()}>
         Empty
       </button>
-      <button className='btn btn-sm btn-secondary mt-3 ml-3' onClick={() => globalConfirmModal.show().then(() => console.log('done shown global confirm'))}>
+      <button
+        className='btn btn-sm btn-secondary mt-3 ml-3'
+        onClick={() => globalConfirmModal.show().then(() => console.log('done shown global confirm'))}
+      >
         Empty Global
       </button>
 
-
-      <Modal
+      {/* <Modal
         ref={confirmModalRef}
         onESC={'hide'}
         // rootElement={containerRef.current ?? undefined}
@@ -133,7 +140,7 @@ const FloatingModalContent = () => {
             Cancel
           </button>
         </div>
-      </Modal>
+      </Modal> */}
     </div>
   )
 }

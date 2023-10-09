@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+  <h1>The dialog element</h1>
+
+  <p>Test which one get focus on page load:</p>
+  <button tabindex="-1"> focusable (tabindex="-1") </button>
+  <button> tabbable </button>
+
+  <!-- <div style="display: none;"> -->
+  <div>
+    test visibility first!!
+
+    <!-- <dialog id="outermodal"> -->
+    <button> focus </button>
+
+    <dialog id="modal">
+      This is an open dialog window
+      <button tabindex="-1"> focusable (tabindex="-1") </button>
+      <button> tabbable </button>
+
+      <!-- <div style="width: 600px; height: 60vh; background-color: red"> </div> -->
+
+
+      <form action="/action_page.php">
+        <label for="fname">First name:</label>
+        <input type="text" id="fname" name="fname"><br><br>
+        <label for="lname">Last name:</label>
+        <input type="text" id="lname" name="lname"><br><br>
+        <input type="submit">
+      </form>
+    </dialog>
+
+
+
+    <button onclick="document.querySelector('#modal').showModal()"> open modal </button>
+
+    <!-- </dialog> -->
+  </div>
+
+
+
+  <div inert>
+    <button> focus </button>
+
+  </div>
+
+  <p>This is some text.</p>
+
+  <p>This is some text.</p>
+
+</body>
+
+<script>
+  // setTimeout(() => document.querySelector('#outermodal').showModal(), 2000)
+  // setTimeout(() => document.querySelector('#modal').showModal(), 1500)
+  // setTimeout(() => document.querySelector('#modal').close(), 2500)
+  // setTimeout(() => document.querySelector('#modal').showModal(), 3500)
+</script>
+
+</html>

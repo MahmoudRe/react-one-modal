@@ -22,3 +22,4 @@
 - [ ] consider only tabbable element when setting the focus on first or last element in the modal. See this... <https://github.com/focus-trap/tabbable#more-details>. (Mostly keep the current way since it take care of all edge cases be attempting focus approach and only exclude element with tabindex="-1")
 - [ ] fallback if inert isn't supported (this solution should be lighter than having a complete polyfill for the `inert`). The user of this library can opt-in to add polyfill for `inert` manually if he keen for unified user experience. (Think also about local modal functionality!)
 - [ ] fix edge case where the first focusable element in modal might cause scroll (button after long paragraph!)
+- [ ] resolve promise on last transition/animation end/cancel (situation where transition happen on multiple properties and some of them end earlier than the rest!, eg. opacity or visibility).
