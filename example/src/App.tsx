@@ -23,8 +23,8 @@ function App() {
 
   return (
     <article className='w-full'>
-      <header className='hero min-h-screen bg-base-200'>
-        <div className='hero-overlay absolute overflow-hidden'>
+      <header className='hero min-h-screen'>
+        <div className='hero-overlay absolute overflow-hidden rounded-xl w-[calc(100%-2rem)] h-[calc(100%-2rem)]'>
           <div className='absolute md:w-1/2 md:h-1/2 w-72 h-72 top-[-20%] left-[-20%] opacity-70 animate-[blob_15s_ease_infinite]'>
             <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 747.2 726.7'>
               <path
