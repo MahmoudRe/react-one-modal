@@ -104,7 +104,6 @@
 
 /* In/Out zoom-in animation -------- */
 
-.omodal[data-omodal-animation='zoom-in'] .omodal__sheet.omodal__sheet--active.omodal__sheet--out-transition,
 .omodal[data-omodal-animation='zoom-in'] .omodal__sheet {
   transition: transform 0.15s, opacity 0.15s, visibility 0.15s;
   transition-timing-function: ease-in-out;
@@ -113,7 +112,7 @@
   pointer-events: none;
   visibility: hidden;
 }
-.omodal[data-omodal-animation='zoom-in'] .omodal__sheet.omodal__sheet--active {
+.omodal[data-omodal-animation='zoom-in'] .omodal__sheet[data-omodal-sheet-state="active"] {
   transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.2);
   transform: scale(1);
   opacity: 1;
@@ -125,31 +124,48 @@
 
 .omodal[data-omodal-animation='slide'] .omodal__sheet {
   transition: transform 0.25s ease-in-out;
-  transform: translate(-100vw, 0);
+  transform: translate(100vw, 0);
   pointer-events: none;
 }
-.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--active.omodal__sheet--in-transition,
-.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--active {
+.omodal[data-omodal-animation='slide'] .omodal__sheet[data-omodal-sheet-state="previous"] {
+  transform: translate(-100vw, 0);
+}
+.omodal[data-omodal-animation='slide'] .omodal__sheet[data-omodal-sheet-state="active"] {
   transform: translate(0, 0);
   pointer-events: inherit;
 }
-.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--in-transition,
-.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--out-transition,
-.omodal[data-omodal-animation='slide'] .omodal__sheet.omodal__sheet--active ~ .omodal__sheet {
+.omodal[data-omodal-animation='slide'] .omodal__sheet[data-omodal-sheet-state="next"] {
   transform: translate(100vw, 0);
   transition-delay: 15ms;
+}
+
+/* In/Out slide-ltr animation -------- */
+
+.omodal[data-omodal-animation='slide-ltr'] .omodal__sheet {
+  transition: transform 0.25s ease-in-out;
+  transform: translate(-100vw, 0);
   pointer-events: none;
+}
+.omodal[data-omodal-animation='slide-ltr'] .omodal__sheet[data-omodal-sheet-state="previous"] {
+  transform: translate(100vw, 0);
+}
+.omodal[data-omodal-animation='slide-ltr'] .omodal__sheet[data-omodal-sheet-state="active"] {
+  transform: translate(0, 0);
+  pointer-events: inherit;
+}
+.omodal[data-omodal-animation='slide-ltr'] .omodal__sheet[data-omodal-sheet-state="next"] {
+  transform: translate(-100vw, 0);
+  transition-delay: 15ms;
 }
 
 /* In/Out slide bottom animation -------- */
 
-.omodal[data-omodal-animation='slide-bottom'] .omodal__sheet.omodal__sheet--active.omodal__sheet--out-transition,
 .omodal[data-omodal-animation='slide-bottom'] .omodal__sheet {
   transition: transform 0.25s ease-in-out;
   transform: translate(0, 100vh);
   pointer-events: none;
 }
-.omodal[data-omodal-animation='slide-bottom'] .omodal__sheet.omodal__sheet--active {
+.omodal[data-omodal-animation='slide-bottom'] .omodal__sheet[data-omodal-sheet-state="active"] {
   transition-timing-function: cubic-bezier(0, 0.3, 0.15, 1.1);
   transform: translate(0, 0);
   pointer-events: inherit;
@@ -174,7 +190,7 @@
   overflow-y: clip !important; /* This fix the above issue, but only on supported browsers */
 }
 
-.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheet.omodal__sheet--active {
+.omodal[data-omodal-type='bottom-sheet'][data-omodal-animation='slide-bottom'] .omodal__sheet[data-omodal-sheet-state="active"] {
   top: var(--bottom-sheet-top, 100%);
   height: var(--bottom-sheet-height, 100%);
   visibility: visible;
