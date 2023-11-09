@@ -21,7 +21,7 @@ export default class Focus {
 
     const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex)
     const isUpperModalExisted = [
-      ...document.querySelectorAll(`[data-omodal-open]:not([data-omodal-id="${this.modalId}"])`)
+      ...document.querySelectorAll(`.omodal:not([data-omodal-close]):not([data-omodal-id="${this.modalId}"])`)
     ]
       .map(
         (e) =>
@@ -98,7 +98,7 @@ export default class Focus {
     }
 
     // if opened modal, show scroll
-    if (!document.querySelectorAll(`[data-omodal-open]:not([data-omodal-id="${this.modalId}"])`).length)
+    if (!document.querySelectorAll(`.omodal:not([data-omodal-close]):not([data-omodal-id="${this.modalId}"])`).length)
       this.rootElement.removeAttribute('data-omodal-prevent-scroll')
 
     this.resume()
@@ -142,7 +142,8 @@ export default class Focus {
    * @param element DOM node for which to find the first focusable descendant.
    * @returns {boolean} true if a focusable element is found and focus is set.
    */
-  static setOnFirstDescendant = (element: Element): boolean => {
+  static setOnFirstDescendant = (element: Element | null): boolean => {
+    if (!element) return false
     for (let i = 0; i < element.children.length; i++) {
       let child = element.children[i]
       if (Focus.attempt(child) || Focus.setOnFirstDescendant(child)) return true

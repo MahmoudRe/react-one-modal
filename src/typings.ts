@@ -1,4 +1,4 @@
-import { KeyboardEvent, MouseEvent, ReactNode, HTMLAttributes } from 'react'
+import { KeyboardEvent, MouseEvent, ReactNode, HTMLAttributes, ClassAttributes } from 'react'
 
 export interface Modal {
   push: (content: ReactNode, options?: ModalPushOneTimeOptions) => Promise<ModalSheet>
@@ -14,9 +14,11 @@ export interface Modal {
 
 export interface ModalSheet {
   id: string
-  reactNode: ReactNode
+  state: 'previous' | 'active' | 'next'
+  content: ReactNode
   htmlElement: HTMLDivElement | null
   activeElement: Element | null
+  props: ClassAttributes<HTMLDivElement>
 }
 export interface BottomSheetOptions {
   disableDrag?: boolean
@@ -54,7 +56,7 @@ export interface ModalProps {
 
 export interface ModalAnimation {
   disable: boolean
-  type: 'slide' | 'slide-bottom' | 'zoom-in'
+  type: 'slide' | 'slide-bottom' | 'zoom-in' | string
   pause: (timeout?: number) => void
   resume: (timeout?: number) => void
 }

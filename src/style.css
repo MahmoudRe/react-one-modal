@@ -15,6 +15,8 @@
   overflow: hidden;
   overscroll-behavior: none; /* https://stackoverflow.com/questions/5802467/prevent-scrolling-of-parent-element-when-inner-element-scroll-position-reaches-t */
   -ms-scroll-chaining: none;
+  transition: background-color 0.25s;
+  background-color: var(--omodal-color-bg, #00000099);
 }
 
 .omodal__sheets {
@@ -25,8 +27,9 @@
   align-items: center;
 }
 
-.omodal:not([data-omodal-open]) {
-  display: none;
+.omodal[data-omodal-close] {
+  background-color: var(--omodal-color-bg, #00000000);
+  pointer-events: none;
 }
 
 .omodal[data-omodal-animation-pause],
@@ -37,35 +40,6 @@
 
 .omodal[data-omodal-type='full-page'] {
   filter: drop-shadow(0 0 15px var(--omodal-color-bg, #00000099));
-}
-.omodal[data-omodal-type='full-page'].omodal--out-transition {
-  background: transparent !important;
-}
-
-.omodal[data-omodal-type='bottom-sheet'],
-.omodal[data-omodal-type='floating'] {
-  background: var(--omodal-color-bg, #00000099);
-  animation: overlayFadeIn 0.25s ease;
-}
-.omodal[data-omodal-type='bottom-sheet'].omodal--out-transition,
-.omodal[data-omodal-type='floating'].omodal--out-transition {
-  animation: overlayFadeOut 0.25s ease both;
-}
-@keyframes overlayFadeIn {
-  from {
-    background: #00000000;
-  }
-  to {
-    background: var(--omodal-color-bg, #00000099);
-  }
-}
-@keyframes overlayFadeOut {
-  from {
-    background: var(--omodal-color-bg, #00000099);
-  }
-  to {
-    background: #00000000;
-  }
 }
 
 .omodal[data-omodal-position='top'] {
