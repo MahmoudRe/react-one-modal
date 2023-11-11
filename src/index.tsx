@@ -82,46 +82,51 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     }
   })
 
-  const handleOpen = useCallback((open: boolean) => {
-    setOpen(open)
+  const handleOpen = useCallback((shouldOpen: boolean) => {
+    if (open === shouldOpen) return
+    setOpen(shouldOpen)
 
-    if (open) {
+    if (shouldOpen) {
       if (modalRef.current) modalRef.current.style.display = ''
       modalRef.current?.scrollWidth // trigger render by requesting scrollWidth, hence changing css-selector causes transition
       modalRef.current?.removeAttribute('data-omodal-close')
-    }
-    if (!open) {
+    } else {
       focus.handleModalWillClose()
       modalRef.current?.setAttribute('data-omodal-close', '')
     }
-  }, [])
+  }, [open]) // prettier-ignore
 
   const resolveTransition = useCallback(
-    (modalSheetEL: HTMLElement, options: ModalOneTimeOptions, shouldClose = false, skipTransition = !open) =>
+    (modalSheetEL: HTMLElement, options: ModalOneTimeOptions, shouldClose = false, shouldActiveChange = true) =>
       new Promise((resolve) => {
         const { animation: animationOptions } = options
-        const eventHandler = (e: Event) => e.target === modalSheetEL && resolveHandler()
+        const eventHandler = (e: Event) => e.target === modalSheetEL && resolveHandler()  // transitionend/cancel event can be triggered by child element as well, hence ignore those
 
         const resolveHandler = runOnce(() => {
           modalSheetEL.removeEventListener('transitionend', eventHandler)
           modalSheetEL.removeEventListener('transitioncancel', eventHandler)
           focus.resume()
+
           let activeSheet = modalsArr.current.find((e) => e.state === 'active')
           const isClose = modalRef.current?.hasAttribute('data-omodal-close') // because `open` state is passed as variable on resolveTransition call-time and it would be outdated at transition end/cancel.
-          if (activeSheet && !isClose) {
+
+          if (activeSheet && !isClose && !shouldClose) {
             Focus.setInertOnSiblings(activeSheet.htmlElement || null)
 
             if (activeSheet.activeElement) Focus.set(activeSheet.activeElement)
             else Focus.setOnFirstDescendant(activeSheet.htmlElement)
           }
+
           if (shouldClose && modalRef.current) {
             modalRef.current.style.display = 'none'
             focus.handleModalHasClosed()
           }
+
           resolve(null)
         })
 
-        if (skipTransition) return resolveHandler()
+        const isClose = modalRef.current?.hasAttribute('data-omodal-close')
+        if (!shouldActiveChange || isClose) return resolveHandler()
 
         const disableAnimation =
           animationOptions === false ||
@@ -130,24 +135,22 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
         if (disableAnimation && !animation.current.disable) animation.current.pause(250)
         if (!disableAnimation && animation.current.disable) animation.current.resume(250)
-        if (disableAnimation) return resolveHandler()
+        if (disableAnimation) return setTimeout(resolveHandler, 10) //slight delay if no animation false
 
-        // transitionend/cancel event can be triggered by child element as well, hence ignore those
         modalSheetEL.addEventListener('transitionend', eventHandler)
         modalSheetEL.addEventListener('transitioncancel', eventHandler)
       }),
-    [open]
+    []
   )
 
   const push: Modal['push'] = (content, options = {}) =>
     new Promise((resolve) => {
       const { silent = false, last = false, transit = false, attributes: oneTimeAttrs } = options
       const shouldActiveChange = modalsArr.current.length === 0 || !(silent || last)
-      const skipTransition = !shouldActiveChange || !open
       const i = last ? modalsArr.current.length - 1 : modalsArr.current.findIndex((e) => e.state === 'active')
       let hasCalled = false // flag to run ref callback only once
 
-      if (!skipTransition) focus.stop()
+      if (shouldActiveChange && open) focus.stop()
 
       const modalSheet: ModalSheet = {
         id: Math.random().toString(16).slice(10),
@@ -175,7 +178,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
               if (i >= 0) modalsArr.current[i].state = 'previous'
             }
 
-            resolveTransition(el, options, false, skipTransition).then(() => {
+            resolveTransition(el, options, false, shouldActiveChange).then(() => {
               if (transit && i >= 0) modalsArr.current.splice(i, 1) // replace current active modal
               else if (modalsArr.current.length > stackSize) modalsArr.current.shift() // remove last element
               forceUpdate()
@@ -187,7 +190,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         }
       }
 
-      if (shouldActiveChange && skipTransition) {
+      if (shouldActiveChange && !open) {
         modalSheet.state = 'active'
         if (i >= 0) modalsArr.current[i].state = 'previous'
       }
@@ -214,10 +217,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       const shouldClose = toPopIdx === 0
       const shouldActiveChange = toPopIdx === activeIdx
-      const skipTransition = !shouldActiveChange || !open
-
-      if (shouldClose) handleOpen(false)
-
       const newActiveSheet = modalsArr.current[shouldClose ? 1 : toPopIdx - 1]
 
       modalsArr.current[toPopIdx].state = 'next'
@@ -227,7 +226,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const modalSheet = shouldClose ? modalsArr.current[toPopIdx] : newActiveSheet
       if (!modalSheet?.htmlElement) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
 
-      resolveTransition(modalSheet.htmlElement, options, shouldClose, skipTransition).then(() => {
+      resolveTransition(modalSheet.htmlElement, options, shouldClose, shouldActiveChange).then(() => {
         const res = modalsArr.current[toPopIdx]
 
         modalsArr.current.splice(toPopIdx, 1) // 2nd parameter means remove one item only
@@ -236,6 +235,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         resolve(res as ModalSheet)
       })
 
+      if (shouldClose) handleOpen(false)
       forceUpdate()
     })
 
@@ -247,13 +247,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const modalSheetEL = modalsArr.current.find((e) => e.state === 'active')?.htmlElement
       if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
 
-      if (open) handleOpen(false)
-
       resolveTransition(modalSheetEL, options, true).then(() => {
         modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
         forceUpdate()
         resolve(res)
       })
+
+      handleOpen(false)
     })
 
   const next: Modal['next'] = (options = {}) =>
@@ -304,9 +304,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       const activeSheetEL = modalsArr.current.find((e) => e.state === 'active')?.htmlElement
       if (!activeSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
 
-      if (open) handleOpen(false)
-
       resolveTransition(activeSheetEL, options, true).then(() => resolve())
+      handleOpen(false)
     })
 
   const show: Modal['show'] = async (content, options = {}) => {
@@ -326,7 +325,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       focus.handleModalWillOpen()
 
-      resolveTransition(modalSheetEL, options, false, false).then(() => {
+      resolveTransition(modalSheetEL, options, false).then(() => {
         focus.handleModalHasOpened(modalSheetEL)
         resolve(modalsArr.current[modalsArr.current.length - 1])
       })
@@ -357,7 +356,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   return createPortal(
     <div
-      className={'omodal ' + className}
+      className={('omodal ' + className).trim()}
       data-omodal-id={id}
       data-omodal-animation={animation.current.type}
       data-omodal-type={type}
