@@ -87,9 +87,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
     if (open) {
       if (modalRef.current) modalRef.current.style.display = ''
-
-      // trigger render by requesting scrollWidth, hence changing css-selector causes transition
-      if (modalRef.current?.scrollWidth)
+      modalRef.current?.scrollWidth // trigger render by requesting scrollWidth, hence changing css-selector causes transition
       modalRef.current?.removeAttribute('data-omodal-close')
     }
     if (!open) {
@@ -162,10 +160,20 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           ...attributesSheet,
           ...oneTimeAttrs,
           ref: (el: HTMLDivElement | null) => {
-            if (!el || hasCalled) return // run only once
+            if (!el) return
+
+            modalSheet.htmlElement = el
+            el?.addEventListener('focusin', () => (modalSheet.activeElement = document.activeElement)) // keep track of active element
+            if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
+
+            if (hasCalled) return // run only once, just in case of rerender and the function called again
             hasCalled = true
 
-            if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
+            if (shouldActiveChange) {
+              el.scrollWidth // call el.scrollWidth to trigger render before changing states, hence transition takes effect
+              modalSheet.state = 'active'
+              if (i >= 0) modalsArr.current[i].state = 'previous'
+            }
 
             resolveTransition(el, options, false, skipTransition).then(() => {
               if (transit && i >= 0) modalsArr.current.splice(i, 1) // replace current active modal
@@ -174,24 +182,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
               resolve(modalSheet)
             })
 
-            // keep track of active element
-            el.addEventListener('focusin', () => (modalSheet.activeElement = document.activeElement))
-
-            // call el.scrollWidth to trigger render before changing states, hence transition takes effect
-            // if el.scrollWidth === 0, then the element is not rendered yet ie. closed, and no need to change state
-            // use el.scrollWidth in condition, so JS minifier doesn't remove it.
-            if (shouldActiveChange && el.scrollWidth) {
-              modalSheet.state = 'active'
-              if (i >= 0) modalsArr.current[i].state = 'previous'
-            }
-
-            modalSheet.htmlElement = el
             forceUpdate()
           }
         }
       }
 
-      if (shouldActiveChange && !open) {
+      if (shouldActiveChange && skipTransition) {
         modalSheet.state = 'active'
         if (i >= 0) modalsArr.current[i].state = 'previous'
       }
