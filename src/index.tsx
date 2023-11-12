@@ -100,7 +100,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     (modalSheetEL: HTMLElement, options: ModalOneTimeOptions, shouldClose = false, shouldActiveChange = true) =>
       new Promise((resolve) => {
         const { animation: animationOptions } = options
-        const eventHandler = (e: Event) => e.target === modalSheetEL && resolveHandler()  // transitionend/cancel event can be triggered by child element as well, hence ignore those
+        const eventHandler = (e: Event) => e.target === modalSheetEL && resolveHandler() // transitionend/cancel event can be triggered by child element as well, hence ignore those
 
         const resolveHandler = runOnce(() => {
           modalSheetEL.removeEventListener('transitionend', eventHandler)
@@ -110,18 +110,11 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           let activeSheet = modalsArr.current.find((e) => e.state === 'active')
           const isClose = modalRef.current?.hasAttribute('data-omodal-close') // because `open` state is passed as variable on resolveTransition call-time and it would be outdated at transition end/cancel.
 
-          if (activeSheet && !isClose && !shouldClose) {
-            Focus.setInertOnSiblings(activeSheet.htmlElement || null)
-
-            if (activeSheet.activeElement) Focus.set(activeSheet.activeElement)
-            else Focus.setOnFirstDescendant(activeSheet.htmlElement)
-          }
-
-          if (shouldClose && modalRef.current) {
-            modalRef.current.style.display = 'none'
+          if (shouldClose) {
+            if (modalRef.current) modalRef.current.style.display = 'none'
             focus.handleModalHasClosed()
           }
-
+          else if (!isClose) focus.handleActiveSheetHasChanged(activeSheet)
           resolve(null)
         })
 

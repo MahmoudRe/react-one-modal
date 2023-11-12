@@ -1,4 +1,5 @@
 import { RefObject } from 'react'
+import { ModalSheet } from './typings'
 
 export default class Focus {
   previousActiveElement = document.activeElement // to save element with focus before modal has opened
@@ -67,6 +68,17 @@ export default class Focus {
 
       if (!sibling.hasAttribute('inert')) sibling.setAttribute('inert', '')
     }
+  }
+
+  /**
+   * Handle focus when active sheet changed, ie. set inert on all other sheets and set focus on new active sheet.
+   */
+  handleActiveSheetHasChanged = (activeSheet?: ModalSheet) => {
+    if (!activeSheet) return
+    Focus.setInertOnSiblings(activeSheet.htmlElement || null)
+
+    if (activeSheet.activeElement) Focus.set(activeSheet.activeElement)
+    else Focus.setOnFirstDescendant(activeSheet.htmlElement)
   }
 
   /**
