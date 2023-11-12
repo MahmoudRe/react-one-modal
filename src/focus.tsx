@@ -113,6 +113,7 @@ export default class Focus {
     if (!document.querySelectorAll(`.omodal:not([data-omodal-close]):not([data-omodal-id="${this.modalId}"])`).length)
       this.rootElement.removeAttribute('data-omodal-prevent-scroll')
 
+    this.modalRef.current?.setAttribute('data-omodal-close', 'completed')
     this.resume()
     if (!unmount) Focus.set(this.previousActiveElement)
   }

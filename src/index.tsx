@@ -87,7 +87,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     setOpen(shouldOpen)
 
     if (shouldOpen) {
-      if (modalRef.current) modalRef.current.style.display = ''
+      modalRef.current?.setAttribute('data-omodal-close', '')
       modalRef.current?.scrollWidth // trigger render by requesting scrollWidth, hence changing css-selector causes transition
       modalRef.current?.removeAttribute('data-omodal-close')
     } else {
@@ -110,10 +110,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           let activeSheet = modalsArr.current.find((e) => e.state === 'active')
           const isClose = modalRef.current?.hasAttribute('data-omodal-close') // because `open` state is passed as variable on resolveTransition call-time and it would be outdated at transition end/cancel.
 
-          if (shouldClose) {
-            if (modalRef.current) modalRef.current.style.display = 'none'
-            focus.handleModalHasClosed()
-          }
+          if (shouldClose) focus.handleModalHasClosed()
           else if (!isClose) focus.handleActiveSheetHasChanged(activeSheet)
           resolve(null)
         })
@@ -147,7 +144,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       const modalSheet: ModalSheet = {
         id: Math.random().toString(16).slice(10),
-        state: 'next',
+        state: shouldActiveChange ? 'active-closed' : 'next',
         content: content,
         htmlElement: null,
         activeElement: null,
@@ -358,14 +355,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       ref={modalRef}
       role='dialog'
       aria-modal='true'
-      data-omodal-close=''
+      data-omodal-close='completed'
       onKeyDown={(ev) => {
         if (!onESC || ev.key !== 'Escape' || modalRef.current?.hasAttribute('inert')) return
         if (typeof onESC === 'string') controlFunctions[onESC]()
         if (typeof onESC === 'function') onESC(ev)
       }}
       style={{
-        display: 'none',
         ['--omodal-color-bg' as any]: colorBackground || undefined,
         ['--omodal-sheet-color-bg' as any]: colorBackgroundSheet || undefined
       }}
