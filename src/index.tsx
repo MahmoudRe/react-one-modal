@@ -144,7 +144,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
       const modalSheet: ModalSheet = {
         id: Math.random().toString(16).slice(10),
-        state: shouldActiveChange ? 'active-closed' : 'next',
+        state: shouldActiveChange ? `active${open ? '-closed' : ''}` : 'next',
         content: content,
         htmlElement: null,
         activeElement: null,
@@ -178,11 +178,6 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
             forceUpdate()
           }
         }
-      }
-
-      if (shouldActiveChange && !open) {
-        modalSheet.state = 'active'
-        if (i >= 0) modalsArr.current[i].state = 'previous'
       }
 
       modalsArr.current.splice(i + 1, 0, modalSheet)

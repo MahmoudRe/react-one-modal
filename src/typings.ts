@@ -14,7 +14,7 @@ export interface Modal {
 
 export interface ModalSheet {
   id: string
-  state: 'previous' | 'active' | 'next'
+  state: 'previous' | 'active' | 'next' | 'previous-closed' | 'active-closed' | 'next-closed'
   content: ReactNode
   htmlElement: HTMLDivElement | null
   activeElement: Element | null
