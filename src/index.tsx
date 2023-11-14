@@ -6,7 +6,8 @@ import React, {
   forwardRef,
   useImperativeHandle,
   ForwardedRef,
-  useCallback
+  useCallback,
+  ReactNode
 } from 'react'
 import { createPortal } from 'react-dom'
 import './style.css'
@@ -45,13 +46,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const modalRef = useRef<HTMLDivElement>(null)
 
-  // `useRef` with `forceUpdate` instead of useState to have up-to-date value for pages array, and push to the existed array directly
-  const modalsArr = useRef<ModalSheet[]>([])
-  const [, forceUpdate] = useReducer((x) => x + 1, 0)
-
   const [id] = useState(Math.random().toString(16).slice(10))
   const [open, setOpen] = useState(false)
   const [focus] = useState(new Focus(modalRef, id, rootElement))
+
+  // `useRef` with `forceUpdate` instead of useState to have up-to-date value for pages array, and push to the existed array directly
+  const modalsArr = useRef<ModalSheet[]>(children ? [createModalSheet(children)] : [])
+  const [, forceUpdate] = useReducer((x) => x + 1, 0)
 
   const _animationType = useRef<ModalAnimation['type']>(
     (animationProps && animationProps.type) ?? props.type == 'full-page'
@@ -115,7 +116,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           resolve(null)
         })
 
-        const isClose = modalRef.current?.hasAttribute('data-omodal-close')
+        const isClose = !modalRef.current /* on-mount */ || modalRef.current.hasAttribute('data-omodal-close')
         if (!shouldActiveChange || isClose) return resolveHandler()
 
         const disableAnimation =
@@ -133,54 +134,68 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     []
   )
 
-  const push: Modal['push'] = (content, options = {}) =>
-    new Promise((resolve) => {
-      const { silent = false, last = false, transit = false, attributes: oneTimeAttrs } = options
-      const shouldActiveChange = modalsArr.current.length === 0 || !(silent || last)
-      const i = last ? modalsArr.current.length - 1 : modalsArr.current.findIndex((e) => e.state === 'active')
-      let hasCalled = false // flag to run ref callback only once
+  function createModalSheet(
+    content: ReactNode,
+    options: ModalPushOneTimeOptions = {},
+    shouldActiveChange: boolean = true,
+    prevIdx: number = -1,
+    resolve?: (value: ModalSheet | PromiseLike<ModalSheet>) => void
+  ): ModalSheet {
+    const { transit = false, attributes: oneTimeAttrs } = options
+    let hasCalled = false // flag to run ref callback only once
 
-      if (shouldActiveChange && open) focus.stop()
+    const modalSheet: ModalSheet = {
+      id: Math.random().toString(16).slice(10),
+      state: shouldActiveChange ? `active${open ? '-closed' : ''}` : 'next',
+      content: content,
+      htmlElement: null,
+      activeElement: null,
+      props: {
+        className: ('omodal__sheet ' + classNameSheet).trim(),
+        ...attributesSheet,
+        ...oneTimeAttrs,
+        ref: (el: HTMLDivElement | null) => {
+          if (!el) return
 
-      const modalSheet: ModalSheet = {
-        id: Math.random().toString(16).slice(10),
-        state: shouldActiveChange ? `active${open ? '-closed' : ''}` : 'next',
-        content: content,
-        htmlElement: null,
-        activeElement: null,
-        props: {
-          className: ('omodal__sheet ' + classNameSheet).trim(),
-          ...attributesSheet,
-          ...oneTimeAttrs,
-          ref: (el: HTMLDivElement | null) => {
-            if (!el) return
+          modalSheet.htmlElement = el
+          el?.addEventListener('focusin', () => (modalSheet.activeElement = document.activeElement)) // keep track of active element
+          if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
 
-            modalSheet.htmlElement = el
-            el?.addEventListener('focusin', () => (modalSheet.activeElement = document.activeElement)) // keep track of active element
-            if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
+          if (hasCalled) return // run only once, just in case of rerender and the function called again
+          hasCalled = true
 
-            if (hasCalled) return // run only once, just in case of rerender and the function called again
-            hasCalled = true
-
-            if (shouldActiveChange) {
-              el.scrollWidth // call el.scrollWidth to trigger render before changing states, hence transition takes effect
-              modalSheet.state = 'active'
-              if (i >= 0) modalsArr.current[i].state = 'previous'
-            }
-
-            resolveTransition(el, options, false, shouldActiveChange).then(() => {
-              if (transit && i >= 0) modalsArr.current.splice(i, 1) // replace current active modal
-              else if (modalsArr.current.length > stackSize) modalsArr.current.shift() // remove last element
-              forceUpdate()
-              resolve(modalSheet)
-            })
-
-            forceUpdate()
+          if (shouldActiveChange) {
+            el.scrollWidth // call el.scrollWidth to trigger render before changing states, hence transition takes effect
+            modalSheet.state = 'active'
+            if (prevIdx >= 0) modalsArr.current[prevIdx].state = 'previous'
           }
+
+          resolveTransition(el, options, false, shouldActiveChange).then(() => {
+            if (transit && prevIdx >= 0) modalsArr.current.splice(prevIdx, 1) // replace current active modal
+            else if (modalsArr.current.length > stackSize) modalsArr.current.shift() // remove last element
+            forceUpdate()
+            if (resolve) resolve(modalSheet as ModalSheet)
+          })
+
+          forceUpdate()
         }
       }
+    }
 
-      modalsArr.current.splice(i + 1, 0, modalSheet)
+    return modalSheet
+  }
+
+  const push: Modal['push'] = (content, options = {}) =>
+    new Promise((resolve) => {
+      const { silent = false, last = false } = options
+
+      const shouldActiveChange = modalsArr.current.length === 0 || !(silent || last)
+      const prevIdx = last ? modalsArr.current.length - 1 : modalsArr.current.findIndex((e) => e.state === 'active')
+
+      if (shouldActiveChange && open) focus.stop()
+      const modalSheet = createModalSheet(content, options, shouldActiveChange, prevIdx, resolve)
+
+      modalsArr.current.splice(prevIdx + 1, 0, modalSheet)
       forceUpdate()
     })
 
@@ -330,14 +345,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   }
   useImperativeHandle(ref, () => controlFunctions)
 
-  useEffect(() => {
-    if (children) push(children)
-    // rootElement.style.position = 'relative'
-
-    return () => {
-      focus.handleModalHasClosed(true)
-    }
-  }, [])
+  useEffect(() => () => focus.handleModalHasClosed(true), []) // callback's return function runs on unmount
 
   return createPortal(
     <div
