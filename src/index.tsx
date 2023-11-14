@@ -51,7 +51,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const [focus] = useState(new Focus(modalRef, id, rootElement))
 
   // `useRef` with `forceUpdate` instead of useState to have up-to-date value for pages array, and push to the existed array directly
-  const modalsArr = useRef<ModalSheet[]>(children ? [createModalSheet(children)] : [])
+  const modalSheets = useRef<ModalSheet[]>(children ? [createModalSheet(children)] : [])
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
 
   const _animationType = useRef<ModalAnimation['type']>(
@@ -108,7 +108,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           modalSheetEL.removeEventListener('transitioncancel', eventHandler)
           focus.resume()
 
-          let activeSheet = modalsArr.current.find((e) => e.state === 'active')
+          let activeSheet = modalSheets.current.find((e) => e.state === 'active')
           const isClose = modalRef.current?.hasAttribute('data-omodal-close') // because `open` state is passed as variable on resolveTransition call-time and it would be outdated at transition end/cancel.
 
           if (shouldClose) focus.handleModalHasClosed()
@@ -167,12 +167,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           if (shouldActiveChange) {
             el.scrollWidth // call el.scrollWidth to trigger render before changing states, hence transition takes effect
             modalSheet.state = 'active'
-            if (prevIdx >= 0) modalsArr.current[prevIdx].state = 'previous'
+            if (prevIdx >= 0) modalSheets.current[prevIdx].state = 'previous'
           }
 
           resolveTransition(el, options, false, shouldActiveChange).then(() => {
-            if (transit && prevIdx >= 0) modalsArr.current.splice(prevIdx, 1) // replace current active modal
-            else if (modalsArr.current.length > stackSize) modalsArr.current.shift() // remove last element
+            if (transit && prevIdx >= 0) modalSheets.current.splice(prevIdx, 1) // replace current active modal
+            else if (modalSheets.current.length > stackSize) modalSheets.current.shift() // remove last element
             forceUpdate()
             if (resolve) resolve(modalSheet as ModalSheet)
           })
@@ -189,13 +189,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     new Promise((resolve) => {
       const { silent = false, last = false } = options
 
-      const shouldActiveChange = modalsArr.current.length === 0 || !(silent || last)
-      const prevIdx = last ? modalsArr.current.length - 1 : modalsArr.current.findIndex((e) => e.state === 'active')
+      const shouldActiveChange = modalSheets.current.length === 0 || !(silent || last)
+      const prevIdx = last ? modalSheets.current.length - 1 : modalSheets.current.findIndex((e) => e.state === 'active')
 
       if (shouldActiveChange && open) focus.stop()
       const modalSheet = createModalSheet(content, options, shouldActiveChange, prevIdx, resolve)
 
-      modalsArr.current.splice(prevIdx + 1, 0, modalSheet)
+      modalSheets.current.splice(prevIdx + 1, 0, modalSheet)
       forceUpdate()
     })
 
@@ -207,29 +207,29 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     new Promise((resolve) => {
       const { last = false } = options
 
-      const len = modalsArr.current.length
+      const len = modalSheets.current.length
       if (!len) throw Error('Modal is empty! No modal-sheet to pop')
 
-      const activeIdx = modalsArr.current.findIndex((e) => e.state === 'active')
+      const activeIdx = modalSheets.current.findIndex((e) => e.state === 'active')
       if (activeIdx < 0) throw Error('No active modal-sheet!')
 
       const toPopIdx = last ? len - 1 : activeIdx
 
       const shouldClose = toPopIdx === 0
       const shouldActiveChange = toPopIdx === activeIdx
-      const newActiveSheet = modalsArr.current[shouldClose ? 1 : toPopIdx - 1]
+      const newActiveSheet = modalSheets.current[shouldClose ? 1 : toPopIdx - 1]
 
-      modalsArr.current[toPopIdx].state = 'next'
+      modalSheets.current[toPopIdx].state = 'next'
       if (shouldActiveChange && len > 1) newActiveSheet.state = 'active'
 
       // listen to the popped sheet closing-transition event, or to the new active sheet opening-transition event if not closing.
-      const modalSheet = shouldClose ? modalsArr.current[toPopIdx] : newActiveSheet
+      const modalSheet = shouldClose ? modalSheets.current[toPopIdx] : newActiveSheet
       if (!modalSheet?.htmlElement) throw Error('Unexpected behavior: No HTML eLement is found while pop!') // shouldn't happen, just in case!!
 
       resolveTransition(modalSheet.htmlElement, options, shouldClose, shouldActiveChange).then(() => {
-        const res = modalsArr.current[toPopIdx]
+        const res = modalSheets.current[toPopIdx]
 
-        modalsArr.current.splice(toPopIdx, 1) // 2nd parameter means remove one item only
+        modalSheets.current.splice(toPopIdx, 1) // 2nd parameter means remove one item only
 
         forceUpdate()
         resolve(res as ModalSheet)
@@ -241,14 +241,14 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const empty: Modal['empty'] = (options = {}) =>
     new Promise((resolve) => {
-      if (!modalsArr.current.length) throw Error('Modal is already empty! No modal-sheets to empty!')
+      if (!modalSheets.current.length) throw Error('Modal is already empty! No modal-sheets to empty!')
 
-      const res = [...modalsArr.current] // hard copy before empty
-      const modalSheetEL = modalsArr.current.find((e) => e.state === 'active')?.htmlElement
+      const res = [...modalSheets.current] // hard copy before empty
+      const modalSheetEL = modalSheets.current.find((e) => e.state === 'active')?.htmlElement
       if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while empty!') // shouldn't happen, just in case!!
 
       resolveTransition(modalSheetEL, options, true).then(() => {
-        modalsArr.current.splice(0, modalsArr.current.length) // empty array while keeping reference
+        modalSheets.current.splice(0, modalSheets.current.length) // empty array while keeping reference
         forceUpdate()
         resolve(res)
       })
@@ -258,19 +258,19 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const next: Modal['next'] = (options = {}) =>
     new Promise((resolve) => {
-      const len = modalsArr.current.length
+      const len = modalSheets.current.length
 
       if (len <= 1) throw Error('Cannot go to next sheet, modal has 0 or 1 sheet!')
 
-      const activeSheetIdx = modalsArr.current.findIndex((e) => e.state === 'active')
+      const activeSheetIdx = modalSheets.current.findIndex((e) => e.state === 'active')
       if (activeSheetIdx < 0) throw Error('No active modal-sheet!')
 
       if (activeSheetIdx === len - 1) throw Error('Cannot go to next sheet, current active sheet is the last one!')
 
-      const nextSheet = modalsArr.current[activeSheetIdx + 1]
+      const nextSheet = modalSheets.current[activeSheetIdx + 1]
       if (!nextSheet?.htmlElement) throw Error('Unexpected behavior: No HTML element for next sheet is found!') // shouldn't happen, just in case!!
 
-      modalsArr.current[activeSheetIdx].state = 'previous'
+      modalSheets.current[activeSheetIdx].state = 'previous'
       nextSheet.state = 'active'
       forceUpdate()
 
@@ -279,18 +279,18 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const back: Modal['back'] = (options = {}) =>
     new Promise((resolve) => {
-      const len = modalsArr.current.length
+      const len = modalSheets.current.length
 
       if (len <= 1) throw Error('Cannot go to previous sheet, modal has 0 or 1 sheet!')
 
-      const activeSheetIdx = modalsArr.current.findIndex((e) => e.state === 'active')
+      const activeSheetIdx = modalSheets.current.findIndex((e) => e.state === 'active')
       if (activeSheetIdx < 0) throw Error('No active modal-sheet!')
       if (activeSheetIdx === 0) throw Error('Cannot go to previous sheet, current active sheet is the first one!')
 
-      const prevSheet = modalsArr.current[activeSheetIdx - 1]
+      const prevSheet = modalSheets.current[activeSheetIdx - 1]
       if (!prevSheet?.htmlElement) throw Error('Unexpected behavior: No HTML element for previous sheet is found!') // shouldn't happen, just in case!!
 
-      modalsArr.current[activeSheetIdx].state = 'next'
+      modalSheets.current[activeSheetIdx].state = 'next'
       prevSheet.state = 'active'
       forceUpdate()
 
@@ -301,7 +301,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     new Promise((resolve) => {
       if (!open) throw Error('Modal is already hidden!')
 
-      const activeSheetEL = modalsArr.current.find((e) => e.state === 'active')?.htmlElement
+      const activeSheetEL = modalSheets.current.find((e) => e.state === 'active')?.htmlElement
       if (!activeSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while hide!') // shouldn't happen, just in case!!
 
       resolveTransition(activeSheetEL, options, true).then(() => resolve())
@@ -309,25 +309,25 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     })
 
   const show: Modal['show'] = async (content, options = {}) => {
-    if (!modalsArr.current.length && !content) throw Error('Nothing to show!')
+    if (!modalSheets.current.length && !content) throw Error('Nothing to show!')
     if (open && !content) throw Error('Modal is already shown!')
 
     focus.preventPageScroll()
 
     let res
     if (content) res = await push(content, options)
-    if (open) return res ?? modalsArr.current[modalsArr.current.length - 1]
+    if (open) return res ?? modalSheets.current[modalSheets.current.length - 1]
     handleOpen(true)
 
     return new Promise((resolve) => {
-      const modalSheetEL = modalsArr.current.find((e) => e.state === 'active')?.htmlElement
+      const modalSheetEL = modalSheets.current.find((e) => e.state === 'active')?.htmlElement
       if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while show!') // shouldn't happen, just in case!!
 
       focus.handleModalWillOpen()
 
       resolveTransition(modalSheetEL, options, false).then(() => {
         focus.handleModalHasOpened(modalSheetEL)
-        resolve(modalsArr.current[modalsArr.current.length - 1])
+        resolve(modalSheets.current[modalSheets.current.length - 1])
       })
     })
   }
@@ -378,7 +378,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           if (typeof onClickOverlay === 'function') onClickOverlay(ev) //nativeEvent, just in case of using addEventListener() later
         }}
       >
-        {modalsArr.current.map((e) => (
+        {modalSheets.current.map((e) => (
           <div {...e.props} key={e.id} data-omodal-sheet-state={e.state + (open ? '' : '-closed')}>
             {e.content}
           </div>
