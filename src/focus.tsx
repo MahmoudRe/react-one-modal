@@ -20,18 +20,14 @@ export default class Focus {
     const modalEl = this.modalRef.current
     if (!modalEl) return
 
-    const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex)
-    const isUpperModalExisted = [
-      ...document.querySelectorAll(`.omodal:not([data-omodal-close]):not([data-omodal-id="${this.modalId}"])`)
-    ]
-      .map(
-        (e) =>
-          zIndexThisModal > parseInt(getComputedStyle(e).zIndex) ||
-          modalEl.compareDocumentPosition(e) === Node.DOCUMENT_POSITION_PRECEDING
-      )
-      .some((e) => !e)
-
-    if (isUpperModalExisted) modalEl.setAttribute('inert', '')
+    if (this.isUpperModalOpened()) {
+      // TO DO: 
+      // - a flag option to allow this behavior
+      // - this modal should be already `inert` or child of `inert` (dynamically added siblings to an opened modal should be inert-ed).
+      // - set inert on all siblings of this modal, with `data-omodal-set-inert-by` attribute, so when the upper modal is closed, focus is trapped here.
+      // - ensure the focus is set on the modal when the upper modal is closed.
+      modalEl.setAttribute('inert', '')  
+    }
     else {
       this.previousActiveElement = document.activeElement
       Focus.setInertOnSiblings(modalEl, this.modalId)
@@ -52,6 +48,20 @@ export default class Focus {
       Focus.setInertOnSiblings(modalSheetEl)
       Focus.setOnFirstDescendant(modalSheetEl)
     }
+  }
+
+  isUpperModalOpened = () => {
+    const modalEl = this.modalRef.current
+    if (!modalEl) return
+
+    const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex)
+    return [...document.querySelectorAll(`.omodal:not([data-omodal-close]):not([data-omodal-id="${this.modalId}"])`)]
+      .map(
+        (e) =>
+          zIndexThisModal > parseInt(getComputedStyle(e).zIndex) ||
+          modalEl.compareDocumentPosition(e) === Node.DOCUMENT_POSITION_PRECEDING
+      )
+      .some((e) => !e)
   }
 
   static setInertOnSiblings = (el: HTMLElement | null, id?: string) => {

@@ -311,6 +311,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const show: Modal['show'] = async (content, options = {}) => {
     if (!modalSheets.current.length && !content) throw Error('Nothing to show!')
     if (open && !content) throw Error('Modal is already shown!')
+    if (!open && focus.isUpperModalOpened())
+      throw Error('This modal is blocked by another opened modal with higher stacking context!')
 
     focus.preventPageScroll()
 
