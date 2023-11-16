@@ -88,6 +88,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     setOpen(shouldOpen)
 
     if (shouldOpen) {
+      focus.handleModalWillOpen()
       modalRef.current?.setAttribute('data-omodal-close', '')
       modalRef.current?.scrollWidth // trigger render by requesting scrollWidth, hence changing css-selector causes transition
       modalRef.current?.removeAttribute('data-omodal-close')
@@ -319,14 +320,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     let res
     if (content) res = await push(content, options)
     if (open) return res ?? modalSheets.current[modalSheets.current.length - 1]
+
+    const modalSheetEL = modalSheets.current.find((e) => e.state === 'active')?.htmlElement
+    if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement of active sheet is found while show!') // shouldn't happen, just in case!!
+    
     handleOpen(true)
 
     return new Promise((resolve) => {
-      const modalSheetEL = modalSheets.current.find((e) => e.state === 'active')?.htmlElement
-      if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement is found while show!') // shouldn't happen, just in case!!
-
-      focus.handleModalWillOpen()
-
       resolveTransition(modalSheetEL, options, false).then(() => {
         focus.handleModalHasOpened(modalSheetEL)
         resolve(modalSheets.current[modalSheets.current.length - 1])
