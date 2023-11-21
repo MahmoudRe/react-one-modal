@@ -52,6 +52,7 @@ export interface ModalProps {
   children?: ReactNode
   onESC?: 'hide' | 'empty' | 'pop' | null | { (event: KeyboardEvent<HTMLDivElement>): void }
   onClickOverlay?: 'hide' | 'empty' | 'pop' | null | { (event: MouseEvent<HTMLDivElement>): void }
+  forceOpenIfBlocked?: boolean
 }
 
 export interface ModalAnimation {

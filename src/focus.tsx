@@ -20,63 +20,85 @@ export default class Focus {
     const modalEl = this.modalRef.current
     if (!modalEl) return
 
-    if (this.isUpperModalOpened()) {
-      // TO DO: 
-      // - a flag option to allow this behavior
+    if (!this.isBlockedByAnotherModal()) {
+      // TO DO:
       // - this modal should be already `inert` or child of `inert` (dynamically added siblings to an opened modal should be inert-ed).
-      // - set inert on all siblings of this modal, with `data-omodal-set-inert-by` attribute, so when the upper modal is closed, focus is trapped here.
       // - ensure the focus is set on the modal when the upper modal is closed.
-      modalEl.setAttribute('inert', '')  
-    }
-    else {
-      this.previousActiveElement = document.activeElement
-      Focus.setInertOnSiblings(modalEl, this.modalId)
       this.stop()
-      this.preventPageScroll()
+      modalEl.removeAttribute('inert')
+      modalEl.removeAttribute('data-omodal-set-inert-by')
     }
+
+    this.previousActiveElement = document.activeElement
+    this.setInertOnSiblings()
+    this.preventPageScroll()
   }
 
   /**
    * This function should be called after modal has been opened, ie. after opening-animation
    */
-  handleModalHasOpened = (modalSheetEl: HTMLElement | null) => {
+  handleModalHasOpened = (modalSheet: ModalSheet) => {
     const modalEl = this.modalRef.current
-    if (!modalEl || !modalSheetEl) return
+    if (!modalEl || !modalSheet.htmlElement) return
 
     if (!modalEl.hasAttribute('inert')) {
       this.resume()
-      Focus.setInertOnSiblings(modalSheetEl)
-      Focus.setOnFirstDescendant(modalSheetEl)
+      modalSheet.htmlElement.removeAttribute('inert')
+      this.setInertOnSiblings(modalSheet)
+      Focus.setOnFirstDescendant(modalSheet.htmlElement)
     }
   }
 
-  isUpperModalOpened = () => {
-    const modalEl = this.modalRef.current
-    if (!modalEl) return
+  /**
+   * Check if another modal with higher stacking context is already open.
+   * 
+   * @returns {boolean}
+   */
+  isBlockedByAnotherModal = (): boolean => [...document.querySelectorAll(`.omodal:not([data-omodal-close])`)].some(this.isBlockedBy)
 
-    const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex)
-    return [...document.querySelectorAll(`.omodal:not([data-omodal-close]):not([data-omodal-id="${this.modalId}"])`)]
-      .map(
-        (e) =>
-          zIndexThisModal > parseInt(getComputedStyle(e).zIndex) ||
-          modalEl.compareDocumentPosition(e) === Node.DOCUMENT_POSITION_PRECEDING
-      )
-      .some((e) => !e)
+  /**
+   * Check if this modal is bellow (blocked by) the given element with respect to visual stacking context.
+   * This will compare the z-index, and the order in DOM tree in case of equal z-index.
+   * 
+   * @param {Element} element
+   * @returns {boolean}
+   */
+  isBlockedBy = (element: Element): boolean => {
+    const modalEl = this.modalRef.current
+    if (!modalEl) return false
+
+    const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex) || 0
+    const zIndexOtherElement = parseInt(getComputedStyle(element).zIndex) || 0
+
+    return (
+      zIndexThisModal < zIndexOtherElement ||
+      (zIndexThisModal === zIndexOtherElement &&
+        modalEl.compareDocumentPosition(element) === Node.DOCUMENT_POSITION_FOLLOWING)
+    )
   }
 
-  static setInertOnSiblings = (el: HTMLElement | null, id?: string) => {
-    if (!el || el === document.body || !el.parentElement) return
+  /**
+   * Set 'inert' attribute to siblings of this modal, excluding other modals that blocks this modal, 
+   * ie. have higher z-index, or comes later in DOM tree.
+   * This also update the value of `data-omodal-set-inert-by` attribute of the effected siblings.
+   * 
+   * @param modalSheet optional modalSheet to set `inert` on the sibling of this modal-sheet element instead of this modal.
+   */
+  setInertOnSiblings = (modalSheet?: ModalSheet) => {
+    const element = modalSheet ? modalSheet?.htmlElement : this.modalRef.current
+    if (!element || element === document.body || !element.parentElement) return
 
-    el.removeAttribute('inert')
-    for (let sibling of el.parentElement.children) {
-      if (sibling == el || !(sibling instanceof HTMLElement)) continue
+    for (let sibling of element.parentElement.children) {
+      if (sibling === element || !(sibling instanceof HTMLElement) || (!modalSheet && this.isBlockedBy(sibling)))
+        continue
 
-      if (id)
-        sibling.dataset.omodalSetInertBy = sibling.dataset.omodalSetInertBy
-          ? sibling.dataset.omodalSetInertBy + ' ' + id
-          : id
+      sibling.setAttribute('inert', '')
 
-      if (!sibling.hasAttribute('inert')) sibling.setAttribute('inert', '')
+      if (modalSheet) continue
+
+      sibling.dataset.omodalSetInertBy = sibling.dataset.omodalSetInertBy
+        ? sibling.dataset.omodalSetInertBy + ' ' + this.modalId
+        : this.modalId
     }
   }
 
@@ -85,7 +107,8 @@ export default class Focus {
    */
   handleActiveSheetHasChanged = (activeSheet?: ModalSheet) => {
     if (!activeSheet) return
-    Focus.setInertOnSiblings(activeSheet.htmlElement || null)
+    activeSheet.htmlElement?.removeAttribute('inert')
+    this.setInertOnSiblings(activeSheet)
 
     if (activeSheet.activeElement) Focus.set(activeSheet.activeElement)
     else Focus.setOnFirstDescendant(activeSheet.htmlElement)
@@ -94,9 +117,7 @@ export default class Focus {
   /**
    * This function should be called before modal closing, ie. before close-animation
    */
-  handleModalWillClose = () => {
-    this.stop()
-  }
+  handleModalWillClose = () => this.stop()
 
   /**
    * This function should be called after modal has closed, ie. after close-animation or unmount.

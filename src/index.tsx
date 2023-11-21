@@ -41,7 +41,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     attributes, // pass the reset to modal container/overlay
     children, // if existed, add them as the first
     onESC,
-    onClickOverlay
+    onClickOverlay,
+    forceOpenIfBlocked,
   } = props
 
   const modalRef = useRef<HTMLDivElement>(null)
@@ -312,7 +313,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const show: Modal['show'] = async (content, options = {}) => {
     if (!modalSheets.current.length && !content) throw Error('Nothing to show!')
     if (open && !content) throw Error('Modal is already shown!')
-    if (!open && focus.isUpperModalOpened())
+    if (!open && !forceOpenIfBlocked && focus.isBlockedByAnotherModal())
       throw Error('This modal is blocked by another opened modal with higher stacking context!')
 
     focus.preventPageScroll()
@@ -321,14 +322,15 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
     if (content) res = await push(content, options)
     if (open) return res ?? modalSheets.current[modalSheets.current.length - 1]
 
-    const modalSheetEL = modalSheets.current.find((e) => e.state === 'active')?.htmlElement
-    if (!modalSheetEL) throw Error('Unexpected behavior: No HTML eLement of active sheet is found while show!') // shouldn't happen, just in case!!
-    
+    const modalSheet = modalSheets.current.find((e) => e.state === 'active')
+    if (!modalSheet) throw Error('Unexpected behavior: No active sheet is found while show!') // shouldn't happen, just in case!!
+
     handleOpen(true)
 
     return new Promise((resolve) => {
-      resolveTransition(modalSheetEL, options, false).then(() => {
-        focus.handleModalHasOpened(modalSheetEL)
+      if (!modalSheet?.htmlElement) throw Error('Unexpected behavior: No HTML eLement is found while show!') // shouldn't happen, just in case!!
+      resolveTransition(modalSheet.htmlElement, options, false).then(() => {
+        focus.handleModalHasOpened(modalSheet)
         resolve(modalSheets.current[modalSheets.current.length - 1])
       })
     })
