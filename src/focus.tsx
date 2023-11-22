@@ -51,15 +51,14 @@ export default class Focus {
 
   /**
    * Check if another modal with higher stacking context is already open.
-   * 
-   * @returns {boolean}
    */
-  isBlockedByAnotherModal = (): boolean => [...document.querySelectorAll(`.omodal:not([data-omodal-close])`)].some(this.isBlockedBy)
+  isBlockedByAnotherModal = () =>
+    [...document.querySelectorAll(`.omodal:not([data-omodal-close])`)].some(this.isBlockedBy)
 
   /**
    * Check if this modal is bellow (blocked by) the given element with respect to visual stacking context.
    * This will compare the z-index, and the order in DOM tree in case of equal z-index.
-   * 
+   *
    * @param {Element} element
    * @returns {boolean}
    */
@@ -78,10 +77,10 @@ export default class Focus {
   }
 
   /**
-   * Set 'inert' attribute to siblings of this modal, excluding other modals that blocks this modal, 
+   * Set 'inert' attribute to siblings of this modal, excluding other modals that blocks this modal,
    * ie. have higher z-index, or comes later in DOM tree.
    * This also update the value of `data-omodal-set-inert-by` attribute of the effected siblings.
-   * 
+   *
    * @param modalSheet optional modalSheet to set `inert` on the sibling of this modal-sheet element instead of this modal.
    */
   setInertOnSiblings = (modalSheet?: ModalSheet) => {
@@ -106,10 +105,11 @@ export default class Focus {
    * Handle focus when active sheet changed, ie. set inert on all other sheets and set focus on new active sheet.
    */
   handleActiveSheetHasChanged = (activeSheet?: ModalSheet) => {
-    if (!activeSheet) return
+    if (!activeSheet || !this.modalRef.current) return
     activeSheet.htmlElement?.removeAttribute('inert')
     this.setInertOnSiblings(activeSheet)
 
+    if (this.modalRef.current.hasAttribute('data-omodal-close')) return
     if (activeSheet.activeElement) Focus.set(activeSheet.activeElement)
     else Focus.setOnFirstDescendant(activeSheet.htmlElement)
   }

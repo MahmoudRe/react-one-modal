@@ -79,3 +79,10 @@ export interface ModalPopOneTimeOptions extends ModalOneTimeOptions {
 }
 
 export type ScrollPosition = 'top' | 'middle' | 'bottom' | 'no-scroll'
+
+export enum Action {
+  NONE,
+  OPEN,
+  CLOSE,
+  SHEET_CHANGE
+}
