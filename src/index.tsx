@@ -106,8 +106,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const resolveTransition = useCallback(
     (options: ModalOneTimeOptions, action: Action, modalSheet?: ModalSheet) =>
       new Promise<void>((resolve) => {
-        const activeSheet = modalSheets.current.find((e) => e.state === 'active')
-        modalSheet ??= activeSheet
+        modalSheet ??= modalSheets.current.find((e) => e.state === 'active')
         if (!modalSheet) throw Error('Unexpected behavior: No active-sheet is found while resolveTransition!') // shouldn't happen, just in case!!
 
         const modalSheetEl = modalSheet.htmlElement
@@ -122,15 +121,14 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           modalSheetEl.removeEventListener('transitioncancel', eventHandler)
           focus.resume()
 
-          if (action === Action.OPEN) focus.handleModalHasOpened(modalSheet as ModalSheet)
+          if (action === Action.OPEN) focus.handleModalHasOpened()
           else if (action === Action.CLOSE) focus.handleModalHasClosed()
-
-          focus.handleActiveSheetHasChanged(activeSheet)
+          focus.handleActiveSheetHasChanged()
 
           resolve()
         })
 
-        const isClose = !modalRef.current || modalRef.current.getAttribute('data-omodal-close') === 'completed' 
+        const isClose = !modalRef.current || modalRef.current.getAttribute('data-omodal-close') === 'completed'
         if (action === Action.NONE || isClose) return resolveHandler()
 
         const { animation: animationOptions } = options
@@ -164,16 +162,19 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       state: action === Action.SHEET_CHANGE ? `active${open ? '-closed' : ''}` : 'next',
       content: content,
       htmlElement: null,
-      activeElement: null,
       props: {
         className: ('omodal__sheet ' + classNameSheet).trim(),
         ...attributesSheet,
         ...oneTimeAttrs,
         ref: (el: HTMLDivElement | null) => {
           if (!el) return
-
           modalSheet.htmlElement = el
-          el?.addEventListener('focusin', () => (modalSheet.activeElement = document.activeElement)) // keep track of active element
+
+          el.addEventListener('focusin', () => {
+            el.querySelector('[data-omodal-autofocus]')?.removeAttribute('data-omodal-autofocus')
+            document.activeElement?.setAttribute('data-omodal-autofocus', '')
+          }) // keep track of active element
+          
           if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
 
           if (hasCalled) return // run only once, just in case of rerender and the function called again

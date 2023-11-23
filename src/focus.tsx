@@ -1,5 +1,4 @@
 import { RefObject } from 'react'
-import { ModalSheet } from './typings'
 
 export default class Focus {
   previousActiveElement = document.activeElement // to save element with focus before modal has opened
@@ -37,15 +36,16 @@ export default class Focus {
   /**
    * This function should be called after modal has been opened, ie. after opening-animation
    */
-  handleModalHasOpened = (modalSheet: ModalSheet) => {
+  handleModalHasOpened = () => {
     const modalEl = this.modalRef.current
-    if (!modalEl || !modalSheet.htmlElement) return
+    const activeSheetEl = this.modalRef.current?.querySelector('[data-omodal-sheet-state="active"]')
+    if (!modalEl || !activeSheetEl) return
 
     if (!modalEl.hasAttribute('inert')) {
       this.resume()
-      modalSheet.htmlElement.removeAttribute('inert')
-      this.setInertOnSiblings(modalSheet)
-      Focus.setOnFirstDescendant(modalSheet.htmlElement)
+      activeSheetEl.removeAttribute('inert')
+      this.setInertOnSiblings(activeSheetEl)
+      Focus.setOnFirstDescendant(activeSheetEl)
     }
   }
 
@@ -81,20 +81,19 @@ export default class Focus {
    * ie. have higher z-index, or comes later in DOM tree.
    * This also update the value of `data-omodal-set-inert-by` attribute of the effected siblings.
    *
-   * @param modalSheet optional modalSheet to set `inert` on the sibling of this modal-sheet element instead of this modal.
+   * @param element optional element to set `inert` on the sibling of this element instead of this modal.
    */
-  setInertOnSiblings = (modalSheet?: ModalSheet) => {
-    const element = modalSheet ? modalSheet?.htmlElement : this.modalRef.current
-    if (!element || element === document.body || !element.parentElement) return
+  setInertOnSiblings = (element?: Element) => {
+    const el = element || this.modalRef.current
+    if (!el || el === document.body || !el.parentElement) return
 
-    for (let sibling of element.parentElement.children) {
-      if (sibling === element || !(sibling instanceof HTMLElement) || (!modalSheet && this.isBlockedBy(sibling)))
+    for (let sibling of el.parentElement.children) {
+      if (sibling === el || !(sibling instanceof HTMLElement) || (!element && this.isBlockedBy(sibling)))
         continue
 
       sibling.setAttribute('inert', '')
 
-      if (modalSheet) continue
-
+      if (element) continue
       sibling.dataset.omodalSetInertBy = sibling.dataset.omodalSetInertBy
         ? sibling.dataset.omodalSetInertBy + ' ' + this.modalId
         : this.modalId
@@ -104,14 +103,17 @@ export default class Focus {
   /**
    * Handle focus when active sheet changed, ie. set inert on all other sheets and set focus on new active sheet.
    */
-  handleActiveSheetHasChanged = (activeSheet?: ModalSheet) => {
-    if (!activeSheet || !this.modalRef.current) return
-    activeSheet.htmlElement?.removeAttribute('inert')
-    this.setInertOnSiblings(activeSheet)
+  handleActiveSheetHasChanged = () => {
+    const activeSheetEl = this.modalRef.current?.querySelector('[data-omodal-sheet-state="active"]')
+    if (!activeSheetEl) return
 
-    if (this.modalRef.current.hasAttribute('data-omodal-close')) return
-    if (activeSheet.activeElement) Focus.set(activeSheet.activeElement)
-    else Focus.setOnFirstDescendant(activeSheet.htmlElement)
+    activeSheetEl?.removeAttribute('inert')
+    this.setInertOnSiblings(activeSheetEl)
+
+    if (this.modalRef.current?.hasAttribute('data-omodal-close')) return
+
+    if (!Focus.attempt(activeSheetEl?.querySelector('[data-omodal-autofocus]')))
+      Focus.setOnFirstDescendant(activeSheetEl)
   }
 
   /**
@@ -211,7 +213,7 @@ export default class Focus {
   }
 
   static attempt = (element: any): boolean => {
-    if (element.tabIndex < 0) return false
+    if (!element || element.tabIndex < 0) return false
     Focus.set(element)
     return document.activeElement === element
   }

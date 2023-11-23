@@ -17,7 +17,6 @@ export interface ModalSheet {
   state: 'previous' | 'active' | 'next' | 'previous-closed' | 'active-closed' | 'next-closed'
   content: ReactNode
   htmlElement: HTMLDivElement | null
-  activeElement: Element | null
   props: ClassAttributes<HTMLDivElement>
 }
 export interface BottomSheetOptions {
