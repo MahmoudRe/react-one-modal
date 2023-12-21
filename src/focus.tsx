@@ -1,4 +1,5 @@
 import { RefObject } from 'react'
+import { isElementBellow } from './utils'
 
 export default class Focus {
   previousActiveElement = document.activeElement // to save element with focus before modal has opened
@@ -57,24 +58,12 @@ export default class Focus {
 
   /**
    * Check if this modal is bellow (blocked by) the given element with respect to visual stacking context.
-   * This will compare the z-index, and the order in DOM tree in case of equal z-index.
    *
    * @param {Element} element
    * @returns {boolean}
    */
-  isBlockedBy = (element: Element): boolean => {
-    const modalEl = this.modalRef.current
-    if (!modalEl) return false
-
-    const zIndexThisModal = parseInt(getComputedStyle(modalEl).zIndex) || 0
-    const zIndexOtherElement = parseInt(getComputedStyle(element).zIndex) || 0
-
-    return (
-      zIndexThisModal < zIndexOtherElement ||
-      (zIndexThisModal === zIndexOtherElement &&
-        modalEl.compareDocumentPosition(element) === Node.DOCUMENT_POSITION_FOLLOWING)
-    )
-  }
+  isBlockedBy = (element: Element): boolean =>
+    !!this.modalRef.current && isElementBellow(this.modalRef.current, element)
 
   /**
    * Set 'inert' attribute to siblings of this modal, excluding other modals that blocks this modal,
