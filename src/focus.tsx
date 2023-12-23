@@ -5,12 +5,19 @@ export default class Focus {
   previousActiveElement = document.activeElement // to save element with focus before modal has opened
   modalRef: RefObject<HTMLElement> = { current: null }
   modalId: string = ''
-  rootElement: HTMLElement = document.body
 
-  constructor(modalRef: RefObject<HTMLElement>, modalId: string, rootElement: HTMLElement) {
+  constructor(modalRef: RefObject<HTMLElement>, modalId: string) {
     this.modalRef = modalRef
     this.modalId = modalId
-    this.rootElement = rootElement
+  }
+
+  get rootElement() {
+    return this.modalElement.parentElement ?? document.body
+  }
+
+  get modalElement() {
+    if (this.modalRef.current instanceof HTMLElement) return this.modalRef.current
+    throw new Error('Modal element is not an instance of HTMLElement')
   }
 
   /**
@@ -25,8 +32,8 @@ export default class Focus {
       // - this modal should be already `inert` or child of `inert` (dynamically added siblings to an opened modal should be inert-ed).
       // - ensure the focus is set on the modal when the upper modal is closed.
       this.stop()
-      modalEl.removeAttribute('inert')
-      modalEl.removeAttribute('data-omodal-set-inert-by')
+      this.modalElement.removeAttribute('inert')
+      this.modalElement.removeAttribute('data-omodal-set-inert-by')
     }
 
     this.previousActiveElement = document.activeElement
@@ -38,11 +45,10 @@ export default class Focus {
    * This function should be called after modal has been opened, ie. after opening-animation
    */
   handleModalHasOpened = () => {
-    const modalEl = this.modalRef.current
-    const activeSheetEl = this.modalRef.current?.querySelector('[data-omodal-sheet-state="active"]')
-    if (!modalEl || !activeSheetEl) return
+    const activeSheetEl = this.modalElement.querySelector('[data-omodal-sheet-state="active"]')
+    if (!activeSheetEl) return
 
-    if (!modalEl.hasAttribute('inert')) {
+    if (!this.modalElement.hasAttribute('inert')) {
       this.resume()
       activeSheetEl.removeAttribute('inert')
       this.setInertOnSiblings(activeSheetEl)
@@ -58,12 +64,12 @@ export default class Focus {
 
   /**
    * Check if this modal is bellow (blocked by) the given element with respect to visual stacking context.
+   * TO DO: check if the roots of both modals are in different DOM trees, if so, return false.
    *
    * @param {Element} element
    * @returns {boolean}
    */
-  isBlockedBy = (element: Element): boolean =>
-    !!this.modalRef.current && isElementBellow(this.modalRef.current, element)
+  isBlockedBy = (element: Element): boolean => isElementBellow(this.modalElement, element)
 
   /**
    * Set 'inert' attribute to siblings of this modal, excluding other modals that blocks this modal,
@@ -73,12 +79,11 @@ export default class Focus {
    * @param element optional element to set `inert` on the sibling of this element instead of this modal.
    */
   setInertOnSiblings = (element?: Element) => {
-    const el = element || this.modalRef.current
+    const el = element || this.modalElement
     if (!el || el === document.body || !el.parentElement) return
 
     for (let sibling of el.parentElement.children) {
-      if (sibling === el || !(sibling instanceof HTMLElement) || (!element && this.isBlockedBy(sibling)))
-        continue
+      if (sibling === el || !(sibling instanceof HTMLElement) || (!element && this.isBlockedBy(sibling))) continue
 
       sibling.setAttribute('inert', '')
 
@@ -93,13 +98,13 @@ export default class Focus {
    * Handle focus when active sheet changed, ie. set inert on all other sheets and set focus on new active sheet.
    */
   handleActiveSheetHasChanged = () => {
-    const activeSheetEl = this.modalRef.current?.querySelector('[data-omodal-sheet-state="active"]')
+    const activeSheetEl = this.modalElement.querySelector('[data-omodal-sheet-state="active"]')
     if (!activeSheetEl) return
 
     activeSheetEl?.removeAttribute('inert')
     this.setInertOnSiblings(activeSheetEl)
 
-    if (this.modalRef.current?.hasAttribute('data-omodal-close')) return
+    if (this.modalElement.hasAttribute('data-omodal-close')) return
 
     if (!Focus.attempt(activeSheetEl?.querySelector('[data-omodal-autofocus]')))
       Focus.setOnFirstDescendant(activeSheetEl)
@@ -135,7 +140,7 @@ export default class Focus {
     if (!document.querySelectorAll(`.omodal:not([data-omodal-close]):not([data-omodal-id="${this.modalId}"])`).length)
       this.rootElement.removeAttribute('data-omodal-prevent-scroll')
 
-    this.modalRef.current?.setAttribute('data-omodal-close', 'completed')
+    this.modalElement.setAttribute('data-omodal-close', 'completed')
     this.resume()
     if (!unmount) Focus.set(this.previousActiveElement)
   }

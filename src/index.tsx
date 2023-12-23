@@ -50,7 +50,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
   const [id] = useState(Math.random().toString(16).slice(10))
   const [open, setOpen] = useState(false)
-  const [focus] = useState(new Focus(modalRef, id, rootElement))
+  const [focus] = useState(new Focus(modalRef, id))
 
   // `useRef` with `forceUpdate` instead of useState to have up-to-date value for pages array, and push to the existed array directly
   const modalSheets = useRef<ModalSheet[]>(children ? [createModalSheet(children)] : [])
