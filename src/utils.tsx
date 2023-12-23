@@ -55,60 +55,55 @@ export function getScrollPosition(childElement: HTMLElement | null, parentElemen
 }
 
 /**
- * Given two HTML elements, check if the first element is visually bellow the second element, as follow:
+ * Given two Modal elements, check if the first element is visually bellow the second element.
+ * The check is done as follow:
  * 1. If the two elements have the same parent, check their z-index:
  *    - If the two elements have the same z-index, check the DOM order of the elements.
- *    - If the first element has lower z-index, it is bellow the second element, otherwise it is above.
- * 2. If the two elements do not have the same parent, 
+ *    - If the first element has lower z-index, it is bellow the second element
+ *    - Otherwise it is above.
+ * 2. If the two elements do not have the same parent,
  *    - If one element is a descendant of the other, the parent is visually bellow the descendant.
- *    - Otherwise, traverse up the DOM tree until a common parent is found, 
- *       then call this function recursively on the two direct descendants 
- *       of the common parent that contain the two elements.
- * 
- * @param thisElement
- * @param otherElement
+ *    - If one element's root is a descendant of the other element's root,
+ *       traverse up the DOM tree from the element of the child-root until having the other root as parent,
+ *       then call this function recursively on the two direct descendants.
+ *    - Otherwise the two modals elements aren't interfering with each other, return false.
+ *
+ * @param thisModalEl
+ * @param otherModalEl
  * @returns true if the first element is visually bellow the second element, false otherwise.
  */
-export function isElementBellow(thisElement: Element, otherElement: Element): boolean {
-  if (!thisElement.parentElement || !otherElement.parentElement) return false
+export function isModalBellow(thisModalEl: Element, otherModalEl: Element): boolean {
+  const thisModalRootEl = thisModalEl.parentElement
+  const otherModalRootEl = otherModalEl.parentElement
+  if (!thisModalRootEl || !otherModalRootEl) return false
 
-  if (thisElement.parentElement === otherElement.parentElement) {
-    const zIndexThisElement = parseInt(getComputedStyle(thisElement).zIndex) || 0
-    const zIndexOtherElement = parseInt(getComputedStyle(otherElement).zIndex) || 0
+  if (thisModalRootEl === otherModalRootEl) {
+    const zIndexThisElement = parseInt(getComputedStyle(thisModalEl).zIndex) || 0
+    const zIndexOtherElement = parseInt(getComputedStyle(otherModalEl).zIndex) || 0
 
     return (
       zIndexThisElement < zIndexOtherElement ||
       (zIndexThisElement === zIndexOtherElement &&
-        !!(thisElement.compareDocumentPosition(otherElement) & Node.DOCUMENT_POSITION_FOLLOWING))
+        !!(thisModalEl.compareDocumentPosition(otherModalEl) & Node.DOCUMENT_POSITION_FOLLOWING))
     )
   }
 
-  const compElements = thisElement.compareDocumentPosition(otherElement)
-  if (compElements & Node.DOCUMENT_POSITION_CONTAINS) return false // expect the edge case when thisElement has z-index < 0, since otherElement is modal, this shouldn't happen!
-  if (compElements & Node.DOCUMENT_POSITION_CONTAINED_BY) return true // expect the edge case when otherElement has z-index < 0, since otherElement is modal, this shouldn't happen!
+  const compElements = thisModalEl.compareDocumentPosition(otherModalEl)
+  if (compElements & Node.DOCUMENT_POSITION_CONTAINS) return false // expect the edge case when thisModalEl has z-index < 0, since thisModalEl is modal, this shouldn't happen!
+  if (compElements & Node.DOCUMENT_POSITION_CONTAINED_BY) return true // expect the edge case when otherModalEl has z-index < 0, since otherModalEl is modal, this shouldn't happen!
 
-  // TO DO: optimize to get the common parent, instead of comparing on each iteration
-  const compParents = thisElement.parentElement.compareDocumentPosition(otherElement.parentElement)
+  const compRoots = thisModalRootEl.compareDocumentPosition(otherModalRootEl)
 
-  if (compParents & Node.DOCUMENT_POSITION_CONTAINS)
-    return isElementBellow(getDirectDescendantContains(otherElement.parentElement, thisElement), otherElement)
+  // case 1: thisModalRootEl is a descendant of otherModalRootEl, update thisModalEl to be the direct child of otherModalRootEl (the common parent)
+  if (compRoots & Node.DOCUMENT_POSITION_CONTAINS) {
+    while (otherModalRootEl !== thisModalEl.parentElement) thisModalEl = thisModalEl.parentElement as Element
+  }
+  // case 2: thisModalRootEl is a ancestor of otherModalRootEl, update otherModalEl to be the direct child of thisModalRootEl (the common parent)
+  else if (compRoots & Node.DOCUMENT_POSITION_CONTAINED_BY) {
+    while (thisModalRootEl !== otherModalEl.parentElement) otherModalEl = otherModalEl.parentElement as Element
+  }
+  // case 3: thisModalRootEl and otherModalRootEl are not related, hence modals are not interfering with each other
+  else return false
 
-  if (compParents & Node.DOCUMENT_POSITION_CONTAINED_BY)
-    return isElementBellow(thisElement, getDirectDescendantContains(thisElement.parentElement, otherElement))
-
-  return isElementBellow(thisElement.parentElement, otherElement.parentElement)
-}
-
-/**
- * Get the direct descendant of the parent element that contains the targetElement.
- * 
- * @param parent
- * @param targetElement 
- * @returns The direct descendant that contains the target element.
- */
-function getDirectDescendantContains(parent: Element, targetElement: Element): Element {
-  if (!targetElement.parentElement) return targetElement
-  return parent === targetElement.parentElement
-    ? targetElement
-    : getDirectDescendantContains(parent, targetElement.parentElement)
+  return isModalBellow(thisModalEl, otherModalEl)
 }

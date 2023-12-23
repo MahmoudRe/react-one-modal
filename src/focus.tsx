@@ -1,5 +1,5 @@
 import { RefObject } from 'react'
-import { isElementBellow } from './utils'
+import { isModalBellow } from './utils'
 
 export default class Focus {
   previousActiveElement = document.activeElement // to save element with focus before modal has opened
@@ -69,7 +69,7 @@ export default class Focus {
    * @param {Element} element
    * @returns {boolean}
    */
-  isBlockedBy = (element: Element): boolean => isElementBellow(this.modalElement, element)
+  isBlockedBy = (element: Element): boolean => isModalBellow(this.modalElement, element)
 
   /**
    * Set 'inert' attribute to siblings of this modal, excluding other modals that blocks this modal,
