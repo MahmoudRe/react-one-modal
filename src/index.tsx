@@ -2,7 +2,7 @@ import React, {
   useRef,
   useReducer,
   useState,
-  useEffect,
+  useLayoutEffect,
   forwardRef,
   useImperativeHandle,
   ForwardedRef,
@@ -326,7 +326,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   }
   useImperativeHandle(ref, () => controlFunctions)
 
-  useEffect(() => () => focus.handleModalHasClosed(true), []) // callback's return function runs on unmount
+  useLayoutEffect(() => focus.handleModalHasClosed, []) // useLayoutEffect cleanup runs on will-unmount, while useEffect cleanup runs on did-unmount
 
   return createPortal(
     <div
