@@ -39,7 +39,7 @@ export default class Focus {
       // - this modal should be already `inert` or child of `inert` (dynamically added siblings to an opened modal should be inert-ed).
       this.stop()
       this.modalElement.removeAttribute('inert')
-      this.modalElement.removeAttribute('data-omodal-set-inert-by')
+      this.modalElement.removeAttribute('data-omodal-inert-by')
     }
 
     prevActiveElement?.setAttribute('data-omodal-blurred-by', this.modalId)
@@ -73,7 +73,7 @@ export default class Focus {
   /**
    * Set 'inert' attribute to siblings of this modal, excluding other modals that blocks this modal,
    * ie. have higher z-index, or comes later in DOM tree.
-   * This also update the value of `data-omodal-set-inert-by` attribute of the effected siblings.
+   * This also update the value of `data-omodal-inert-by` attribute of the effected siblings.
    *
    * @param element optional element to set `inert` on the sibling of this element instead of this modal.
    */
@@ -87,7 +87,7 @@ export default class Focus {
       sibling.setAttribute('inert', '')
 
       if (element) continue
-      appendToAttribute(sibling, 'data-omodal-set-inert-by', this.modalId)
+      appendToAttribute(sibling, 'data-omodal-inert-by', this.modalId)
     }
   }
 
@@ -125,8 +125,8 @@ export default class Focus {
    *  but before close handler is called.
    */
   handleModalHasClosed = () => {
-    ;[...document.querySelectorAll(`[data-omodal-set-inert-by~="${this.modalId}"]`)].forEach((e) => {
-      if (!removeFromAttribute(e, 'data-omodal-set-inert-by', this.modalId)) e.removeAttribute('inert')
+    ;[...document.querySelectorAll(`[data-omodal-inert-by~="${this.modalId}"]`)].forEach((e) => {
+      if (!removeFromAttribute(e, 'data-omodal-inert-by', this.modalId)) e.removeAttribute('inert')
     })
 
     this.modalElement.setAttribute('data-omodal-close', 'completed')
