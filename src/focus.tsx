@@ -1,18 +1,14 @@
 import { RefObject } from 'react'
-import { isModalBellow } from './utils'
+import { appendToAttribute, isModalBellow, removeFromAttribute } from './utils'
 
 export default class Focus {
-  previousActiveElement = document.activeElement // to save element with focus before modal has opened
   modalRef: RefObject<HTMLElement> = { current: null }
   modalId: string = ''
+  isFocusShiftRequired: boolean = false // flag to set in handleModalWillClose, use in handleModalHasClosed
 
   constructor(modalRef: RefObject<HTMLElement>, modalId: string) {
     this.modalRef = modalRef
     this.modalId = modalId
-  }
-
-  get rootElement() {
-    return this.modalElement.parentElement ?? document.body
   }
 
   get modalElement() {
@@ -20,23 +16,33 @@ export default class Focus {
     throw new Error('Modal element is not an instance of HTMLElement')
   }
 
+  get rootElement() {
+    return this.modalElement.parentElement ?? document.body
+  }
+
   /**
    * This function should be called to prepare for modal opening, ie. before opening-animation
    */
   handleModalWillOpen = () => {
-    const modalEl = this.modalRef.current
-    if (!modalEl) return
+    let prevActiveElement = document.activeElement
+    let blockingModals = this.getBlockingModals()
 
-    if (!this.isBlockedByAnotherModal()) {
+    if (blockingModals.length) {
+      const lowestBlockingModalId = blockingModals
+        .reduce((lowestModalEl, modalEl) => (isModalBellow(lowestModalEl, modalEl) ? lowestModalEl : modalEl))
+        .getAttribute('data-omodal-id')
+
+      prevActiveElement = document.querySelector(`[data-omodal-blurred-by="${lowestBlockingModalId}"]`)
+      this.modalElement.setAttribute('data-omodal-blurred-by', lowestBlockingModalId || '') // so when lowestBlockingModal closes, the focus moves to this modal (first element or autofocus)
+    } else {
       // TO DO:
       // - this modal should be already `inert` or child of `inert` (dynamically added siblings to an opened modal should be inert-ed).
-      // - ensure the focus is set on the modal when the upper modal is closed.
       this.stop()
       this.modalElement.removeAttribute('inert')
       this.modalElement.removeAttribute('data-omodal-set-inert-by')
     }
 
-    this.previousActiveElement = document.activeElement
+    prevActiveElement?.setAttribute('data-omodal-blurred-by', this.modalId)
     this.setInertOnSiblings()
     this.preventPageScroll()
   }
@@ -45,26 +51,19 @@ export default class Focus {
    * This function should be called after modal has been opened, ie. after opening-animation
    */
   handleModalHasOpened = () => {
-    const activeSheetEl = this.modalElement.querySelector('[data-omodal-sheet-state="active"]')
-    if (!activeSheetEl) return
-
-    if (!this.modalElement.hasAttribute('inert')) {
-      this.resume()
-      activeSheetEl.removeAttribute('inert')
-      this.setInertOnSiblings(activeSheetEl)
-      Focus.setOnFirstDescendant(activeSheetEl)
-    }
+    this.resume()
+    if (!this.modalElement.hasAttribute('data-omodal-blurred-by')) this.setOnActiveSheet()
   }
 
   /**
    * Check if another modal with higher stacking context is already open.
    */
-  isBlockedByAnotherModal = () =>
-    [...document.querySelectorAll(`.omodal:not([data-omodal-close])`)].some(this.isBlockedBy)
+  getBlockingModals = () =>
+    [...document.querySelectorAll(`.omodal:not([data-omodal-close]):not([data-omodal-id="${this.modalId}"])`)]
+      .filter(this.isBlockedBy) // prettier-ignore
 
   /**
    * Check if this modal is bellow (blocked by) the given element with respect to visual stacking context.
-   * TO DO: check if the roots of both modals are in different DOM trees, if so, return false.
    *
    * @param {Element} element
    * @returns {boolean}
@@ -88,23 +87,20 @@ export default class Focus {
       sibling.setAttribute('inert', '')
 
       if (element) continue
-      sibling.dataset.omodalSetInertBy = sibling.dataset.omodalSetInertBy
-        ? sibling.dataset.omodalSetInertBy + ' ' + this.modalId
-        : this.modalId
+      appendToAttribute(sibling, 'data-omodal-set-inert-by', this.modalId)
     }
   }
 
   /**
-   * Handle focus when active sheet changed, ie. set inert on all other sheets and set focus on new active sheet.
+   * Set inert on all other sheets and set focus on new active sheet.
    */
-  handleActiveSheetHasChanged = () => {
-    const activeSheetEl = this.modalElement.querySelector('[data-omodal-sheet-state="active"]')
+  setOnActiveSheet = (modalElement: Element = this.modalElement) => {
+    modalElement.removeAttribute('inert')
+    const activeSheetEl = modalElement.querySelector('[data-omodal-sheet-state="active"]')
     if (!activeSheetEl) return
 
     activeSheetEl?.removeAttribute('inert')
     this.setInertOnSiblings(activeSheetEl)
-
-    if (this.modalElement.hasAttribute('data-omodal-close')) return
 
     if (!Focus.attempt(activeSheetEl?.querySelector('[data-omodal-autofocus]')))
       Focus.setOnFirstDescendant(activeSheetEl)
@@ -113,10 +109,14 @@ export default class Focus {
   /**
    * This function should be called before modal closing, ie. before close-animation
    */
-  handleModalWillClose = () => this.stop()
+  handleModalWillClose = () => {
+    // if focus inside this modal, a focus-shift is needed, hence stop focus and resume after close-animation (handleModalHasClosed)
+    this.isFocusShiftRequired = this.modalElement.contains(document.activeElement)
+    if (this.isFocusShiftRequired) this.stop()
+  }
 
   /**
-   * This function should be called after modal has closed, ie. after close-animation or unmount.
+   * This function should be called after modal has closed, ie. after close-animation.
    *
    * Note this function should be expected to run even when modal is already closed (eg. on mount and umount)
    *  or twice in case of unmount directly after close-animation.
@@ -124,30 +124,36 @@ export default class Focus {
    *  in case the modal was forcefully unmounted just after closing (ie. `close` state is false)
    *  but before close handler is called.
    */
-  handleModalHasClosed = (unmount?: boolean) => {
-    const elements = document.querySelectorAll(`[data-omodal-set-inert-by~="${this.modalId}"]`)
-    for (let e of elements) {
-      const dataSetInertBy = e.getAttribute('data-omodal-set-inert-by')?.replace(this.modalId, '').trim() || ''
-
-      if (dataSetInertBy) e.setAttribute('data-omodal-set-inert-by', dataSetInertBy)
-      else {
-        e.removeAttribute('inert')
-        e.removeAttribute('data-omodal-set-inert-by')
-      }
-    }
-
-    // if opened modal, show scroll
-    if (!document.querySelectorAll(`.omodal:not([data-omodal-close]):not([data-omodal-id="${this.modalId}"])`).length)
-      this.rootElement.removeAttribute('data-omodal-prevent-scroll')
+  handleModalHasClosed = () => {
+    ;[...document.querySelectorAll(`[data-omodal-set-inert-by~="${this.modalId}"]`)].forEach((e) => {
+      if (!removeFromAttribute(e, 'data-omodal-set-inert-by', this.modalId)) e.removeAttribute('inert')
+    })
 
     this.modalElement.setAttribute('data-omodal-close', 'completed')
     this.resume()
-    if (!unmount) Focus.set(this.previousActiveElement)
+
+    if (!this.rootElement.querySelector(`.omodal:not([data-omodal-close])`))
+      this.rootElement.removeAttribute('data-omodal-prevent-scroll')
+
+    const previousFocusEl = document.querySelector(`[data-omodal-blurred-by="${this.modalId}"]`)
+    previousFocusEl?.removeAttribute('data-omodal-blurred-by')
+
+    const blockingModalId =
+      this.modalElement.getAttribute('data-omodal-blurred-by') ||
+      this.modalElement.querySelector('[data-omodal-blurred-by]')?.getAttribute('data-omodal-blurred-by')
+
+    if (blockingModalId) previousFocusEl?.setAttribute('data-omodal-blurred-by', blockingModalId)
+    else if (this.isFocusShiftRequired && previousFocusEl) {
+      previousFocusEl?.hasAttribute('data-omodal-id')
+        ? this.setOnActiveSheet(previousFocusEl)
+        : Focus.set(previousFocusEl)
+    }
+    // otherwise this is a local modal that is closed from outside its root, then keep the focus.
+
+    this.isFocusShiftRequired = false // reset
   }
 
-  preventPageScroll = () => {
-    this.rootElement.setAttribute('data-omodal-prevent-scroll', '')
-  }
+  preventPageScroll = () => this.rootElement.setAttribute('data-omodal-prevent-scroll', '')
 
   /**
    * To prevent effect of spamming keypress on open/close modal btn while animation is running,

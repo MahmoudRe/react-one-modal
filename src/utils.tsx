@@ -107,3 +107,27 @@ export function isModalBellow(thisModalEl: Element, otherModalEl: Element): bool
 
   return isModalBellow(thisModalEl, otherModalEl)
 }
+
+/**
+ * Append a given string to the end of the specified attribute value with space as delimiter.
+ * @returns the new value of the attribute after modification.
+ */
+export function appendToAttribute(element: Element | null, attribute: string, toAppendStr: string) {
+  if (!element) return ''
+  const oldVal = element.getAttribute(attribute) || ''
+  const newVal = oldVal ? oldVal + ' ' + toAppendStr : toAppendStr
+  element.setAttribute(attribute, newVal)
+  return newVal
+}
+
+/**
+ * Remove a given string from the specified attribute value.
+ * @returns the new value of the attribute after modification.
+ */
+export function removeFromAttribute(element: Element | null, attribute: string, toAppendStr: string) {
+  if (!element) return ''
+  const value = element.getAttribute(attribute)?.replace(toAppendStr, '').trim() || ''
+  if (value) element.setAttribute(attribute, value)
+  else element.removeAttribute(attribute)
+  return value
+}

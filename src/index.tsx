@@ -106,6 +106,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const resolveTransition = useCallback(
     (options: ModalOneTimeOptions, action: Action, modalSheet?: ModalSheet) =>
       new Promise<void>((resolve) => {
+        if (!modalRef.current || action === Action.NONE) return resolve()
         modalSheet ??= modalSheets.current.find((e) => e.state === 'active')
         if (!modalSheet) throw Error('Unexpected behavior: No active-sheet is found while resolveTransition!') // shouldn't happen, just in case!!
 
@@ -123,13 +124,12 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
 
           if (action === Action.OPEN) focus.handleModalHasOpened()
           else if (action === Action.CLOSE) focus.handleModalHasClosed()
-          focus.handleActiveSheetHasChanged()
+          else if (action === Action.SHEET_CHANGE) focus.setOnActiveSheet()
 
           resolve()
         })
 
-        const isClose = !modalRef.current || modalRef.current.getAttribute('data-omodal-close') === 'completed'
-        if (action === Action.NONE || isClose) return resolveHandler()
+        if (modalRef.current.getAttribute('data-omodal-close') === 'completed') return resolveHandler()
 
         const { animation: animationOptions } = options
         const disableAnimation =
@@ -174,7 +174,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
             el.querySelector('[data-omodal-autofocus]')?.removeAttribute('data-omodal-autofocus')
             document.activeElement?.setAttribute('data-omodal-autofocus', '')
           }) // keep track of active element
-          
+
           if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)
 
           if (hasCalled) return // run only once, just in case of rerender and the function called again
@@ -301,7 +301,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   const show: Modal['show'] = async (content, options = {}) => {
     if (!modalSheets.current.length && !content) throw Error('Nothing to show!')
     if (open && !content) throw Error('Modal is already shown!')
-    if (!open && !forceOpenIfBlocked && focus.isBlockedByAnotherModal())
+    if (!open && !forceOpenIfBlocked && focus.getBlockingModals().length)
       throw Error('This modal is blocked by another opened modal with higher stacking context!')
 
     focus.preventPageScroll()
@@ -326,7 +326,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
   }
   useImperativeHandle(ref, () => controlFunctions)
 
-  useLayoutEffect(() => focus.handleModalHasClosed, []) // useLayoutEffect cleanup runs on will-unmount, while useEffect cleanup runs on did-unmount
+  useLayoutEffect(
+    () => () => {
+      focus.handleModalWillClose()
+      focus.handleModalHasClosed()
+    },
+    []
+  ) // the cleanup function here runs on will-unmount, while useEffect cleanup runs on did-unmount
 
   return createPortal(
     <div
