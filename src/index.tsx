@@ -347,7 +347,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       aria-modal='true'
       data-omodal-close='completed'
       onKeyDown={(ev) => {
-        if (!onESC || ev.key !== 'Escape' || modalRef.current?.hasAttribute('inert')) return
+        if (
+          !onESC ||
+          ev.key !== 'Escape' ||
+          modalRef.current?.hasAttribute('data-omodal-close') ||
+          modalRef.current?.hasAttribute('inert')
+        )
+          return
         if (typeof onESC === 'string') controlFunctions[onESC]()
         if (typeof onESC === 'function') onESC(ev)
       }}
