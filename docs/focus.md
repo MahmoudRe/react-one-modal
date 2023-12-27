@@ -10,7 +10,7 @@ This is a simplified requirement list of what is mentioned in "[Dialog (Modal) P
 
 ## Tabbable, Focusable and Inert
 
-Before starting, it is worth learning the difference between the focus-categories of an HTML element. According to *ally.js*:
+Before starting, it is worth learning the difference between the focus-categories of an HTML element. According to [ally.js](https://allyjs.io/what-is-focusable.html):
 
 > An HTML element can be a member of exactly one of the following five categories:
 >
@@ -21,6 +21,8 @@ Before starting, it is worth learning the difference between the focus-categorie
 > - Forwards Focus: The element will forward focus to another element instead of receiving focus itself.
 >
 > *source: [allyjs.io/what-is-focusable.html](https://allyjs.io/what-is-focusable.html)*
+
+Note: There is no consensus on the term "tabbable". Some use "tab-focusable" term from [Webkit](https://bugs.webkit.org/show_bug.cgi?id=22261), others use "tabbable" term which is more common and was used for the name of the selector `:tabbable` to grab such elements in [jQueryUI](https://api.jqueryui.com/tabbable-selector/).
 
 ## Focus-trap
 
@@ -46,11 +48,11 @@ However, this is not quite the perfect solution, as actively shifting focus to k
 
 An element with focus-trap should act as it is the only element in the document to interact with, and keep the natural behavior of the browser to determine what should happen before circulating the focus. This leads to the last option!
 
-### 3. Making everything outside the modal not-focusable
+### 3. Making everything outside the modal not focusable
 
-As for the last option, it is trivial to make an element and all its descendant not-focusable with the `inert` attribute, which is now standard and fully supported on latest version of all modern browsers. However, versions before 2022/2023 doesn't support it, therefore a polyfill should be considered. To make a focus-trap, simply add `inert` attribute to all sibling-elements and also to all sibling elements of its parent, repeat recursively until reaching the`body`.
+As for the last option, it is trivial to make an element and all its descendant not-focusable with the `inert` attribute, which is now standard and fully supported on latest version of all modern browsers. However, versions before 2022/2023 doesn't support it, therefore a polyfill should be considered. To make a focus-trap, simply add `inert` attribute to all siblings of the modal element and also to all siblings of its parent element, repeat recursively until reaching the`body`.
 
-In contrast to the impossibility of preventing focus to occur on an element, making an element not-tabbable is possible and fairly easy even without `inert` attribute by using `tabindex="-1"`, which is the method used to make `inert` polyfill. At the end, navigating the document is concerned with tabbable elements and not focusable element [see the differences here](#tabbable-focusable-and-inert)
+In contrast to the impossibility of preventing focus to occur on an element, making an element not tabbable is possible and fairly easy even without `inert` attribute by using `tabindex="-1"`, which is the method used to make `inert` polyfill. At the end, navigating the document is concerned with tabbable elements and not focusable element [see the differences here](#tabbable-focusable-and-inert)
 
 ### Honorable mention: CSS-Tricks
 
@@ -62,7 +64,7 @@ In One Modal, we have internally implemented and tested all of the above mention
 
 ## Moving focus to the modal
 
-As mentioned in the requirement above, when modal is open, the focus should move to the first element with [autofocus](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/autofocus) attribute if existed, or to the first focusable element in the modal otherwise. To find such element, a list of focusable element can be queried and checked first if any has the `autofocus` attribute to focus it, else the first element in the list can be focused.
+As mentioned in the requirement above, when modal is open, the focus should move to the first element with [autofocus](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/autofocus) attribute if existed, or to the first tabbable, element in the modal otherwise. To find such element, a list of tab-focusable element can be queried and checked first if any has the `autofocus` attribute to focus it, else the first element in the list can be focused.
 
 The list start very short with basic element `a, button, textarea, input, select`, but quickly grows to many uncommon focusable element `area, embed, object, iframe, embed`, then we had to filter them according to specific attributes like `type`, `disabled`, `ref` and `href`. That is all and we haven't started on different behavior for focusable element between different browsers, check the [table here](https://allyjs.io/data-tables/focusable.html) and hope that this list is exhaustive and up-to-date with newly added HTML element.
 
@@ -74,7 +76,7 @@ let focusableElementsSelector = `a[href]:not([disabled]), area[href], button:not
 
 ### Focus-attempt
 
-To mitigate any potential issue mentioned above, One Modal takes different approach. If no element is available with `autofocus` attribute, it actually attempt focus via `focus()` method on each element within the active modal-sheet element traversing the DOM depth-first from the start to the end. When a focus attempt does succeed, this element is considered a focusable element by the definition of that specific browser. In this way, we don't have to keep the list of focusable elements up-to-date, and keep the decision of determining if element is focusable or not to the browser.
+To mitigate any potential issue mentioned above, One Modal takes different approach, by checking `tabindex` first to ensure the element is tabbable, and not only focusable, then attempting focus via `focus()` method on each element within the active modal-sheet element traversing the DOM depth-first from the start to the end. When the element doesn't have negative `tabindex`, and focus-attempt succeed, this element is considered a tab-focusable element by the definition of that specific browser. In this way, we don't have to keep the list of focusable elements up-to-date, and keep the decision of determining if element is focusable or not to the browser.
 
 > The HTMLElement.focus() method sets focus on the specified element, **if it can be focused**.
 >
@@ -82,6 +84,7 @@ To mitigate any potential issue mentioned above, One Modal takes different appro
 
 ```ts
 function attemptFocus(element) {
+  if (element.tabIndex < 0) return false
   try {
     element.focus()
   } catch (e) {
@@ -93,7 +96,18 @@ function attemptFocus(element) {
 
 This approach in fact was inspired by the example provided for [Dialog (Modal) Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/).
 
-At this point, there is one edge-case to handle, in which the first focusable element is outside of the viewport. Focusing such element will cause scroll effect and this results in bad user experience. So before focus-attempt, an element is checked it it is visible in the viewport, otherwise focus is set to the active modal-sheet container with `tabindex="-1"`, such that it won't effect the tab-order of the page and only get focused via script.
+At this point, there is one edge-case to handle, in which the first tabbable element is outside of the viewport. Focusing such element will cause scroll effect and this results in bad user experience. So before focus-attempt, an element is checked it it is visible in the viewport, otherwise focus is set to the active modal-sheet with `tabindex="-1"`, such that it won't effect the tab-order of the page and only get focused via script.
+
+## Update Dec 2023
+
+Considering [the proposal regarding the initial focus of the `<dialog>` element](https://github.com/whatwg/html/wiki/dialog--initial-focus,-a-proposal), and following the recent change of browsers default behavior to treat `<dialog>` as tabbable element (namely Chrome and Firefox), modal-sheet are now also tabbable by default, hence not only focusable via script. The effect can be observed when cycling the focus in modal mode or when the container receives the focus in dialog mode, where the container element get focused before it passes to its descendants. This change is to ensure One Modal deliver consistent behavior for web-users and capture all characteristics of the native `<dialog>` element, while maintaining a great browser support and offering advanced features with amazing transitions.
+
+Optionally, this change can be reversed by passing `tabindex="-1"` in `modalSheetAttribute` prop on component initialization or pass it for specific modal-sheet on calling:
+
+```ts
+modal.push(<Component />, {tabindex: -1})
+modal.show(<Component />, {tabindex: -1})
+```
 
 ## Resources
 
@@ -106,6 +120,7 @@ At this point, there is one edge-case to handle, in which the first focusable el
 - <https://samthor.au/2021/inert/>
 - <https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus>
 - <https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/inert>
+- <https://github.com/whatwg/html/wiki/dialog--initial-focus,-a-proposal>
 
 ## Disclaimer
 

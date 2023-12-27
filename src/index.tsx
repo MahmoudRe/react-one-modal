@@ -366,7 +366,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
         }}
       >
         {modalSheets.current.map((e) => (
-          <div {...e.props} key={e.id} data-omodal-sheet-state={e.state + (open ? '' : '-closed')}>
+          <div tabIndex={0} {...e.props} key={e.id} data-omodal-sheet-state={e.state + (open ? '' : '-closed')}>
             {e.content}
           </div>
         ))}
