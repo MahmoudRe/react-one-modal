@@ -171,8 +171,8 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           modalSheet.htmlElement = el
 
           el.addEventListener('focusin', () => {
-            el.querySelector('[data-omodal-autofocus]')?.removeAttribute('data-omodal-autofocus')
-            document.activeElement?.setAttribute('data-omodal-autofocus', '')
+            el.querySelector('[data-omodal-lastfocus]')?.removeAttribute('data-omodal-lastfocus')
+            document.activeElement?.setAttribute('data-omodal-lastfocus', '')
           }) // keep track of active element
 
           if (type === 'bottom-sheet' && !bottomSheetOptions.disableDrag) dragElement(el, bottomSheetOptions, pop)

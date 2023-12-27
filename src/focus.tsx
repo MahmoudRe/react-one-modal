@@ -1,5 +1,6 @@
 import { RefObject } from 'react'
 import { appendToAttribute, isModalBellow, removeFromAttribute } from './utils'
+import { Action } from './typings'
 
 export default class Focus {
   modalRef: RefObject<HTMLElement> = { current: null }
@@ -52,7 +53,7 @@ export default class Focus {
    */
   handleModalHasOpened = () => {
     this.resume()
-    if (!this.modalElement.hasAttribute('data-omodal-blurred-by')) this.setOnActiveSheet()
+    if (!this.modalElement.hasAttribute('data-omodal-blurred-by')) this.setOnActiveSheet(Action.OPEN)
   }
 
   /**
@@ -94,16 +95,15 @@ export default class Focus {
   /**
    * Set inert on all other sheets and set focus on new active sheet.
    */
-  setOnActiveSheet = (modalElement: Element = this.modalElement) => {
-    modalElement.removeAttribute('inert')
+  setOnActiveSheet = (action = Action.SHEET_CHANGE, modalElement: Element = this.modalElement) => {
     const activeSheetEl = modalElement.querySelector('[data-omodal-sheet-state="active"]')
     if (!activeSheetEl) return
 
-    activeSheetEl?.removeAttribute('inert')
+    activeSheetEl.removeAttribute('inert')
     this.setInertOnSiblings(activeSheetEl)
 
-    if (!Focus.attempt(activeSheetEl?.querySelector('[data-omodal-autofocus]')))
-      Focus.setOnFirstDescendant(activeSheetEl)
+    const selector = action === Action.OPEN ? 'autofocus' : '[data-omodal-lastfocus]'
+    if (!Focus.attempt(activeSheetEl.querySelector(selector))) Focus.setOnFirstDescendant(activeSheetEl)
   }
 
   /**
@@ -145,7 +145,7 @@ export default class Focus {
     if (blockingModalId) previousFocusEl?.setAttribute('data-omodal-blurred-by', blockingModalId)
     else if (this.isFocusShiftRequired && previousFocusEl) {
       previousFocusEl?.hasAttribute('data-omodal-id')
-        ? this.setOnActiveSheet(previousFocusEl)
+        ? this.setOnActiveSheet(Action.NONE, previousFocusEl)
         : Focus.set(previousFocusEl)
     }
     // otherwise this is a local modal that is closed from outside its root, then keep the focus.
