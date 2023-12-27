@@ -346,6 +346,13 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       role='dialog'
       aria-modal='true'
       data-omodal-close='completed'
+      onClick={(ev) => {
+        if (ev.currentTarget != ev.target) return
+        focus.setOnActiveSheet(Action.NONE) // prevent focus goes to body, keep it inside omodal to enable shortcut keys (ie. ESC).
+        if (!onClickOverlay) return
+        if (typeof onClickOverlay === 'string') controlFunctions[onClickOverlay]()
+        if (typeof onClickOverlay === 'function') onClickOverlay(ev) //nativeEvent, just in case of using addEventListener() later
+      }}
       onKeyDown={(ev) => {
         if (
           !onESC ||
@@ -363,14 +370,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
       }}
       {...attributes}
     >
-      <div
-        className={'omodal__sheets'}
-        onClick={(ev) => {
-          if (!onClickOverlay || ev.currentTarget != ev.target) return
-          if (typeof onClickOverlay === 'string') controlFunctions[onClickOverlay]()
-          if (typeof onClickOverlay === 'function') onClickOverlay(ev) //nativeEvent, just in case of using addEventListener() later
-        }}
-      >
+      <div className='omodal__sheets'>
         {modalSheets.current.map((e) => (
           <div tabIndex={0} {...e.props} key={e.id} data-omodal-sheet-state={e.state + (open ? '' : '-closed')}>
             {e.content}

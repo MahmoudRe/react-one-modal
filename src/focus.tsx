@@ -102,6 +102,8 @@ export default class Focus {
     activeSheetEl.removeAttribute('inert')
     this.setInertOnSiblings(activeSheetEl)
 
+    if (action === Action.NONE) return Focus.set(activeSheetEl)
+
     const selector = action === Action.OPEN ? 'autofocus' : '[data-omodal-lastfocus]'
     if (!Focus.attempt(activeSheetEl.querySelector(selector))) Focus.setOnFirstDescendant(activeSheetEl)
   }
@@ -145,7 +147,7 @@ export default class Focus {
     if (blockingModalId) previousFocusEl?.setAttribute('data-omodal-blurred-by', blockingModalId)
     else if (this.isFocusShiftRequired && previousFocusEl) {
       previousFocusEl?.hasAttribute('data-omodal-id')
-        ? this.setOnActiveSheet(Action.NONE, previousFocusEl)
+        ? this.setOnActiveSheet(Action.SHEET_CHANGE, previousFocusEl)
         : Focus.set(previousFocusEl)
     }
     // otherwise this is a local modal that is closed from outside its root, then keep the focus.
