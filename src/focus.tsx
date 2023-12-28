@@ -97,12 +97,12 @@ export default class Focus {
    */
   setOnActiveSheet = (action = Action.SHEET_CHANGE, modalElement: Element = this.modalElement) => {
     const activeSheetEl = modalElement.querySelector('[data-omodal-sheet-state="active"]')
-    if (!activeSheetEl) return
+    if (!(activeSheetEl instanceof HTMLElement)) return
 
     activeSheetEl.removeAttribute('inert')
     this.setInertOnSiblings(activeSheetEl)
 
-    if (action === Action.NONE) return Focus.set(activeSheetEl)
+    if (action === Action.NONE) return activeSheetEl.focus()
 
     const selector = action === Action.OPEN ? 'autofocus' : '[data-omodal-lastfocus]'
     if (!Focus.attempt(activeSheetEl.querySelector(selector))) Focus.setOnFirstDescendant(activeSheetEl)
@@ -145,10 +145,10 @@ export default class Focus {
       this.modalElement.querySelector('[data-omodal-blurred-by]')?.getAttribute('data-omodal-blurred-by')
 
     if (blockingModalId) previousFocusEl?.setAttribute('data-omodal-blurred-by', blockingModalId)
-    else if (this.isFocusShiftRequired && previousFocusEl) {
+    else if (this.isFocusShiftRequired && previousFocusEl instanceof HTMLElement) {
       previousFocusEl?.hasAttribute('data-omodal-id')
         ? this.setOnActiveSheet(Action.SHEET_CHANGE, previousFocusEl)
-        : Focus.set(previousFocusEl)
+        : previousFocusEl.focus()
     }
     // otherwise this is a local modal that is closed from outside its root, then keep the focus.
 
@@ -186,9 +186,9 @@ export default class Focus {
   // Copyright © 2023 World Wide Web Consortium. https://www.w3.org/copyright/software-license-2023/
 
   /**
-   * @description Set focus on descendant nodes until the first focusable element is found.
-   * @param element DOM node for which to find the first focusable descendant.
-   * @returns {boolean} true if a focusable element is found and focus is set.
+   * Set focus on descendant nodes until the first tab-focusable element is found.
+   * @param element DOM node for which to find the first tab-focusable descendant.
+   * @returns {boolean} true if a tab-focusable element is found and focus is set.
    */
   static setOnFirstDescendant = (element: Element | null): boolean => {
     if (!element) return false
@@ -200,11 +200,9 @@ export default class Focus {
   }
 
   /**
-   * @description Find the last descendant node that is focusable.
-   * @param element
-   *          DOM node for which to find the last focusable descendant.
-   * @returns {boolean}
-   *  true if a focusable element is found and focus is set.
+   * Find the last descendant node that is tab-focusable.
+   * @param element DOM node for which to find the last tab-focusable descendant.
+   * @returns {boolean} true if a tab-focusable element is found and focus is set.
    */
   static setOnLastDescendant = (element: Element): boolean => {
     for (let i = element.children.length - 1; i >= 0; i--) {
@@ -214,17 +212,14 @@ export default class Focus {
     return false
   }
 
-  static attempt = (element: any): boolean => {
-    if (!element || element.tabIndex < 0) return false
-    Focus.set(element)
+  /**
+   * Attempt focus on the given element if its tabindex not negative.
+   * @param {Element} element
+   * @returns true if the focus attempt was successful, otherwise return false.
+   */
+  static attempt = (element: Element | null): boolean => {
+    if (!(element instanceof HTMLElement) || element.tabIndex < 0) return false
+    element.focus()
     return document.activeElement === element
-  }
-
-  static set = (element: any) => {
-    try {
-      element.focus()
-    } catch (e) {
-      // continue regardless of error
-    }
   }
 }
