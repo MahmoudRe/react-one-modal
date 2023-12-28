@@ -363,6 +363,7 @@ export default forwardRef((props: ModalProps, ref: ForwardedRef<Modal>) => {
           return
         if (typeof onESC === 'string') controlFunctions[onESC]()
         if (typeof onESC === 'function') onESC(ev)
+        ev.preventDefault() // prevent default behavior of exiting the full-screen mode on some browsers.
       }}
       style={{
         ['--omodal-color-bg' as any]: colorBackground || undefined,
