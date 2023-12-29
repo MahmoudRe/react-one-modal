@@ -105,7 +105,8 @@ export default class Focus {
     if (action === Action.NONE) return activeSheetEl.focus()
 
     const selector = action === Action.OPEN ? 'autofocus' : '[data-omodal-lastfocus]'
-    if (!Focus.attempt(activeSheetEl.querySelector(selector))) Focus.setOnFirstDescendant(activeSheetEl)
+    if (!Focus.attempt(activeSheetEl.querySelector(selector) as HTMLElement))
+      Focus.setOnFirstVisibleDescendant(activeSheetEl)
   }
 
   /**
@@ -181,44 +182,70 @@ export default class Focus {
     }
   }
 
-  // Bellow class includes material derived from: Modal Dialog Example
-  // https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/dialog/#top.
-  // Copyright © 2023 World Wide Web Consortium. https://www.w3.org/copyright/software-license-2023/
-
   /**
    * Set focus on descendant nodes until the first tab-focusable element is found.
    * @param element DOM node for which to find the first tab-focusable descendant.
    * @returns {boolean} true if a tab-focusable element is found and focus is set.
    */
-  static setOnFirstDescendant = (element: Element | null): boolean => {
+  static setOnFirstVisibleDescendant = (element: Element | null, scrollableAncestorsRects: DOMRect[] = []): boolean => {
     if (!element) return false
+
+    // Track the array of scrollable ancestors to cover cases where closest scrollable doesn't hide the element but higher scrollable ancestor does.
+    // Call/cache the bounding-rect directly to avoid unnecessary calculations down its DOM tree.
+    if (element.scrollWidth > element.clientWidth || element.scrollHeight > element.clientHeight)
+      scrollableAncestorsRects.push(element.getBoundingClientRect())
+
     for (let i = 0; i < element.children.length; i++) {
       let child = element.children[i]
-      if (Focus.attempt(child) || Focus.setOnFirstDescendant(child)) return true
+      if (!(child instanceof HTMLElement)) continue
+
+      // Short-circuit to avoid unnecessary calculations
+      if (child.tabIndex < 0)
+        if (Focus.setOnFirstVisibleDescendant(child, scrollableAncestorsRects)) return true
+        else continue
+
+      // Check element visibility:
+      // Considering the performance of getBoundingClientRect: https://toruskit.com/blog/how-to-get-element-bounds-without-reflow/
+      // the performance cost is negligible here since it is done only once, the container calculations is cached
+      // and it short-circuit if element isn't tabbable or its parent is completely not visible.
+      // Since it desirable that focus-shift is done synchronously, the cost of `await`-ing promisified IntersectionObserver is worst.
+      const childRect = child.getBoundingClientRect()
+      const isFullyVisible = scrollableAncestorsRects.reduce(
+        (visible, rect) =>
+          visible &&
+          childRect.top >= rect.top &&
+          childRect.bottom <= rect.bottom &&
+          childRect.left >= rect.left &&
+          childRect.right <= rect.right,
+        true
+      )
+
+      if (isFullyVisible && Focus.attempt(child)) return true
+
+      const isPartiallyVisible = scrollableAncestorsRects.reduce(
+        (visible, rect) =>
+          visible &&
+          ((childRect.top >= rect.top && childRect.top <= rect.bottom) ||
+            (childRect.bottom >= rect.top && childRect.bottom <= rect.bottom) ||
+            (childRect.top <= rect.top && childRect.bottom >= rect.bottom)),
+        true
+      )
+
+      if (isPartiallyVisible && Focus.setOnFirstVisibleDescendant(child, scrollableAncestorsRects)) return true
     }
+
     return false
   }
 
   /**
-   * Find the last descendant node that is tab-focusable.
-   * @param element DOM node for which to find the last tab-focusable descendant.
-   * @returns {boolean} true if a tab-focusable element is found and focus is set.
-   */
-  static setOnLastDescendant = (element: Element): boolean => {
-    for (let i = element.children.length - 1; i >= 0; i--) {
-      let child = element.children[i]
-      if (Focus.attempt(child) || Focus.setOnLastDescendant(child)) return true
-    }
-    return false
-  }
-
-  /**
-   * Attempt focus on the given element if its tabindex not negative.
+   * Attempt focus on the given HTML element and return true if successful.
+   * Focus attempt will fail (return false) if element has
+   *  display:none, visibility:hidden or opacity: 0 (tested on all major browsers).
+   *
    * @param {Element} element
    * @returns true if the focus attempt was successful, otherwise return false.
    */
-  static attempt = (element: Element | null): boolean => {
-    if (!(element instanceof HTMLElement) || element.tabIndex < 0) return false
+  static attempt = (element: HTMLElement): boolean => {
     element.focus()
     return document.activeElement === element
   }
