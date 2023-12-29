@@ -222,14 +222,16 @@ export default class Focus {
 
       if (isFullyVisible && Focus.attempt(child)) return true
 
-      const isPartiallyVisible = scrollableAncestorsRects.reduce(
-        (visible, rect) =>
-          visible &&
-          ((childRect.top >= rect.top && childRect.top <= rect.bottom) ||
-            (childRect.bottom >= rect.top && childRect.bottom <= rect.bottom) ||
-            (childRect.top <= rect.top && childRect.bottom >= rect.bottom)),
-        true
-      )
+      const isPartiallyVisible =
+        isFullyVisible ||
+        scrollableAncestorsRects.reduce(
+          (visible, rect) =>
+            visible &&
+            ((childRect.top >= rect.top && childRect.top <= rect.bottom) ||
+              (childRect.bottom >= rect.top && childRect.bottom <= rect.bottom) ||
+              (childRect.top <= rect.top && childRect.bottom >= rect.bottom)),
+          true
+        )
 
       if (isPartiallyVisible && Focus.setOnFirstVisibleDescendant(child, scrollableAncestorsRects)) return true
     }
