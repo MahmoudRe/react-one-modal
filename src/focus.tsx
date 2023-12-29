@@ -106,7 +106,7 @@ export default class Focus {
 
     const selector = action === Action.OPEN ? 'autofocus' : '[data-omodal-lastfocus]'
     if (!Focus.attempt(activeSheetEl.querySelector(selector) as HTMLElement))
-      Focus.setOnFirstVisibleDescendant(activeSheetEl)
+      Focus.setOnFirstVisibleDescendant(activeSheetEl) || activeSheetEl.focus()
   }
 
   /**
