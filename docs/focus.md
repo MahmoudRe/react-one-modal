@@ -109,6 +109,12 @@ modal.push(<Component />, {tabindex: -1})
 modal.show(<Component />, {tabindex: -1})
 ```
 
+### Best of all worlds!
+
+While waiting the browsers to address the issues of use-cases specified in [the proposal regarding the initial focus of the <dialog> element](https://github.com/whatwg/html/wiki/dialog--initial-focus,-a-proposal), namely the issue of having a scrollable elements with long text that contains the first focusable element, like a link, in the middle (eg. Term and Service), the focus is set on the link by default and causes scrolling to that element. This is of course undesirable behavior, but the proposed solution isn't that comprehensive either. After analyzing the issue - refer here to [Analysis of proposed change to set initial focus to <dialog>](https://github.com/whatwg/html/wiki/dialog--initial-focus,-a-proposal#analysis-of-proposed-change-to-set-initial-focus-to-dialog), OneModal approach is to set focus on first **visible** tabbable elements when modal is open, otherwise set the focus on the active-sheet (ie. container container). This combine the best of both words, where if no tabbable elements existed or they are hidden in scrollable element, the focus is set on the container and no undesirable scrolling happening, and if there is a visible tabbable element, set the focus on it directly for uninterrupted user-experience (eg. filling email address in mail-list modal).
+
+Of course, this whole issue is trivial to solve by the developers by just setting `autofocus` attribute to the action-button for example. However, we believe that the default should be as close to desired behavior as possible.
+
 ## Resources
 
 - <https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/>
