@@ -2,7 +2,7 @@
 
 Managing focus properly is the key for an accessible modal, but most of the time it is left entirely out or partially implemented. In nutshell, an accessible modal should behave as follow:
 
-- On modal open, focus should be set on the first tabbable element or autofocus element if defined.
+- On modal open, focus should be set on the first tabbable element or the element with `autofocus` if defined. (Edited: the first tabbable element should be visible, [read more below](#best-of-all-worlds))
 - While modal open, focus should be trapped inside modal.
 - On modal close, focus should return to the element that was active before modal open.
 
@@ -20,7 +20,7 @@ Before starting, it is worth learning the difference between the focus-categorie
 > - Only Tabbable: The element is only keyboard focusable, possibly by the mouse (or pointer), but it cannot be focused by script.
 > - Forwards Focus: The element will forward focus to another element instead of receiving focus itself.
 >
-> *source: [allyjs.io/what-is-focusable.html](https://allyjs.io/what-is-focusable.html)*
+> _source: [allyjs.io/what-is-focusable.html](https://allyjs.io/what-is-focusable.html)_
 
 Note: There is no consensus on the term "tabbable". Some use "tab-focusable" term from [Webkit](https://bugs.webkit.org/show_bug.cgi?id=22261), others use "tabbable" term which is more common and was used for the name of the selector `:tabbable` to grab such elements in [jQueryUI](https://api.jqueryui.com/tabbable-selector/).
 
@@ -46,7 +46,7 @@ Since the focus here does occur on an element outside the focus-tap area before 
 
 However, this is not quite the perfect solution, as actively shifting focus to keep it inside modal means focus will never reach the end of the document. This might be problematic and causes inconsistent behavior. Currently, all modern browser set the focus on the url/search bar or browser's navigation UI after the focus reach the end of the document, and before return it back to the document again. Also, think about other cases where reaching the end of document won't circulate focus like being inside `iframe`.
 
-An element with focus-trap should act as it is the only element in the document to interact with, and keep the natural behavior of the browser to determine what should happen before circulating the focus. This leads to the last option!
+An element with focus-trap should act as it is the only element in the document to interact with, and keep the natural behavior of the browser to determine what should happen before cycling the focus. This leads to the last option!
 
 ### 3. Making everything outside the modal not focusable
 
@@ -56,11 +56,11 @@ In contrast to the impossibility of preventing focus to occur on an element, mak
 
 ### Honorable mention: CSS-Tricks
 
-Before ending this section, an honorable mention goes to the CSS-Tricks community for surprising us again with [a css approach to trap focus inside of an element](https://css-tricks.com/a-css-approach-to-trap-focus-inside-of-an-element/). Spoiler alert! it falls under the second method mentioned above, nevertheless recommended to read!
+Before wrapping up this section, an honorable mention goes to the CSS-Tricks community for surprising us again with [a css approach to trap focus inside of an element](https://css-tricks.com/a-css-approach-to-trap-focus-inside-of-an-element/). Spoiler alert! it falls under the second method mentioned above, nevertheless recommended to read!
 
-### One Modal approach: Progressive Enhancement
+### OneModal approach: Progressive Enhancement
 
-In One Modal, we have internally implemented and tested all of the above mentioned options, thus this article is from first-hand experience with the ups and downs of each method. At the end, we subtle down on using `inert`. This enables us also to implement features that wasn't possible before like *local-modals* for part of the DOM tree, and allow One Modal to have an enhanced accessibility that match the newly added `<dialog>` element like no other modal-library currently available. For better browser support, a fallback to trap-focus using the second method is implemented - [Progressive Enhancement](https://developer.mozilla.org/en-US/docs/Glossary/Progressive_Enhancement), as it is more lightweight than shipping the library with entire polyfill for `inert`. Nonetheless, users of One Modal can opt-in to add polyfill for `inert` manually to have unified user experience across broad range of browsers.
+In One Modal, we have internally implemented and tested all of the above mentioned options, thus this article is from first-hand experience with the ups and downs of each method. At the end, we subtle down on using `inert`. This enables us also to implement features that wasn't possible before like _local-modals_ for part of the DOM tree, and allow OneModal to have an enhanced accessibility that match the newly added `<dialog>` element like no other modal-library currently do. For better browser support, a fallback to trap-focus using the second method is implemented - [Progressive Enhancement](https://developer.mozilla.org/en-US/docs/Glossary/Progressive_Enhancement), as it is more lightweight than shipping the library with entire polyfill for `inert`. Nonetheless, users of OneModal can opt-in to add polyfill for `inert` manually to have unified user experience across broad range of browsers.
 
 ## Moving focus to the modal
 
@@ -80,7 +80,7 @@ To mitigate any potential issue mentioned above, One Modal takes different appro
 
 > The HTMLElement.focus() method sets focus on the specified element, **if it can be focused**.
 >
-> *source: [MDN web docs](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus)*
+> _source: [MDN web docs](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus)_
 
 ```ts
 function attemptFocus(element) {
@@ -105,15 +105,18 @@ Considering [the proposal regarding the initial focus of the `<dialog>` element]
 Optionally, this change can be reversed by passing `tabindex="-1"` in `modalSheetAttribute` prop on component initialization or pass it for specific modal-sheet on calling:
 
 ```ts
-modal.push(<Component />, {tabindex: -1})
-modal.show(<Component />, {tabindex: -1})
+modal.push(<Component />, { tabindex: -1 })
+modal.show(<Component />, { tabindex: -1 })
 ```
 
-### Best of all worlds!
+### Best of all worlds
 
-While waiting the browsers to address the issues of use-cases specified in [the proposal regarding the initial focus of the <dialog> element](https://github.com/whatwg/html/wiki/dialog--initial-focus,-a-proposal), namely the issue of having a scrollable elements with long text that contains the first focusable element, like a link, in the middle (eg. Term and Service), the focus is set on the link by default and causes scrolling to that element. This is of course undesirable behavior, but the proposed solution isn't that comprehensive either. After analyzing the issue - refer here to [Analysis of proposed change to set initial focus to <dialog>](https://github.com/whatwg/html/wiki/dialog--initial-focus,-a-proposal#analysis-of-proposed-change-to-set-initial-focus-to-dialog), OneModal approach is to set focus on first **visible** tabbable elements when modal is open, otherwise set the focus on the active-sheet (ie. container container). This combine the best of both words, where if no tabbable elements existed or they are hidden in scrollable element, the focus is set on the container and no undesirable scrolling happening, and if there is a visible tabbable element, set the focus on it directly for uninterrupted user-experience (eg. filling email address in mail-list modal).
+While waiting the browsers to address the issues of the use-cases mentioned in [the proposal regarding the initial focus of the \<dialog\> element](https://github.com/whatwg/html/wiki/dialog--initial-focus,-a-proposal), specifically the issue of having a scrollable elements with long text that contains the first focusable element, like a link, in the middle (eg. Term and Service), the focus is set on the link by default and causes scrolling to that element. This is of course undesirable behavior, but the proposed solution isn't that comprehensive either. After analyzing the issue - refer here to [Analysis of proposed change to set initial focus to \<dialog\>](https://github.com/whatwg/html/wiki/dialog--initial-focus,-a-proposal#analysis-of-proposed-change-to-set-initial-focus-to-dialog), OneModal approach is to set the focus on the first **visible** tabbable element when modal open, otherwise set the focus on the active-sheet (ie. container element). This combine the best of both worlds, where:
 
-Of course, this whole issue is trivial to solve by the developers by just setting `autofocus` attribute to the action-button for example. However, we believe that the default should be as close to desired behavior as possible.
+- if no tabbable elements existed or they are hidden in a scrollable ancestor element, the focus is set on the container, hence no undesirable scrolling.
+- if there is a visible tabbable element, set the focus on it directly for uninterrupted user-experience (eg. mailing list modal: focusing directly the textfield to fill-in email address).
+
+Of course, this whole issue is trivial to solve by the developers by using the `autofocus` attribute to explicitly set the focus to the desirable element. However, we believe that the default should be as close to the desired behavior as possible.
 
 ## Resources
 
@@ -127,6 +130,8 @@ Of course, this whole issue is trivial to solve by the developers by just settin
 - <https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus>
 - <https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/inert>
 - <https://github.com/whatwg/html/wiki/dialog--initial-focus,-a-proposal>
+- <https://css-tricks.com/focus-management-and-inert>
+- <https://stackoverflow.com/q/123999>
 
 ## Disclaimer
 
