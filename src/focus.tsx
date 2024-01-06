@@ -204,11 +204,7 @@ export default class Focus {
         if (Focus.setOnFirstVisibleDescendant(child, scrollableAncestorsRects)) return true
         else continue
 
-      // Check element visibility:
-      // Considering the performance of getBoundingClientRect: https://toruskit.com/blog/how-to-get-element-bounds-without-reflow/
-      // the performance cost is negligible here since it is done only once, the container calculations is cached
-      // and it short-circuit if element isn't tabbable or its parent is completely not visible.
-      // Since it desirable that focus-shift is done synchronously, the cost of `await`-ing promisified IntersectionObserver is worst.
+      // Check element visibility
       const childRect = child.getBoundingClientRect()
       const isFullyVisible = scrollableAncestorsRects.reduce(
         (visible, rect) =>
@@ -248,7 +244,11 @@ export default class Focus {
    * @returns true if the focus attempt was successful, otherwise return false.
    */
   static attempt = (element: HTMLElement): boolean => {
-    element.focus()
+    try {
+      element.focus()
+    } catch (e) {
+      // do nothing
+    }
     return document.activeElement === element
   }
 }
