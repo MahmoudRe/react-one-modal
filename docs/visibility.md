@@ -264,7 +264,7 @@ function isVisible(element) {
 
     if (style.display === 'none' || style.opacity === '0' || style.height === '0' || style.width === '0' || style.maxHeight === '0' || style.maxWidth === '0') return false
 
-    if (style.visibility === 'visible' || style.visibility === 'initial') isVisibilityHiddenOverride = true
+    if (style.visibility === 'visible') isVisibilityHiddenOverride = true
     else if (style.visibility === 'hidden' && !isVisibilityHiddenOverride) return false
 
     currentElement = currentElement.parentElement
