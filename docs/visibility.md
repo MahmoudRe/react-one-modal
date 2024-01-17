@@ -235,36 +235,135 @@ However, it doesn't come without drawbacks:
 
 ## Visibility according to stacking context
 
-What if an element is hidden under another element with `position` property set to `fixed`, `absolute` or `sticky`? Spoiler alert, it is will get very complex down here!
+An element might be hidden under another element duo to overlapping, which can happen because of various reasons, like overflow if the container is too small, or there is a `grid` display with two elements having the same `grid-column` and `grid-row`, or the `position` value is `absolute` or `fixed`.
 
-To check for that we need to check the z-index and DOM order of all the siblings of the parent element, and if any have higher stacking context (ie. have higher z-index, or if same z-index come after the element in the DOM tree, while being or having element with `position` property set to `fixed`, `absolute` or `sticky`). In this case, we have to check the positions with the previous methods and see if any overlapping occurs, and if so, weather those elements does actually block our element visibility, see [next section](#visibility-according-to-element-style).
+If you start thinking about using `getComputedStyle()` to check the `position` and `z-index` property of some elements, well.. think again, because it will get quite complex and, in some cases, requires checking almost all elements on the page! Since the check is done without any assumptions, we have to consider the most unexpected case. Nonetheless, it is fun to take it as mini-challenge and work through a "deterministic" solution, dare I say so in the JS world. To start, we have to:
 
-Well, it is quite complex, so have to skip the implementation of this approach!
+- find all elements that might block the visibility of the element if they overlap, ie. elements that are on top of the element if overlap occur, and then
+- check if those element are actually overlap with the element to determine if they partially or fully block the element visibility.
 
-Another easier approach, is using `document.elementsFromPoint()` function (browsers +2018 version)
+As for the first point, those elements are all the siblings of the element, and the siblings of each ancestor of the element, starting from the direct parent to `documentElement`; if they have higher `z-index` or come after the element in the DOM order with none-negative `z-index`. We consider here also all the descendants of these elements, if their `overflow` computed value is `visible`, as a descendant can appear outside its parent only when `overflow` is `visible`.
 
-> WIP: implementation
+Note that all descendant of the element itself are considered non-blocking elements as they are essentially part of the element.
+
+As for the second point, the overlap check is done via checking the position (coordinate) for each potential element, as we are not concerned here with the way the overlap occur. However, one optimization can be done by skipping all element descendants
+
+<details>
+  <summary>
+  If you are interested in the implementation, it is quite complex, check it out here. [WIP]
+  </summary>
+  </br>
 
 ```ts
-function isBlockedByHigherStackingContext(element) {
-  const rect = element.getBoundingClientRect();
-  const elements = document.elementsFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
-  const index = elements.indexOf(element);
-  if (index === -1) {
-    return true; // Element is not under the point, so it's not visible
+/**
+ * Given two elements, check if the first element is visually bellow the second element.
+ * The check is done as follow:
+ * 1. If the two elements have the same parent, check their z-index:
+ *    - If the two elements have the same z-index, check the DOM order of the elements.
+ *    - If the first element has lower z-index, it is bellow the second element
+ *    - Otherwise it is above.
+ * 2. If the two elements do not have the same parent,
+ *    - If one element is a descendant of the other, the parent is visually bellow the descendant.
+ *    - If one element's root is a descendant of the other element's root,
+ *       traverse up the DOM tree from the element of the child-root until having the other root as parent,
+ *       then call this function recursively on the two direct descendants.
+ *    - Otherwise the two modals elements aren't interfering with each other, return false.
+ * 
+ * Assumption: Two element where given have `position` property set to `absolute` or `fixed`
+ *
+ * @param thisElement
+ * @param otherElement
+ * @returns true if the first element is visually bellow the second element, false otherwise.
+ */
+export function isElementBellow(thisElement: Element, otherElement: Element): boolean {
+  const thisElementParent = thisElement.parentElement
+  const otherElementParent = otherElement.parentElement
+  if (!thisElementParent || !otherElementParent) return false
+
+  if (thisElementParent === otherElementParent) {
+    const zIndexThisElement = parseInt(getComputedStyle(thisElement).zIndex) || 0
+    const zIndexOtherElement = parseInt(getComputedStyle(otherElement).zIndex) || 0
+
+    return (
+      zIndexThisElement < zIndexOtherElement ||
+      (zIndexThisElement === zIndexOtherElement &&
+        !!(thisElement.compareDocumentPosition(otherElement) & Node.DOCUMENT_POSITION_FOLLOWING))
+    )
   }
-  for (let i = 0; i < index; i++) {
-    const style = window.getComputedStyle(elements[i]);
-    if (style.position !== 'static' && style.zIndex !== 'auto') {
-      const zIndex = parseInt(style.zIndex, 10);
-      if (!isNaN(zIndex) && zIndex > 0) {
-        return true; // There's an element with a higher stacking context in front of the element
-      }
-    }
+
+  const compElements = thisElement.compareDocumentPosition(otherElement)
+  if (compElements & Node.DOCUMENT_POSITION_CONTAINS) return false // expect the edge case when thisElement has z-index < 0!
+  if (compElements & Node.DOCUMENT_POSITION_CONTAINED_BY) return true // expect the edge case when otherElement has z-index < 0!
+
+  const compParents = thisElementParent.compareDocumentPosition(otherElementParent)
+
+  // case 1: thisElementParent is a descendant of otherElementParent, update thisElement to be the direct child of otherElementParent (the common parent)
+  if (compParents & Node.DOCUMENT_POSITION_CONTAINS) {
+    while (otherElementParent !== thisElement.parentElement) thisElement = thisElement.parentElement
   }
-  return false;
+  // case 2: thisElementParent is a ancestor of otherElementParent, update otherElement to be the direct child of thisElementParent (the common parent)
+  else if (compParents & Node.DOCUMENT_POSITION_CONTAINED_BY) {
+    while (thisElementParent !== otherElement.parentElement) otherElement = otherElement.parentElement
+  }
+
+  return isElementBellow(thisElement, otherElement)
 }
 ```
+
+</details>
+
+A direct and easier approach would be using [`document.elementFromPoint()`](https://developer.mozilla.org/en-US/docs/Web/API/Document/elementFromPoint) function:
+
+```ts
+function isVisible(element) {
+  const rect = element.getBoundingClientRect()
+  const elementAtPoint = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+  return elementAtPoint === element
+}
+```
+
+However, this only check for center point of an element, hence we need to check more points: the edges of the element, and some points in between according to a given `precision` value.
+
+```ts
+/**
+ * @param {HTMLElement} element
+ * @param {number} precision
+ *    determine how many points in between the edges to check.
+ *    It defaults to 0, which check all the pixels of an element.
+ */
+function isFullyVisible(element, precision) {
+  const rect = element.getBoundingClientRect()
+  const points = []
+
+  const stepX = precision ? (rect.width - 1) / precision : 1
+  const stepY = precision ? (rect.height - 1) / precision : 1
+
+  for (let x = rect.left; x < rect.right; x += stepX)
+    for (let y = rect.top; y < rect.bottom; y += stepY) 
+      points.push({ x, y })
+
+  return points.every((point) => {
+    let elementAtPoint = document.elementFromPoint(point.x, point.y)
+    return elementAtPoint === element || element.contains(elementAtPoint)
+  })
+}
+```
+
+Since `elementFromPoint` method checks the top-most element at specific point (coordinate), and there is no way to do that for a specific area, we have to check for all points the element occupied to determine if the element is fully visible or not. However, since that is expensive, a second argument can be passed `precision` to determine how many points in between edges should be checked, so if, for example `precision` is set to:
+
+- `0` (default), check all the points between the edges
+- `1`, check only the edges of the elements
+- `2`, check the edges with 1 point in between, ie. the center point
+- `3`, check the edges with 2 point in between, ie. 9 (3^2) points
+- `n`, check `n^2` points evenly distributed in the element rectangle including the edges
+
+Finally consider also:
+
+> Elements with `pointer-events` set to none will be ignored, and the element below it will be returned.
+>
+> Source: [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/API/Document/elementFromPoint)
+
+So, in case there is a need to cover this limitation, either use [`document.elementsFromPoint`](https://developer.mozilla.org/en-US/docs/Web/API/Document/elementsFromPoint), which is supported by all major browser from 2018 onward. If you wish to support browser previous to that, then set inline style `points-event: all !important` on every element in the page and remove it after the check, giving that you have no control over the content of the page what so ever, and have to decide if element visibility is blocked by another element on top.
 
 ## Visibility according to element style
 
