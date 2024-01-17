@@ -200,6 +200,24 @@ const element = document.querySelector('[SELECTOR]')
 observer.observe(element)
 ```
 
+To turn this into promisify-ed one time visibility check function:
+
+```ts
+function isFullyVisible(element) {
+  return new Promise((resolve) => {
+    const observer = new IntersectionObserver(([entry]) => {
+      resolve(entry.isIntersecting)
+      observer.disconnect() // Disconnect the observer after the check
+    })
+
+    observer.observe(element)
+  })
+}
+
+const element = document.querySelector('[SELECTOR]')
+const isVisible = await isFullyVisible(element)
+```
+
 > This is a simplified implementation for simple visibility detection when element become visible/hidden. Consult [the documentation](<(https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)>) for more complex cases, like executing the callback on specific `intersectionRatio` threshold.
 
 The advantages of this method:
